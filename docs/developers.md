@@ -8,7 +8,7 @@ This page contains documentation for developers (people who would like to contri
 ## Setup
 From the root directory of your Moodle installation run the script below.
 ```sh
-cd admin/tool/log/store; rm -rf xapi; git clone git@github.com:jlowe64/moodle-logstore_xapi.git xapi; php -r "readfile('https://getcomposer.org/installer');" | php; rm -rf vendor; php composer.phar install --prefer-source;
+cd admin/tool/log/store; rm -rf xapi; git clone git@github.com:xAPI-vle/moodle-logstore_xapi.git xapi; php -r "readfile('https://getcomposer.org/installer');" | php; rm -rf vendor; php composer.phar install --prefer-source;
 ```
 
 If you hadn't already installed the plugin, you'll need to login as an admin and navigate to "http://www.example.com/admin/index.php" (replacing “www.example.com” with your own domain). Once there you can follow on from step 6 of the [user installation guide](installation.md).
