@@ -203,6 +203,7 @@ function logstore_xapi_get_event_names_array() {
         global $CFG;
 
         require_once($CFG->dirroot . '/admin/tool/log/store/xapi/src/transformer/get_event_function_map.php');
+        require_once($CFG->dirroot . '/admin/tool/log/store/xapi/src/transformer/utils/event_functions/event_functions.php');
     }
 
     $eventnames = [];
