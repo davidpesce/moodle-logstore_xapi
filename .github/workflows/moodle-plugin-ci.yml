@@ -30,31 +30,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - php: '7.4'
-            moodle-branch: 'MOODLE_39_STABLE'
-            database: 'pgsql'
-          - php: '7.4'
-            moodle-branch: 'MOODLE_39_STABLE'
-            database: 'mariadb'
-          - php: '7.4'
-            moodle-branch: 'MOODLE_311_STABLE'
-            database: 'pgsql'
-          - php: '7.4'
-            moodle-branch: 'MOODLE_311_STABLE'
-            database: 'mariadb'
-          - php: '8.0'
-            moodle-branch: 'MOODLE_311_STABLE'
-            database: 'pgsql'
-          - php: '8.0'
-            moodle-branch: 'MOODLE_311_STABLE'
-            database: 'mariadb'
-          - php: '8.0'
-            moodle-branch: 'MOODLE_400_STABLE'
-            database: 'pgsql'
-          - php: '8.0'
-            moodle-branch: 'MOODLE_400_STABLE'
-            database: 'mariadb'
+        php: ['7.4', '8.0']
+        moodle-branch: ['MOODLE_401_STABLE']
+        database: [pgsql, mariadb]
 
     steps:
       - name: Check out repository code
@@ -68,7 +46,8 @@ jobs:
           php-version: ${{ matrix.php }}
           extensions: ${{ matrix.extensions }}
           ini-values: max_input_vars=5000
-          # none to use phpdbg fallback. Specify pcov (Moodle 3.10 and up) or xdebug to use them instead.
+          # If you are not using code coverage, keep "none". Otherwise, use "pcov" (Moodle 3.10 and up) or "xdebug".
+          # If you try to use code coverage with "none", it will fallback to phpdbg (which has known problems).
           coverage: none
 
       - name: Initialise moodle-plugin-ci
@@ -85,14 +64,8 @@ jobs:
           cd plugin
           composer install
 
-      - name: Install additional supported plugins (Moodle 3.9-3.11)
-        if: ${{ matrix.moodle-branch == 'MOODLE_39_STABLE' || matrix.moodle-branch == 'MOODLE_310_STABLE' || matrix.moodle-branch == 'MOODLE_311_STABLE' }}
-        run: |
-          moodle-plugin-ci add-plugin --branch MOODLE_34_STABLE catalyst/moodle-mod_facetoface
-          moodle-plugin-ci add-plugin --branch v3.0-stable blindsidenetworks/moodle-mod_bigbluebuttonbn
-
       - name: Install additional supported plugins (Moodle 4.0)
-        if: ${{ matrix.moodle-branch == 'MOODLE_400_STABLE' }}
+        if: ${{ matrix.moodle-branch == 'MOODLE_400_STABLE' || matrix.moodle-branch == 'MOODLE_401_STABLE' || matrix.moodle-branch == 'MOODLE_402_STABLE' }}
         run: |
           moodle-plugin-ci add-plugin --branch MOODLE_400_STABLE catalyst/moodle-mod_facetoface
 
