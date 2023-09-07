@@ -29,7 +29,6 @@ namespace src\transformer\utils\event_functions;
  *
  * @return array
  */
-
 function event_functions(): array {
 
     return [
