@@ -195,6 +195,15 @@ class store extends php_obj implements log_writer {
     }
 
     /**
+     * Retrieve the text for pseudonymization.
+     *
+     * @return int
+     */
+    public function get_pseudo_text() {
+        return $this->get_config('pseudo_text', '');
+    }
+
+    /**
      * Take rows from logstore_standard_log for the emit_task or failed_task
      * and add in the logstorestandardlogid and set the type.
      *
@@ -263,6 +272,7 @@ class store extends php_obj implements log_writer {
             'log_info' => $loginfo,
             'transformer' => [
                 'source_lang' => 'en',
+                'send_pseudo' => $this->get_config('pseudo', false),
                 'send_mbox' => $this->get_config('mbox', false),
                 'send_response_choices' => $this->get_config('sendresponsechoices', false),
                 'send_short_course_id' => $this->get_config('shortcourseid', false),
@@ -281,6 +291,7 @@ class store extends php_obj implements log_writer {
                 'lrs_username' => $this->get_config('username', ''),
                 'lrs_password' => $this->get_config('password', ''),
                 'lrs_max_batch_size' => $this->get_max_batch_size(),
+                'lrs_pseudo_text' => $this->get_pseudo_text(),
                 'lrs_resend_failed_batches' => $this->get_config('resendfailedbatches', false),
             ],
         ];

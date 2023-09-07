@@ -64,6 +64,14 @@ if ($hassiteconfig) {
         get_string('resendfailedbatches', 'logstore_xapi'),
         get_string('resendfailedbatches_desc', 'logstore_xapi'), 0));
 
+    $settings->add(new admin_setting_configcheckbox('logstore_xapi/pseudo',
+        get_string('pseudo', 'logstore_xapi'),
+        get_string('pseudo_desc', 'logstore_xapi'), 0));
+
+    $settings->add(new admin_setting_configtext('logstore_xapi/pseudo_text',
+        get_string('pseudo_text', 'logstore_xapi'),
+        get_string('pseudo_text_desc', 'logstore_xapi'), '', PARAM_TEXT));
+
     $settings->add(new admin_setting_configcheckbox('logstore_xapi/mbox',
         get_string('mbox', 'logstore_xapi'),
         get_string('mbox_desc', 'logstore_xapi'), 0));
@@ -135,8 +143,9 @@ if ($hassiteconfig) {
         $menuroutes[$eventname] = $eventname;
     }
 
-    $settings->add(new admin_setting_configmulticheckbox('logstore_xapi/routes',
-        get_string('routes', 'logstore_xapi'), '', $menuroutes, $menuroutes));
+    $label = get_string('actionsdescription', 'logstore_xapi');
+    $settings->add(new admin_setting_configmultiselect('logstore_xapi/routes',
+        get_string('routes', 'logstore_xapi'), $label, (array) '', $menuroutes));
 
     // The xAPI Error Log page.
     $errorreport = new admin_externalpage(
