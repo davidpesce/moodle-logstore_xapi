@@ -58,6 +58,11 @@ jobs:
           sudo locale-gen en_AU.UTF-8
           echo "NVM_DIR=$HOME/.nvm" >> $GITHUB_ENV
 
+      - name: Add configuration value for PHPUNIT XAPI TESTCASE
+        run: |
+          moodle-plugin-ci add-config 'define("PHPUNIT_XAPI_TESTCASE", false);'
+
+
       - name: Install plugin dev dependencies
         run: |
           echo $(pwd)
