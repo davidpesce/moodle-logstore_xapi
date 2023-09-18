@@ -98,7 +98,7 @@ function get_event_function_map() {
         '\totara_program\event\program_assigned' => 'totara_program\program_assigned'
     ];
 
-    if (PHPUNIT_TEST && PHPUNIT_XAPI_TESTCASE) {
+    if (PHPUNIT_TEST && !defined('PHPUNIT_XAPI_TESTCASE')) {
         $environmentevents = $availableevents;
     } else {
         $environmentevents = class_exists("report_eventlist_list_generator") ?
