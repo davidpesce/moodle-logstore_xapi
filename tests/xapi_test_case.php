@@ -42,6 +42,17 @@ abstract class xapi_test_case extends \advanced_testcase {
     abstract protected function get_test_dir();
 
     /**
+     * Create a PHPUNIT_XAPI_TESTCASE constant.
+     *
+     * @return void
+     */
+    protected function setUp(): void {
+        if (!defined('PHPUNIT_XAPI_TESTCASE')) {
+            define('PHPUNIT_XAPI_TESTCASE', true);
+        }
+    }
+
+    /**
      * Retrieve the plugin type being tested.
      */
     abstract protected function get_plugin_type();

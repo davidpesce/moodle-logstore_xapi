@@ -32,6 +32,7 @@ namespace src\transformer;
  * @return array
  */
 function get_event_function_map() {
+
     $availableevents = [
         '\core\event\course_completed' => 'core\course_completed',
         '\core\event\course_viewed' => 'core\course_viewed',
@@ -97,8 +98,12 @@ function get_event_function_map() {
         '\totara_program\event\program_assigned' => 'totara_program\program_assigned'
     ];
 
-    $environmentevents = class_exists("report_eventlist_list_generator") ?
-        array_keys(\report_eventlist_list_generator::get_all_events_list(false)) : array_keys($availableevents);
+    if (PHPUNIT_TEST && PHPUNIT_XAPI_TESTCASE) {
+        $environmentevents = $availableevents;
+    } else {
+        $environmentevents = class_exists("report_eventlist_list_generator") ?
+            array_keys(\report_eventlist_list_generator::get_all_events_list(false)) : array_keys($availableevents);
+    }
 
     return array_filter($availableevents, function($k) use ($environmentevents) {
         return in_array($k, $environmentevents);

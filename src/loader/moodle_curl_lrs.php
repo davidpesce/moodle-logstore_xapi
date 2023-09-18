@@ -51,6 +51,12 @@ function load(array $config, array $events) {
 
         $url = utils\correct_endpoint($endpoint).'/statements';
         $auth = base64_encode($username.':'.$password);
+
+        // Raise a exception if attempting to send empty statement arrays.
+        if (count($statements) == 0) {
+            throw new \Exception('The given $statements array is empty.');
+        }
+
         $postdata = json_encode($statements);
 
         if ($postdata === false) {
