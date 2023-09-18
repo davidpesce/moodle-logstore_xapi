@@ -72,7 +72,7 @@ jobs:
       - name: Install the plugin.
         run: |
           moodle-plugin-ci install --plugin ./plugin --db-host=127.0.0.1
-          moodle-plugin-ci add-config 'define("PHPUNIT_XAPI_TESTCASE", false);'
+          moodle-plugin-ci add-config 'define("PHPUNIT_XAPI_TESTCASE", "false");'
 
         env:
           DB: ${{ matrix.database }}
