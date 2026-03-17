@@ -1,0 +1,9 @@
+{
+  "contextinstanceid": 1,
+  "courseid": 2,
+  "id": 1,
+  "userid": 1,
+  "eventname": "\\mod_game\\event\\game_played",
+  "objecttable": "game",
+  "timecreated": 1433946701
+}
