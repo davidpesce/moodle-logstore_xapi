@@ -87,6 +87,17 @@ if ($hassiteconfig) {
     $passwordsetting->size = 40;
     $settings->add($passwordsetting);
 
+    $settings->add(new admin_setting_configcheckbox(
+        'logstore_xapi/oauth2_enabled',
+        get_string('oauth2_enabled', 'logstore_xapi'),
+        get_string('oauth2_enabled_desc', 'logstore_xapi'), 1)
+    );
+    $settings->add(new admin_setting_configtext(
+        'logstore_xapi/oauth2_token_endpoint',
+        get_string('oauth2_token_endpoint', 'logstore_xapi'), '',
+        'https://auth.example.com/oauth/token', PARAM_URL)
+    );
+
     // Processing and batches.
     $settings->add(new admin_setting_heading(
         'processingbatches',

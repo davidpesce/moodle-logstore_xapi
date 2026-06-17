@@ -102,6 +102,13 @@ $string['noerrorsfound'] = 'No errors found';
 $string['norows'] = "No rows to report";
 $string['notificationsnotenabled'] = "Notifications not enabled";
 $string['notificationtriggerlimitnotreached'] = "Notification trigger limit not reached";
+$string['oauth2_token_endpoint'] = 'OAuth2 identity provider token endpoint';
+$string['oauth2_enabled'] = 'OAuth2 identity provider token endpoint';
+$string['oauth2_enabled_desc'] = 'When enabled,
+        connect to the OAuth2 identity provider using Username/password as ClientID/client secret
+        and the Client Credentials flow to get an auth token.
+        This token is then used to authenticate to the LRS.
+        Disable this option to connect to the LRS using Basic Auth';
 $string['password'] = 'LRS auth secret';
 $string['pluginadministration'] = 'Logstore xAPI administration';
 $string['pluginname'] = 'Logstore xAPI';

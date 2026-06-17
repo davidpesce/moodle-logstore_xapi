@@ -282,6 +282,8 @@ class store extends php_obj implements log_writer {
             ],
             'loader' => [
                 'loader' => 'moodle_curl_lrs',
+                'oauth2_enabled' => $this->get_config('oauth2_enabled', ''),
+                'oauth2_token_endpoint' => $this->get_config('oauth2_token_endpoint', ''),
                 'lrs_endpoint' => $this->get_config('endpoint', ''),
                 'lrs_username' => $this->get_config('username', ''),
                 'lrs_password' => $this->get_config('password', ''),

@@ -40,9 +40,27 @@ function load(array $config, array $events) {
         $endpoint = $config['lrs_endpoint'];
         $username = $config['lrs_username'];
         $password = $config['lrs_password'];
+        $oauth2_enabled = $config['oauth2_enabled'];
+        $oauth2_token_endpoint = $config['oauth2_token_endpoint'];
 
+        if ($oauth2_enabled) {
+          $oauth2_token_set = array_key_exists('oauth2_token_cached', $config);
+          $oauth2_token_expired = true;
+          if ($oauth2_token_set) {
+            $oauth2_token_cached_expiry = (int)$config['oauth2_token_cached_expiry'];
+            $oauth2_token_expired = $oauth2_token_cached_expiry - time() < 300;
+          }
+          if ($oauth2_token_expired) {
+            $oauth2_token_data = utils\get_oauth2_token($oauth2_token_endpoint, $username, $password);
+            $config['oauth2_token_cached'] = $oauth2_token_data['access_token'];
+            $config['oauth2_token_cached_expiry'] = time() + (int)$oauth2_token_data['expires_in'];
+          }
+          $auth_header = 'Bearer ' . $config['oauth2_token_cached']; 
+        }
+        else {
+          $auth_header = 'Basic ' . base64_encode($username . ':' . $password);
+        }
         $url = utils\correct_endpoint($endpoint) . '/statements';
-        $auth = base64_encode($username . ':' . $password);
         $postdata = json_encode($statements);
 
         if ($postdata === false) {
@@ -55,14 +73,13 @@ function load(array $config, array $events) {
         curl_setopt($request, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($request, CURLOPT_SSL_VERIFYPEER, false);
         curl_setopt($request, CURLOPT_HTTPHEADER, [
-            'Authorization: Basic ' . $auth,
+            'Authorization: ' . $auth_header,
             'X-Experience-API-Version: 1.0.3',
             'Content-Type: application/json',
         ]);
 
         $responsetext = curl_exec($request);
         $responsecode = curl_getinfo($request, CURLINFO_RESPONSE_CODE);
-        curl_close($request);
 
         if ($responsecode !== 200) {
             throw new \Exception($responsetext, $responsecode);
