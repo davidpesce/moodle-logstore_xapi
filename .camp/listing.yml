@@ -1,26 +1,22 @@
 name: Logstore xAPI
 summary: Send xAPI statements from the Moodle logstore to your LRS.
 description: |
-  PLACEHOLDER — a few paragraphs of markdown for the About section.
-  Describe what the plugin does, supported event coverage, and how
-  statements are batched/sent. Bullet lists work:
-
-  - PLACEHOLDER feature one
-  - PLACEHOLDER feature two
+  Logstore xAPI captures Moodle activity (events) and sends it to a Learning Record Store (LRS) as xAPI statements.
+  Once configured, events like course views, quiz attempts, assignment submissions, and forum posts are automatically recorded in your LRS.
 labels:
   - fully-free
   - commercial-support-available
 screenshots:
-  - path: .camp/screenshots/01-placeholder.png
-    caption: PLACEHOLDER — what screenshot one shows
-  - path: .camp/screenshots/02-placeholder.png
-    caption: PLACEHOLDER — what screenshot two shows
-  - path: .camp/screenshots/03-placeholder.png
-    caption: PLACEHOLDER — what screenshot three shows
-  - path: .camp/screenshots/04-placeholder.png
-    caption: PLACEHOLDER — what screenshot four shows
-  - path: .camp/screenshots/05-placeholder.png
-    caption: PLACEHOLDER — what screenshot five shows
+  - path: .camp/screenshots/logstore_xapi-1.png
+    caption: Logstore xAPI Infographic
+  - path: .camp/screenshots/logstore_xapi-2.png
+    caption: Admin Settings - Connections and Processing
+  - path: .camp/screenshots/logstore_xapi-3.png
+    caption: Admin Settings - Actor and Statements
+  - path: .camp/screenshots/logstore_xapi-4.png
+    caption: Admin Settings - Notifications
+  - path: .camp/screenshots/logstore_xapi-5.png
+    caption: Admin Settings - Included Events
 links:
   docs: https://github.com/xAPI-vle/moodle-logstore_xapi#readme
   issues: https://github.com/xAPI-vle/moodle-logstore_xapi/issues
