@@ -1,5 +1,5 @@
 name: Logstore xAPI
-summary: Send xAPI statements from the Moodle logstore to your LRS.
+summary: Send xAPI statements of Moodle events to your LRS.
 description: |
   Logstore xAPI captures Moodle activity (events) and sends it to a Learning Record Store (LRS) as xAPI statements.
   Once configured, events like course views, quiz attempts, assignment submissions, and forum posts are automatically recorded in your LRS.
@@ -18,9 +18,9 @@ screenshots:
   - path: .camp/screenshots/logstore_xapi-5.png
     caption: Admin Settings - Included Events
 links:
-  docs: https://github.com/xAPI-vle/moodle-logstore_xapi#readme
-  issues: https://github.com/xAPI-vle/moodle-logstore_xapi/issues
-  changelog: https://github.com/xAPI-vle/moodle-logstore_xapi/releases
+  docs: https://github.com/davidpesce/moodle-logstore_xapi#readme
+  issues: https://github.com/davidpesce/moodle-logstore_xapi/issues
+  changelog: https://github.com/davidpesce/moodle-logstore_xapi/releases
 badges:
   - endpoint: https://mdlshield.com/api/badge/logstore_xapi
     link: https://mdlshield.com/plugins/logstore_xapi
