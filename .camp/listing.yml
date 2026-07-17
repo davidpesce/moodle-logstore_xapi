@@ -21,6 +21,10 @@ screenshots:
     caption: PLACEHOLDER — what screenshot four shows
   - path: .camp/screenshots/05-placeholder.png
     caption: PLACEHOLDER — what screenshot five shows
+links:
+  docs: https://github.com/xAPI-vle/moodle-logstore_xapi#readme
+  issues: https://github.com/xAPI-vle/moodle-logstore_xapi/issues
+  changelog: https://github.com/xAPI-vle/moodle-logstore_xapi/releases
 badges:
   - endpoint: https://mdlshield.com/api/badge/logstore_xapi
     link: https://mdlshield.com/plugins/logstore_xapi
