@@ -87,6 +87,20 @@ if ($hassiteconfig) {
     $passwordsetting->size = 40;
     $settings->add($passwordsetting);
 
+    $settings->add(new admin_setting_configcheckbox(
+        'logstore_xapi/sslverification',
+        get_string('sslverification', 'logstore_xapi'),
+        get_string('sslverification_desc', 'logstore_xapi'),
+        1
+    ));
+
+    $settings->add(new admin_setting_configfile(
+        'logstore_xapi/sslcabundle',
+        get_string('sslcabundle', 'logstore_xapi'),
+        get_string('sslcabundle_desc', 'logstore_xapi'),
+        ''
+    ));
+
     // Processing and batches.
     $settings->add(new admin_setting_heading(
         'processingbatches',

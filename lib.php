@@ -421,3 +421,16 @@ function logstore_xapi_get_type_from_table($table) {
             return XAPI_IMPORT_TYPE_LIVE;
     }
 }
+
+/**
+ * Security checks contributed to the site security report.
+ *
+ * Called by \core\check\manager::get_security_checks().
+ *
+ * @return array of \core\check\check
+ */
+function logstore_xapi_security_checks() {
+    return [
+        new \logstore_xapi\check\ssl_verification(),
+    ];
+}

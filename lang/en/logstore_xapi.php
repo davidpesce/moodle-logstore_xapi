@@ -35,6 +35,11 @@ $string['backgroundmode'] = 'Send statements by scheduled task?';
 $string['backgroundmode_desc'] = 'This will force Moodle to send the statements to the LRS in the background,
         via a cron task to avoid blocking page responses. This will make the process less close to real time, but will help to prevent unpredictable
         Moodle performance linked to the performance of the LRS.';
+$string['check_sslverification_details'] = 'The xAPI logstore sends learner data and its LRS credentials over this connection. With certificate verification disabled, anyone able to intercept the connection between this server and the LRS can read that data, capture the credentials, and alter the LRS response.';
+$string['check_sslverification_na'] = 'The xAPI logstore is not enabled, so no data is sent to an LRS.';
+$string['check_sslverification_name'] = 'xAPI LRS certificate verification';
+$string['check_sslverification_ok'] = 'The LRS TLS certificate is verified.';
+$string['check_sslverification_warning'] = 'LRS TLS certificate verification is disabled.';
 $string['cohorts'] = 'Cohorts';
 $string['cohorts_help'] = 'Add cohort(s) to notifications';
 $string['confirmresendevents'] = 'You are about to send {$a->count} record(s) to the queue for reprocessing.<br>Do you wish to continue?';
@@ -77,6 +82,7 @@ $string['heading_statementcontent_desc'] = 'Control what data is included in xAP
 $string['includecohorts'] = 'Include these cohorts in notifications';
 $string['info'] = 'Info';
 $string['insendfailednotificationstask'] = 'In send failed notifications task execute';
+$string['invalidreportid'] = 'Invalid report id.';
 $string['lmsinstance'] = 'LMS instance on which the error(s) occurred';
 $string['logguests'] = 'Log guest actions';
 $string['logstore_not_enabled'] = 'The Logstore xAPI plugin is not currently enabled. Events will not be captured until it is enabled via <a href="{$a}">Manage log stores</a>.';
@@ -132,6 +138,10 @@ $string['sendidnumber_desc'] = 'Statements will include the ID number (admin def
 $string['settings'] = 'General Settings';
 $string['shortcourseid'] = 'Send short course name';
 $string['shortcourseid_desc'] = 'Statements will contain the shortname for a course as a short course id extension';
+$string['sslcabundle'] = 'Custom CA certificate bundle';
+$string['sslcabundle_desc'] = 'Absolute path to a PEM certificate bundle used to verify the LRS certificate. Set this when the LRS uses a private or internal certificate authority. This is the preferred alternative to disabling verification, because the certificate is still checked.';
+$string['sslverification'] = 'Verify the LRS TLS certificate';
+$string['sslverification_desc'] = 'Verify the TLS certificate presented by the LRS. Leave this enabled. Disabling it allows anyone able to intercept the connection to read learner data, capture the LRS username and password, and tamper with the response. If the LRS uses a private certificate authority, set the CA certificate bundle below instead of disabling this.';
 $string['submit'] = 'Submit';
 $string['successful_events'] = 'event(s) have been successfully processed.';
 $string['taskemit'] = 'Emit records to LRS';

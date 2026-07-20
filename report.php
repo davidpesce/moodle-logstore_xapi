@@ -129,7 +129,9 @@ switch ($id) {
         break;
 
     default:
-        break;
+        // Unknown report id. Every valid report enforces its own capability
+        // above, so anything reaching here is unauthorised by definition.
+        throw new moodle_exception('invalidreportid', 'logstore_xapi');
 }
 
 $notifications = [];
@@ -277,7 +279,7 @@ if (!empty($results)) {
         }
         $row[] = $result->eventname;
         if ($id == XAPI_REPORT_ID_HISTORIC) {
-            $row[] = $result->username;
+            $row[] = s($result->username);
 
             if ($context = context::instance_by_id($result->contextid, IGNORE_MISSING)) {
                 $row[] = $context->get_context_name();
@@ -288,7 +290,14 @@ if (!empty($results)) {
         if ($id == XAPI_REPORT_ID_ERROR) {
             $response = '';
             if (isset($result->response)) {
-                $response = '<pre>' . json_encode(logstore_xapi_decode_response($result->response), JSON_PRETTY_PRINT) . '</pre>';
+                // The response body originates from the LRS and is untrusted.
+                // Escape both at encode time and on output before it reaches
+                // the table cell, which html_writer::table() emits verbatim.
+                $decoded = json_encode(
+                    logstore_xapi_decode_response($result->response),
+                    JSON_PRETTY_PRINT | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_QUOT
+                );
+                $response = \html_writer::tag('pre', s($decoded));
             } else {
                 $response = '-';
             }

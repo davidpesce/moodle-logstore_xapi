@@ -34,17 +34,19 @@ $capabilities = [
             'manager' => CAP_ALLOW,
         ],
     ],
+    // Permits requeueing failed events for resending, so it is a write action.
     'logstore/xapi:manageerrors' => [
         'riskbitmask'  => RISK_CONFIG,
-        'captype'      => 'read',
+        'captype'      => 'write',
         'contextlevel' => CONTEXT_SYSTEM,
         'archetypes'   => [
             'manager' => CAP_ALLOW,
         ],
     ],
+    // Permits moving historic events into the processing queue, so it is a write action.
     'logstore/xapi:managehistoric' => [
         'riskbitmask'  => RISK_CONFIG,
-        'captype'      => 'read',
+        'captype'      => 'write',
         'contextlevel' => CONTEXT_SYSTEM,
         'archetypes'   => [
             'manager' => CAP_ALLOW,

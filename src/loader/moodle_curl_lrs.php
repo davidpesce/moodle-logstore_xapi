@@ -36,6 +36,51 @@ require_once($CFG->libdir . '/filelib.php');
 use src\loader\utils;
 
 /**
+ * Build the cURL options used for an LRS statement request.
+ *
+ * TLS peer verification is on unless an administrator has explicitly turned it
+ * off. Note that this cannot be left to Moodle's \curl wrapper, which defaults
+ * CURLOPT_SSL_VERIFYPEER to 0 (see curl::resetopt() in lib/filelib.php), so the
+ * option is always set explicitly here.
+ *
+ * @param array $config An array of configuration settings.
+ * @param string $url The statements endpoint.
+ * @param string $auth The base64 encoded basic auth credentials.
+ * @param string $postdata The JSON encoded statements.
+ * @return array A map of cURL option constant => value.
+ */
+function build_curl_options(array $config, string $url, string $auth, string $postdata): array {
+    $options = [
+        CURLOPT_URL => $url,
+        CURLOPT_POSTFIELDS => $postdata,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_SSL_VERIFYPEER => true,
+        CURLOPT_SSL_VERIFYHOST => 2,
+        CURLOPT_HTTPHEADER => [
+            'Authorization: Basic ' . $auth,
+            'X-Experience-API-Version: 1.0.3',
+            'Content-Type: application/json',
+        ],
+    ];
+
+    // A private CA bundle keeps verification fully intact, so it is preferred
+    // over turning verification off and is applied independently of it.
+    if (!empty($config['lrs_ssl_cabundle'])) {
+        $options[CURLOPT_CAINFO] = $config['lrs_ssl_cabundle'];
+    }
+
+    // Last resort escape hatch. Both checks are dropped together so that the
+    // setting does what its name says; a half-disabled state would still fail
+    // for self-signed certificates whose common name does not match.
+    if (isset($config['lrs_ssl_verification']) && empty($config['lrs_ssl_verification'])) {
+        $options[CURLOPT_SSL_VERIFYPEER] = false;
+        $options[CURLOPT_SSL_VERIFYHOST] = 0;
+    }
+
+    return $options;
+}
+
+/**
  * Load data necessary to send statements to LRS.
  *
  * @param array $config An array of configuration settings.
@@ -58,18 +103,17 @@ function load(array $config, array $events) {
         }
 
         $request = curl_init();
-        curl_setopt($request, CURLOPT_URL, $url);
-        curl_setopt($request, CURLOPT_POSTFIELDS, $postdata);
-        curl_setopt($request, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($request, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($request, CURLOPT_HTTPHEADER, [
-            'Authorization: Basic ' . $auth,
-            'X-Experience-API-Version: 1.0.3',
-            'Content-Type: application/json',
-        ]);
+        curl_setopt_array($request, build_curl_options($config, $url, $auth, $postdata));
 
         $responsetext = curl_exec($request);
         $responsecode = curl_getinfo($request, CURLINFO_RESPONSE_CODE);
+
+        // A transport level failure (of which a rejected TLS certificate is the
+        // most likely) yields false with no response code, so report cURL's own
+        // error rather than storing an empty message in the failed log.
+        if ($responsetext === false) {
+            throw new \Exception('cURL error: ' . curl_error($request), curl_errno($request));
+        }
 
         if ($responsecode !== 200) {
             throw new \Exception($responsetext, $responsecode);
