@@ -1,0 +1,84 @@
+# camp release workflow (from camp-index templates/author-release.yml).
+# Publishing to camp means: git tag v1.2.3 && git push --tags
+#
+# What it does on every version tag:
+#   1. checks the repo has a listing manifest,
+#   2. runs the same label heuristics and security lint camp CI runs, so
+#      findings appear here before reviewers see them (warn-only),
+#   3. builds the canonical ZIP and computes the release record with camp
+#      tools — the identical code path camp CI verifies against,
+#   4. opens a pull request against the camp index with the new release
+#      appended to this plugin's entry.
+
+name: Publish release to camp
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch: {}   # backfill an old release: run at the existing tag
+                          #   gh workflow run camp-release.yml --ref v1.1.0
+
+env:
+  CAMP_INDEX_REPO: camp-registry/camp-index
+  COMPONENT: logstore_xapi
+  # Empty: camp reads the supported range from version.php at the tag
+  # ($plugin->supported range, else the branch $plugin->requires maps to).
+  SUPPORTED_MOODLE: ""
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out plugin at the tag
+        uses: actions/checkout@v4
+        with:
+          path: plugin
+          fetch-depth: 0
+
+      - name: Check out camp index
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.CAMP_INDEX_REPO }}
+          path: index-repo
+          token: ${{ secrets.CAMP_INDEX_TOKEN }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install camp tools
+        run: pip install --quiet "git+https://github.com/camp-registry/camp-tools@v0.2.21"
+
+      - name: Require a listing manifest
+        run: camp scaffold plugin --check
+
+      - name: Label heuristics + security lint (warn-only preview)
+        run: |
+          camp lint-labels plugin || true
+          camp audit plugin || true
+
+      - name: Compute and append the release record
+        run: |
+          plugintype="${COMPONENT%%_*}"
+          camp release "index-repo/plugins/${plugintype}/${COMPONENT}.yml" \
+            "${GITHUB_REF_NAME}" --source ./plugin \
+            ${SUPPORTED_MOODLE:+--supported-moodle "${SUPPORTED_MOODLE}"}
+
+      - name: Open index pull request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          # Maintainer has write access to camp-index, so the release
+          # branch pushes there directly (no push-to-fork). The token is a
+          # fine-grained PAT scoped to camp-registry/camp-index with
+          # Contents + Pull requests read/write. (External authors need a
+          # CLASSIC token with public_repo and push-to-fork instead — see
+          # the template.)
+          token: ${{ secrets.CAMP_INDEX_TOKEN }}
+          path: index-repo
+          branch: release/${{ env.COMPONENT }}-${{ github.ref_name }}
+          commit-message: "${{ env.COMPONENT }}: release ${{ github.ref_name }}"
+          title: "${{ env.COMPONENT }}: release ${{ github.ref_name }}"
+          body: |
+            Automated release PR from ${{ github.repository }} @ ${{ github.ref_name }}.
+            camp CI will independently rebuild the artifact from the tag and
+            verify the recorded hashes before this can merge.
