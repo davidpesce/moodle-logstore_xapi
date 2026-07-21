@@ -44,7 +44,7 @@ function get_enrolment_context(
     \stdClass $user,
     string $lang
 ) {
-    $info = unserialize($event->other);
+    $info = utils\decode_other($event->other);
 
     $ctx = [
         'language' => $lang,

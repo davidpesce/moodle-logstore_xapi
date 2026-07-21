@@ -40,7 +40,7 @@ function course_module_completion_updated(array $config, \stdClass $event) {
     $user = $repo->read_record_by_id('user', $event->relateduserid);
     $course = $repo->read_record_by_id('course', $event->courseid);
     $lang = utils\get_course_lang($course);
-    $completionstate = unserialize($event->other)['completionstate'];
+    $completionstate = utils\decode_other($event->other)['completionstate'];
 
     $result = [];
 

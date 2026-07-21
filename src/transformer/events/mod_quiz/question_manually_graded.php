@@ -42,7 +42,7 @@ function question_manually_graded(array $config, \stdClass $event) {
         'attemptid' => $attemptid,
         'quizid' => $quizid,
         'slot' => $slot,
-    ] = unserialize($event->other);
+    ] = utils\decode_other($event->other);
     $attempt = $repo->read_record_by_id('quiz_attempts', (int) $attemptid);
     $quiz = $repo->read_record_by_id('quiz', (int) $quizid);
     $user = $repo->read_record_by_id('user', $attempt->userid);

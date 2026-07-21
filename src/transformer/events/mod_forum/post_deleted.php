@@ -43,7 +43,7 @@ function post_deleted(array $config, \stdClass $event) {
     $post = new \stdClass();
     $post->id = $event->objectid;
 
-    $other = unserialize($event->other);
+    $other = utils\decode_other($event->other);
     $discussionid = $other['discussionid'];
     $post->discussion = $discussionid;
     $discussion = $repo->read_record_by_id('forum_discussions', $discussionid);

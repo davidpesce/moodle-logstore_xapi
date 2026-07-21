@@ -47,7 +47,7 @@ function tour_ended(array $config, \stdClass $event) {
             ],
         ],
         'object' => [
-            'id' => unserialize($event->other)['pageurl'],
+            'id' => utils\decode_other($event->other)['pageurl'],
             'objectType' => 'Activity',
         ],
         'context' => [
