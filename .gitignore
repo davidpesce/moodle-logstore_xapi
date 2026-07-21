@@ -6,7 +6,7 @@
 /*.sublime-workspace
 /classes/log/error_log.txt
 /composer.phar
-/logstore_xapi_[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9].md
+/logstore_xapi_[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]*.md
 /node_modules
 /notes.md
 /vendor
