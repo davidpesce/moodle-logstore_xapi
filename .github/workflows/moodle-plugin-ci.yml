@@ -8,7 +8,10 @@ jobs:
 
     services:
       postgres:
-        image: postgres:15
+        # Moodle's minimum Postgres rises per release and the installer refuses
+        # to run below it; 5.2 requires 16. This version satisfies every branch
+        # in the matrix (4.5 needs 13, 5.0 needs 14, 5.1 needs 15).
+        image: postgres:16
         env:
           POSTGRES_USER: 'postgres'
           POSTGRES_HOST_AUTH_METHOD: 'trust'
@@ -31,19 +34,20 @@ jobs:
       fail-fast: false
       matrix:
         php: ['8.1', '8.2', '8.3', '8.4']
-        moodle-branch: ['MOODLE_403_STABLE', 'MOODLE_404_STABLE', 'MOODLE_405_STABLE', 'MOODLE_500_STABLE', 'MOODLE_501_STABLE']
+        moodle-branch: ['MOODLE_405_STABLE', 'MOODLE_500_STABLE', 'MOODLE_501_STABLE', 'MOODLE_502_STABLE']
         database: [pgsql, mariadb]
+        # Each Moodle release sets its own minimum PHP (4.5 needs 8.1, 5.0 and
+        # 5.1 need 8.2, 5.2 needs 8.3) and 4.5 predates 8.4 support, so the
+        # combinations outside those ranges are excluded rather than tested.
         exclude:
           - php: '8.1'
             moodle-branch: 'MOODLE_500_STABLE'
           - php: '8.1'
             moodle-branch: 'MOODLE_501_STABLE'
-          - php: '8.3'
-            moodle-branch: 'MOODLE_403_STABLE'
-          - php: '8.4'
-            moodle-branch: 'MOODLE_403_STABLE'
-          - php: '8.4'
-            moodle-branch: 'MOODLE_404_STABLE'
+          - php: '8.1'
+            moodle-branch: 'MOODLE_502_STABLE'
+          - php: '8.2'
+            moodle-branch: 'MOODLE_502_STABLE'
           - php: '8.4'
             moodle-branch: 'MOODLE_405_STABLE'
 
