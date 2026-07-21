@@ -37,6 +37,11 @@ define('XAPI_REPORT_SOURCE_LOG', 'logstore_xapi_log');
 define('XAPI_REPORT_SOURCE_FAILED', 'logstore_xapi_failed_log');
 define('XAPI_REPORT_SOURCE_HISTORICAL', 'logstore_standard_log');
 
+// Columns of the failed log that the error report may build filter options
+// from. Used as an allow-list, since a column name cannot be bound as a query
+// parameter and has to be interpolated into the SQL.
+define('XAPI_REPORT_FILTER_COLUMNS', ['errortype', 'response']);
+
 // Error types.
 define('XAPI_REPORT_ERRORTYPE_NETWORK', 101);
 define('XAPI_REPORT_ERRORTYPE_RECIPE', 400);
@@ -158,12 +163,21 @@ function logstore_xapi_get_users_for_notifications() {
 /**
  * Gets the unique column values
  *
- * @param string $column
+ * The column name is interpolated into SQL, since identifiers cannot be bound
+ * as parameters. It is checked against a fixed allow-list so that a future
+ * caller cannot turn this helper into an injection point.
+ *
+ * @param string $column One of the columns listed in XAPI_REPORT_FILTER_COLUMNS.
  * @return array
+ * @throws coding_exception If the column is not one this helper supports.
  * @throws dml_exception
  */
 function logstore_xapi_get_distinct_options_from_failed_table($column) {
     global $DB;
+
+    if (!in_array($column, XAPI_REPORT_FILTER_COLUMNS, true)) {
+        throw new coding_exception('Unsupported filter column: ' . $column);
+    }
 
     $options = [0 => get_string('any')];
     $results = $DB->get_fieldset_select('logstore_xapi_failed_log', "DISTINCT $column", '');

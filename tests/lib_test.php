@@ -30,6 +30,7 @@ require_once($CFG->dirroot . '/admin/tool/log/store/xapi/lib.php');
  * @copyright 2025 David Pesce <david.pesce@exputo.com>
  * @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @covers    ::logstore_xapi_get_selected_cohorts
+ * @covers    ::logstore_xapi_get_distinct_options_from_failed_table
  */
 final class lib_test extends advanced_testcase {
     /**
@@ -130,5 +131,85 @@ final class lib_test extends advanced_testcase {
         $this->resetAfterTest();
 
         $this->assertSame([], logstore_xapi_get_selected_cohorts());
+    }
+
+    /**
+     * The columns the report actually filters on are accepted.
+     *
+     * @return void
+     */
+    public function test_distinct_options_accepts_allowed_columns(): void {
+        $this->resetAfterTest();
+
+        foreach (XAPI_REPORT_FILTER_COLUMNS as $column) {
+            $options = logstore_xapi_get_distinct_options_from_failed_table($column);
+            $this->assertSame(get_string('any'), $options[0]);
+        }
+    }
+
+    /**
+     * Distinct values from the failed log become filter options.
+     *
+     * @return void
+     */
+    public function test_distinct_options_returns_column_values(): void {
+        global $DB;
+        $this->resetAfterTest();
+
+        foreach ([XAPI_REPORT_ERRORTYPE_NETWORK, XAPI_REPORT_ERRORTYPE_NETWORK, XAPI_REPORT_ERRORTYPE_AUTH] as $type) {
+            $DB->insert_record('logstore_xapi_failed_log', (object) [
+                'eventname' => '\core\event\course_viewed',
+                'component' => 'core',
+                'action' => 'viewed',
+                'target' => 'course',
+                'crud' => 'r',
+                'edulevel' => 0,
+                'contextid' => \context_system::instance()->id,
+                'contextlevel' => CONTEXT_SYSTEM,
+                'contextinstanceid' => 0,
+                'userid' => 2,
+                'courseid' => 0,
+                'relateduserid' => 0,
+                'anonymous' => 0,
+                'other' => 'N;',
+                'timecreated' => time(),
+                'origin' => 'web',
+                'ip' => '198.51.100.1',
+                'realuserid' => 0,
+                'errortype' => $type,
+            ]);
+        }
+
+        $options = logstore_xapi_get_distinct_options_from_failed_table('errortype');
+
+        // Duplicates collapse, and the "any" option is retained.
+        $this->assertArrayHasKey(XAPI_REPORT_ERRORTYPE_NETWORK, $options);
+        $this->assertArrayHasKey(XAPI_REPORT_ERRORTYPE_AUTH, $options);
+        $this->assertCount(3, $options);
+    }
+
+    /**
+     * A column outside the allow-list is rejected rather than interpolated
+     * into the query, since identifiers cannot be bound as parameters.
+     *
+     * @return void
+     */
+    public function test_distinct_options_rejects_unlisted_column(): void {
+        $this->resetAfterTest();
+
+        $this->expectException(\coding_exception::class);
+        logstore_xapi_get_distinct_options_from_failed_table('userid');
+    }
+
+    /**
+     * An injection attempt is rejected before reaching the database.
+     *
+     * @return void
+     */
+    public function test_distinct_options_rejects_injection_attempt(): void {
+        $this->resetAfterTest();
+
+        $this->expectException(\coding_exception::class);
+        logstore_xapi_get_distinct_options_from_failed_table('id FROM {user} WHERE 1=1 --');
     }
 }
