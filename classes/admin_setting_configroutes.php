@@ -108,20 +108,11 @@ class admin_setting_configroutes extends \admin_setting_configmulticheckbox {
 
         $html .= \html_writer::end_div();
 
-        // Inline JS for select all / deselect all toggles.
-        $html .= '<script>
-document.addEventListener("click", function(e) {
-    var el = e.target.closest(".logstore-xapi-groupaction");
-    if (!el) return;
-    e.preventDefault();
-    var action = el.getAttribute("data-group-action");
-    var target = el.getAttribute("data-group-target");
-    var checked = (action === "selectall");
-    document.querySelectorAll("[data-routegroup=\"" + target + "\"] input[type=checkbox]").forEach(function(cb) {
-        cb.checked = checked;
-    });
-});
-</script>';
+        // Select all / deselect all toggles. Delivered as an AMD module rather
+        // than an inline <script> so the page stays compatible with a Content
+        // Security Policy that forbids inline script.
+        global $PAGE;
+        $PAGE->requires->js_call_amd('logstore_xapi/route_groups', 'init');
 
         return format_admin_setting($this, $this->visiblename, $html, $this->description, true, '', '', $query);
     }
