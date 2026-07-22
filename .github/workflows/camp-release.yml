@@ -20,9 +20,11 @@ on:
 
 env:
   CAMP_INDEX_REPO: camp-registry/camp-index
-  COMPONENT: logstore_xapi
-  # Empty: camp reads the supported range from version.php at the tag
-  # ($plugin->supported range, else the branch $plugin->requires maps to).
+  # Both optional overrides — empty means everything is read from
+  # version.php at the tag: COMPONENT from $plugin->component,
+  # SUPPORTED_MOODLE from the $plugin->supported range (else the branch
+  # $plugin->requires maps to).
+  COMPONENT: ""
   SUPPORTED_MOODLE: ""
 
 jobs:
@@ -48,6 +50,18 @@ jobs:
 
       - name: Install camp tools
         run: pip install --quiet "git+https://github.com/camp-registry/camp-tools@v0.2.21"
+
+      - name: Resolve component name
+        run: |
+          if [ -z "${COMPONENT}" ]; then
+            COMPONENT=$(sed -nE 's/.*\$plugin->component[[:space:]]*=[[:space:]]*.?([a-z][a-z0-9_]*).?[[:space:]]*;.*/\1/p' plugin/version.php | head -1)
+          fi
+          if [ -z "${COMPONENT}" ]; then
+            echo "::error::COMPONENT is empty and \$plugin->component was not found in version.php — set one of them"
+            exit 1
+          fi
+          echo "COMPONENT=${COMPONENT}" >> "$GITHUB_ENV"
+          echo "component: ${COMPONENT}"
 
       - name: Require a listing manifest
         run: camp scaffold plugin --check
