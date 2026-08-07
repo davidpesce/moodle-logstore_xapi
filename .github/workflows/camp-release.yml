@@ -1,14 +1,22 @@
-# camp release workflow (from camp-index templates/author-release.yml).
-# Publishing to camp means: git tag v1.2.3 && git push --tags
+# camp release workflow — copy to .github/workflows/camp-release.yml in your
+# plugin repository. Publishing to camp then means: git tag v1.2.3 && git push --tags
 #
-# What it does on every version tag:
-#   1. checks the repo has a listing manifest,
-#   2. runs the same label heuristics and security lint camp CI runs, so
-#      findings appear here before reviewers see them (warn-only),
-#   3. builds the canonical ZIP and computes the release record with camp
+# No token, no secrets, no fork. On every version tag this workflow:
+#   1. checks your repo has a listing manifest (fails with instructions if not),
+#   2. runs the same label heuristics and security lint camp CI runs, so you
+#      see findings before reviewers do (warn-only here),
+#   3. builds the canonical ZIP and computes your release record with camp
 #      tools — the identical code path camp CI verifies against,
-#   4. opens a pull request against the camp index with the new release
-#      appended to this plugin's entry.
+#   4. proves this workflow's identity to the camp publish service with a
+#      signed OIDC token from GitHub (that is what `id-token: write` grants:
+#      the ability to REQUEST an identity statement — it writes nothing to
+#      your repository), and the service opens the release PR on the index.
+#
+# Publishing authorization is your claimed listing: the service checks that
+# this repository is the listed source of your entry, by permanent repository
+# id. camp CI still independently rebuilds and verifies everything from the
+# public tag, and a human merges. Prefer holding a token yourself? The
+# personal-access-token flow remains supported: templates/author-release-pat.yml.
 
 name: Publish release to camp
 
@@ -18,12 +26,20 @@ on:
   workflow_dispatch: {}   # backfill an old release: run at the existing tag
                           #   gh workflow run camp-release.yml --ref v1.1.0
 
+permissions:
+  contents: read
+  id-token: write
+
 env:
-  CAMP_INDEX_REPO: camp-registry/camp-index
-  # Both optional overrides — empty means everything is read from
-  # version.php at the tag: COMPONENT from $plugin->component,
-  # SUPPORTED_MOODLE from the $plugin->supported range (else the branch
-  # $plugin->requires maps to).
+  CAMP_INDEX_REPO: camp-registry/camp-index  # the camp index repository
+  CAMP_PUBLISH_URL: https://publish.camp-registry.org/publish
+  # Both values below are optional overrides — with them empty
+  # (recommended), everything is read from your version.php at the tag:
+  #   COMPONENT        ← $plugin->component (your frankenstyle name)
+  #   SUPPORTED_MOODLE ← the $plugin->supported range when declared,
+  #                      else the single branch $plugin->requires maps
+  #                      to. Set it only when version.php can't say what
+  #                      you mean (e.g. a non-contiguous set "4.1,4.4").
   COMPONENT: ""
   SUPPORTED_MOODLE: ""
 
@@ -31,25 +47,48 @@ jobs:
   publish:
     runs-on: ubuntu-24.04
     steps:
+      # Releases are built at immutable tags only; the publish service
+      # additionally refuses branch-minted tokens, so this guard just
+      # fails earlier with a better message (camp-tools#15).
+      - name: Require a tag ref
+        run: |
+          if [ "${{ github.ref_type }}" != "tag" ]; then
+            echo "::error::This workflow must run at a tag. From workflow_dispatch, pick the tag in the ref dropdown (or: gh workflow run camp-release.yml --ref v1.2.3). Current ref: ${{ github.ref_name }} (${{ github.ref_type }})"
+            exit 1
+          fi
+
       - name: Check out plugin at the tag
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           path: plugin
           fetch-depth: 0
 
+      # Read-only: camp release computes your record against your entry's
+      # current ledger. Nothing is pushed from this job.
       - name: Check out camp index
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: ${{ env.CAMP_INDEX_REPO }}
           path: index-repo
-          token: ${{ secrets.CAMP_INDEX_TOKEN }}
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
 
       - name: Install camp tools
-        run: pip install --quiet "git+https://github.com/camp-registry/camp-tools@v0.2.21"
+        run: pip install --quiet "git+https://github.com/camp-registry/camp-tools@v0.2.51"
+
+      # Stale template copies are the recurring failure mode (they have
+      # broken releases before); this nudge compares the copy's pin
+      # against the registry's published version and never fails the run
+      # (camp-tools#35).
+      - name: Check template freshness
+        continue-on-error: true
+        run: |
+          current=$(curl -s --max-time 5 -A "camp-release" https://camp-registry.org/version.json | sed -nE 's/.*"camp-tools": *"([0-9.]+)".*/\1/p')
+          if [ -n "$current" ] && [ "v$current" != "v0.2.51" ]; then
+            echo "::warning::This workflow pins camp-tools v0.2.51 but the current release is v${current}. Refresh your copy from templates/author-release.yml in camp-registry/camp-index."
+          fi
 
       - name: Resolve component name
         run: |
@@ -78,21 +117,47 @@ jobs:
             "${GITHUB_REF_NAME}" --source ./plugin \
             ${SUPPORTED_MOODLE:+--supported-moodle "${SUPPORTED_MOODLE}"}
 
-      - name: Open index pull request
-        uses: peter-evans/create-pull-request@v6
-        with:
-          # Maintainer has write access to camp-index, so the release
-          # branch pushes there directly (no push-to-fork). The token is a
-          # fine-grained PAT scoped to camp-registry/camp-index with
-          # Contents + Pull requests read/write. (External authors need a
-          # CLASSIC token with public_repo and push-to-fork instead — see
-          # the template.)
-          token: ${{ secrets.CAMP_INDEX_TOKEN }}
-          path: index-repo
-          branch: release/${{ env.COMPONENT }}-${{ github.ref_name }}
-          commit-message: "${{ env.COMPONENT }}: release ${{ github.ref_name }}"
-          title: "${{ env.COMPONENT }}: release ${{ github.ref_name }}"
-          body: |
-            Automated release PR from ${{ github.repository }} @ ${{ github.ref_name }}.
-            camp CI will independently rebuild the artifact from the tag and
-            verify the recorded hashes before this can merge.
+      - name: Publish (OIDC token exchange)
+        run: |
+          CAMP_OIDC_TOKEN=$(curl -sS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=camp-publish" \
+            | python3 -c 'import sys,json; print(json.load(sys.stdin)["value"])')
+          export CAMP_OIDC_TOKEN TAG="${GITHUB_REF_NAME}"
+          python3 <<'EOF'
+          import json, os, sys, urllib.request, yaml
+
+          component = os.environ["COMPONENT"]
+          tag = os.environ["TAG"]
+          path = f"index-repo/plugins/{component.split('_')[0]}/{component}.yml"
+          with open(path) as f:
+              record = yaml.safe_load(f)["releases"][-1]
+          assert record["tag"] == tag, "computed record is not for this tag"
+
+          body = json.dumps({
+              "token": os.environ["CAMP_OIDC_TOKEN"],
+              "component": component, "tag": tag, "record": record,
+          }).encode()
+          req = urllib.request.Request(
+              os.environ["CAMP_PUBLISH_URL"], data=body,
+              headers={"Content-Type": "application/json",
+                       "User-Agent": f"camp-release ({component})"})
+          try:
+              out = json.load(urllib.request.urlopen(req))
+          except urllib.error.HTTPError as e:
+              raw = e.read().decode(errors="replace")
+              try:
+                  out = json.loads(raw)
+                  msg = f"({out.get('code')}): {out.get('message')}"
+              except ValueError:
+                  msg = f"HTTP {e.code}: {raw[:200]}"
+              print(f"::error::camp publish refused {msg}")
+              sys.exit(1)
+          print("Release PR:", out["pr"])
+          summary = os.environ.get("GITHUB_STEP_SUMMARY")
+          if summary:
+              with open(summary, "a") as f:
+                  f.write(f"Release PR: {out['pr']}\n\n"
+                          "camp CI will independently rebuild the artifact "
+                          "from the tag and verify the recorded hashes "
+                          "before this can merge.\n")
+          EOF
