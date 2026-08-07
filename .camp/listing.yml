@@ -5,6 +5,7 @@ description: |
   Once configured, events like course views, quiz attempts, assignment submissions, and forum posts are automatically recorded in your LRS.
 labels:
   - fully-free
+  - external-account
   - commercial-support-available
 screenshots:
   - path: .camp/screenshots/logstore_xapi-1.png
