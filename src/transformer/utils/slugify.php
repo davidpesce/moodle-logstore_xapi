@@ -25,30 +25,37 @@
 namespace src\transformer\utils;
 
 /**
- * Transformer utility that converts a given string into a URL-friendly "slug".
+ * Convert a string into an id-safe "slug".
+ *
+ * Letters and digits from any script are kept, so non-English answers (for example Japanese)
+ * still produce meaningful, distinct ids. ASCII input produces the same slug as before.
+ * If nothing is left after cleaning (for example answers made only of symbols such as "○" or "×"),
+ * a short hash of the original string is used, so the id is never empty and is stable for the
+ * same input. This keeps the ids in activity definitions and in result responses consistent,
+ * since both are derived from the answer text.
  *
  * @param string $string The input string to be converted into a slug.
- * @return string The URL-friendly slug created from the input string.
- */
-
-/**
- * Convert a string into a URL-friendly slug.
- *
- * @param string $string The input string to be converted into a slug.
- * @return string The URL-friendly slug created from the input string.
+ * @return string The slug created from the input string.
  */
 function slugify($string) {
+    $original = (string) $string;
+
     // Convert the string to lowercase.
-    $string = strtolower($string);
+    $string = \core_text::strtolower($original);
 
     // Replace spaces, underscores and consecutive whitespace with a single dash.
-    $string = preg_replace('/[\s_]+/', '-', $string);
+    $string = preg_replace('/[\s_]+/u', '-', $string);
 
-    // Remove any non-alphanumeric characters except dashes.
-    $string = preg_replace('/[^a-z0-9-]/', '', $string);
+    // Remove anything that is not a letter, a number (in any script) or a dash.
+    $string = preg_replace('/[^\p{L}\p{M}\p{N}-]+/u', '', $string ?? '');
 
     // Trim any trailing or leading dashes.
-    $string = trim($string, '-');
+    $string = trim($string ?? '', '-');
+
+    // Never return an empty id for a non-empty input.
+    if ($string === '' && trim($original) !== '') {
+        $string = 'h' . substr(sha1($original), 0, 12);
+    }
 
     return $string;
 }
