@@ -1,0 +1,84 @@
+{
+  "grade_grades": [
+    {
+      "itemid": 1,
+      "userid": 1,
+      "rawgrade": 50
+    }
+  ],
+  "grade_items": [
+    {
+      "id": 1,
+      "grademax": 100,
+      "grademin": 0,
+      "gradepass": 50,
+      "iteminstance": 1,
+      "itemmodule": "quiz"
+    }
+  ],
+  "modules": [
+    {
+      "id": 1,
+      "name": "quiz"
+    }
+  ],
+  "qtype_match_subquestions": [
+    {
+      "id": 1,
+      "questionid": 1,
+      "answertext": "Green",
+      "questiontext": "<p>Red...</p>"
+    },
+    {
+      "id": 2,
+      "questionid": 1,
+      "answertext": "Orange",
+      "questiontext": "<p>Blue.sky</p>"
+    },
+    {
+      "id": 3,
+      "questionid": 1,
+      "answertext": "White",
+      "questiontext": "<p>Black.. and white</p>"
+    }
+  ],
+  "question": [
+    {
+      "id": 1,
+      "name": "test_name",
+      "qtype": "match",
+      "questiontext": "test_question"
+    }
+  ],
+  "question_attempts": [
+    {
+      "id": 1,
+      "questionid": 1,
+      "questionusageid": 1,
+      "responsesummary": "Red...\n -> Green; Blue.sky\n -> Orange; Black.. and white\n -> White",
+      "rightanswer": "Red...\n -> Green; Blue.sky\n -> Orange; Black.. and white\n -> White"
+    }
+  ],
+  "question_usages": [
+    {
+      "id": 1
+    }
+  ],
+  "quiz": [
+    {
+      "id": 1,
+      "name": "test_quiz_name"
+    }
+  ],
+  "quiz_attempts": [
+    {
+      "id": 1,
+      "uniqueid": 1,
+      "quiz": 1,
+      "state": "finished",
+      "sumgrades": 50,
+      "timefinish": 1,
+      "timestart": 0
+    }
+  ]
+}

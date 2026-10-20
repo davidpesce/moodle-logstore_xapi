@@ -54,18 +54,6 @@ function matching(array $config, \stdClass $event, \stdClass $questionattempt, \
     ];
 
     if (!is_null($questionattempt->responsesummary) && $questionattempt->responsesummary !== '') {
-        $selections = array_reduce(
-            explode('; ', $questionattempt->responsesummary),
-            function ($reduction, $selection) {
-                $split = explode("\n -> ", $selection);
-                $selectionkey = $split[0];
-                $selectionvalue = $split[1];
-                $reduction[$selectionkey] = $selectionvalue;
-                return $reduction;
-            },
-            []
-        );
-
         $result = [
             'response' => utils\result\get_matching_response(
                 $config,
@@ -75,7 +63,11 @@ function matching(array $config, \stdClass $event, \stdClass $questionattempt, \
             'completion' => true,
             'success' => $questionattempt->rightanswer === $questionattempt->responsesummary,
             'extensions' => [
-                'http://learninglocker.net/xapi/cmi/matching/response' => $selections,
+                'http://learninglocker.net/xapi/cmi/matching/response' => utils\result\get_matching_extension_response(
+                    $config,
+                    $questionattempt,
+                    $lang
+                ),
             ],
         ];
     }

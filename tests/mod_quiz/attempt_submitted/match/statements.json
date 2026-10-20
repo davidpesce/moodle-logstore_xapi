@@ -234,9 +234,9 @@
       "completion": true,
       "extensions": {
         "http://learninglocker.net/xapi/cmi/matching/response": {
-          "Black": "White",
-          "Blue": "Orange",
-          "Red": "Green"
+          "black": "White",
+          "blue": "Orange",
+          "red": "Green"
         }
       },
       "response": "red[.]green[,]blue[.]orange[,]black[.]white",
