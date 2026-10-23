@@ -45,10 +45,9 @@ function scoreraw_submitted(array $config, \stdClass $event) {
     $unserializedcmi = utils\decode_other($event->other);
     $scormscoestracks = utils\get_scorm_tracks(
         $config,
-        $user->id,
-        $event->objectid,
-        $event->contextinstanceid,
-        $unserializedcmi['attemptid']
+        $unserializedcmi['attemptid'],
+        $unserializedcmi['cmielement'],
+        $unserializedcmi['cmivalue']
     );
     $rawscore = floatval($unserializedcmi['cmivalue']);
 

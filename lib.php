@@ -183,7 +183,13 @@ function logstore_xapi_get_distinct_options_from_failed_table($column) {
     $results = $DB->get_fieldset_select('logstore_xapi_failed_log', "DISTINCT $column", '');
     if ($results) {
         foreach ($results as $result) {
-            $options[$result] = $result;
+            // The response column holds raw LRS error bodies, and core's select template prints
+            // option labels unescaped, so escape (and shorten) the label. The value stays raw.
+            $label = (string) $result;
+            if (core_text::strlen($label) > 100) {
+                $label = core_text::substr($label, 0, 100) . '…';
+            }
+            $options[$result] = s($label);
         }
     }
     return $options;

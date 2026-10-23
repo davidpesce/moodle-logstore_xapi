@@ -82,7 +82,12 @@ function multichoice(
             $selected[] = $choices[$position];
         }
     }
-    $selectedchoice = implode('[,]', $selected);
+    // The xAPI spec defines a choice response as the [,]-delimited ids of the selected choices, using the
+    // same ids as the definition. The readable text goes in the extension, as for quiz questions.
+    $selectedids = implode('[,]', array_map(function ($choice) {
+        return utils\slugify($choice);
+    }, $selected));
+    $selectedtext = implode('[,]', $selected);
 
     return [[
         'actor' => $actor,
@@ -104,10 +109,10 @@ function multichoice(
             ),
         ],
         'result' => [
-            'response' => $selectedchoice,
+            'response' => $selectedids,
             'completion' => $feedbackvalue->value !== '',
             "extensions" => [
-                "http://learninglocker.net/xapi/cmi/choice/response" => $selectedchoice,
+                "http://learninglocker.net/xapi/cmi/choice/response" => $selectedtext,
             ],
         ],
         'context' => [

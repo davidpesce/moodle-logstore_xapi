@@ -13,6 +13,12 @@ Privacy and reliability release. Supports Moodle 4.5 to 5.3.
   They are now sent anonymously, and without the session-based registration that could link them
   to the same user's other statements in real-time mode. Statements already in your LRS may
   identify respondents.
+- **Security:** the error report's Response filter displayed LRS error responses without escaping
+  them, so HTML in a response could run as script for whoever opened the report.
+- The reports now check permissions before running their queries, so users without access can no
+  longer trigger a full scan of the standard log.
+- SCORM score and status statements looked up the wrong attempt and SCO, so they failed to send or
+  reported the wrong data.
 - A user tour ending on a relative page URL produced a statement the LRS rejected, along with the
   rest of its batch. The object id is now always absolute.
 - Quiz attempt view statements named the wrong attempt, or failed to send.
@@ -21,11 +27,16 @@ Privacy and reliability release. Supports Moodle 4.5 to 5.3.
 - In real-time mode, failed events are kept in the failed log so they can be replayed.
 - LRS requests time out (10 s to connect, 60 s in total) instead of waiting indefinitely.
 - Feedback multiple-choice answers other than the first option are no longer rejected by the LRS
-  (#899).
+  (#899). The response now holds the selected choices' ids, as the xAPI specification requires,
+  with the readable text in the choice response extension.
 - The privacy registry lists the LRS as an external location.
 - Resending events from the report can no longer select every row when given an empty list.
 - Failure notification emails are checked every two hours, instead of every minute in alternate
   hours.
+- On Moodle 5.x, changing a report filter now disables Resend until the report is re-run, so the
+  confirmed count matches what is resent. Report and settings markup works with Bootstrap 5.
+- The historic report's username column was labelled "LRS auth key".
+- Removed an unused development-only transformer.
 - Moodle 5.3 support.
 
 ## 5.1.0 (2026-07-21)
