@@ -1,0 +1,46 @@
+[
+  {
+    "actor": {
+      "account": {
+        "homePage": "http://www.example.org",
+        "name": "1"
+      },
+      "name": "test_fullname"
+    },
+    "verb": {
+      "id": "https://xapi.edlm/profiles/edlm-lms/concepts/verbs/toured",
+      "display": {
+        "en": "Toured"
+      }
+    },
+    "object": {
+      "id": "http://www.example.org/course/view.php?id=2",
+      "objectType": "Activity"
+    },
+    "context": {
+      "contextActivities": {
+        "category": [
+          {
+            "id": "http://www.example.org",
+            "objectType": "Activity",
+            "definition": {
+              "name": {
+                "en": "test_site_fullname"
+              },
+              "type": "http://id.tincanapi.com/activitytype/lms"
+            }
+          }
+        ]
+      },
+      "extensions": {
+        "http://lrs.learninglocker.net/define/extensions/info": {
+          "event_function": "\\src\\transformer\\events\\tool_usertours\\tour_ended",
+          "event_name": "\\tool_usertours\\event\\tour_ended",
+          "http://moodle.org": "1.0.0",
+          "https://github.com/xAPI-vle/moodle-logstore_xapi": "0.0.0-development"
+        }
+      },
+      "language": "en"
+    }
+  }
+]
