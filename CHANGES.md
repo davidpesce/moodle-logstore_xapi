@@ -4,6 +4,31 @@ A summary of each release. The full notes, including upgrade instructions, are o
 [GitHub releases page](https://github.com/davidpesce/moodle-logstore_xapi/releases), which is
 the authoritative record.
 
+## 5.2.0 (unreleased)
+
+This release changes some statement values to follow the xAPI specification. If your LRS
+reports or dashboards filter on the values below, review them before upgrading.
+
+- **Interaction ids** (choice, matching and sequencing questions) now keep accented and
+  non-Latin letters, and a non-breaking space becomes a dash. For example `naïve` was `nave` and
+  is now `naïve`, and a Japanese answer that used to give an empty id now gets one (#894, #897).
+- **Matching responses:** the `http://learninglocker.net/xapi/cmi/matching/response` extension is
+  keyed by the question's source ids rather than its text, whose dots broke Elasticsearch-backed
+  LRSs (#892, #898).
+- **Choice responses** are the selected choices' ids, as xAPI requires, for Choice activities,
+  Feedback rated multiple-choice items and Lesson pages. The readable text stays in the choice
+  response extension.
+- **No made-up correct answers:** Feedback items and Choice activities no longer send a
+  `correctResponsesPattern`, which claimed that selecting every option was the only correct
+  answer and made LRSs mark real answers as wrong.
+- **Lesson questions** described their choices and correct answers with the feedback text
+  instead of the answer text. Numerical ranges are now sent as ranges.
+- **Quiz true/false** responses are always `true` or `false`; on non-English sites they were the
+  translated label, and the correct answer was recorded wrongly.
+- **SCORM 2004** passed and failed statuses are recorded as such (they were all "completed"),
+  SCORM 2004 score bounds are read, and decimal scores are kept. A score outside its own bounds
+  no longer gets the LRS to reject the statement.
+
 ## 5.1.1 (2026-10-23)
 
 Privacy and reliability release. Supports Moodle 4.5 to 5.3.
