@@ -44,6 +44,18 @@ $page         = optional_param('page', XAPI_REPORT_STARTING_PAGE, PARAM_INT);
 $perpage      = optional_param('perpage', XAPI_REPORT_PERPAGE_DEFAULT, PARAM_INT);
 $onpage       = optional_param('onpage', XAPI_REPORT_ONPAGE_DEFAULT, PARAM_TEXT);
 
+// Check access before doing any work: building the filter options scans the log tables.
+switch ($id) {
+    case XAPI_REPORT_ID_ERROR:
+        require_capability('logstore/xapi:viewerrorlog', $systemcontext);
+        break;
+    case XAPI_REPORT_ID_HISTORIC:
+        require_capability('logstore/xapi:managehistoric', $systemcontext);
+        break;
+    default:
+        throw new moodle_exception('invalidreportid', 'logstore_xapi');
+}
+
 if ($id == XAPI_REPORT_ID_ERROR) {
     $run = true;
 }
@@ -106,8 +118,6 @@ switch ($id) {
         $filterparams['errortypes'] = logstore_xapi_get_distinct_options_from_failed_table('errortype');
         $filterparams['responses'] = logstore_xapi_get_distinct_options_from_failed_table('response');
 
-        require_capability('logstore/xapi:viewerrorlog', $systemcontext);
-
         if (has_capability('logstore/xapi:manageerrors', $systemcontext)) {
             $canmanage = true;
         }
@@ -122,15 +132,12 @@ switch ($id) {
         } else {
             $filterparams['eventcontexts'] = [];
         }
-
-        require_capability('logstore/xapi:managehistoric', $systemcontext);
         $canmanage = true;
 
         break;
 
     default:
-        // Unknown report id. Every valid report enforces its own capability
-        // above, so anything reaching here is unauthorised by definition.
+        // Unreachable: unknown report ids are rejected by the access check at the top.
         throw new moodle_exception('invalidreportid', 'logstore_xapi');
 }
 
@@ -261,7 +268,8 @@ if (!empty($results)) {
     }
     $table->head[] = get_string('eventname', 'logstore_xapi');
     if ($id == XAPI_REPORT_ID_HISTORIC) {
-        $table->head[] = get_string('username', 'logstore_xapi');
+        // Core's string: the plugin's own 'username' string labels the LRS auth key setting.
+        $table->head[] = get_string('username');
         $table->head[] = get_string('eventcontext', 'logstore_xapi');
     }
     if ($id == XAPI_REPORT_ID_ERROR) {
