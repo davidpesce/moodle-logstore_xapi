@@ -36,11 +36,21 @@ final class get_matching_extension_response_test extends advanced_testcase {
      * Call the utility with the given response summary.
      *
      * @param ?string $responsesummary The question attempt response summary.
+     * @return \stdClass
+     */
+    private function build_object(?string $responsesummary): \stdClass {
+        $questionattempt = (object) ['responsesummary' => $responsesummary];
+        return \src\transformer\utils\result\get_matching_extension_response([], $questionattempt, 'en');
+    }
+
+    /**
+     * Call the utility and return the selections as an array.
+     *
+     * @param ?string $responsesummary The question attempt response summary.
      * @return array
      */
     private function build(?string $responsesummary): array {
-        $questionattempt = (object) ['responsesummary' => $responsesummary];
-        return \src\transformer\utils\result\get_matching_extension_response([], $questionattempt, 'en');
+        return (array) $this->build_object($responsesummary);
     }
 
     /**
@@ -101,5 +111,16 @@ final class get_matching_extension_response_test extends advanced_testcase {
     public function test_no_response(): void {
         $this->assertSame([], $this->build(null));
         $this->assertSame([], $this->build(''));
+    }
+
+    /**
+     * The extension always encodes as a JSON object, even when the ids are 0, 1, 2...
+     * or there is no response.
+     *
+     * @return void
+     */
+    public function test_encodes_as_json_object(): void {
+        $this->assertSame('{"0":"Zero","1":"One"}', json_encode($this->build_object("0.\n -> Zero; 1.\n -> One")));
+        $this->assertSame('{}', json_encode($this->build_object(null)));
     }
 }

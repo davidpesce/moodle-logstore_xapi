@@ -34,10 +34,14 @@ use src\transformer\utils;
  * like Elasticsearch read as nested field paths, so statements were rejected when a stem
  * contained for example "..". The values are kept as the selected answer text.
  *
+ * An object is returned so the extension always encodes as a JSON object. As an array, ids that
+ * happen to be 0, 1, 2... (stems such as "0." or "1.") would encode as a JSON list, and an empty
+ * response as [] rather than {}.
+ *
  * @param array $config The transformer config settings.
  * @param \stdClass $questionattempt The question attempt object.
  * @param string $lang The language.
- * @return array The selections keyed by source id. Empty when there is no response.
+ * @return \stdClass The selections keyed by source id. Empty when there is no response.
  */
 function get_matching_extension_response(
     array $config,
@@ -45,10 +49,10 @@ function get_matching_extension_response(
     string $lang
 ) {
     if (is_null($questionattempt->responsesummary) || $questionattempt->responsesummary === '') {
-        return [];
+        return new \stdClass();
     }
 
-    return array_reduce(
+    return (object) array_reduce(
         explode('; ', $questionattempt->responsesummary),
         function ($reduction, $selection) {
             $split = explode("\n -> ", $selection);
