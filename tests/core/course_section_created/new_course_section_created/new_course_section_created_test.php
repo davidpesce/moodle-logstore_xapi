@@ -14,18 +14,22 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-namespace logstore_xapi\totara_program\program_assigned\existing_program;
+namespace logstore_xapi\core\course_section_created\new_course_section_created;
+
+defined('MOODLE_INTERNAL') || die();
+
+global $CFG;
+
+require_once($CFG->dirroot . '/admin/tool/log/store/xapi/tests/xapi_test_case.php');
 
 /**
- * Unit test for totara_program event.
+ * Unit test for course section created event.
  *
  * @package   logstore_xapi
- * @copyright Jerret Fowler <jerrett.fowler@gmail.com>
- *            Ryan Smith <https://www.linkedin.com/in/ryan-smith-uk/>
- *            David Pesce <david.pesce@exputo.com>
+ * @copyright Milt Reder <milt@yetanalytics.com>
  * @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-final class test extends \logstore_xapi\xapi_test_case {
+final class new_course_section_created_test extends \logstore_xapi\xapi_test_case {
     /**
      * Retrieve the directory of the unit test.
      *
@@ -41,7 +45,7 @@ final class test extends \logstore_xapi\xapi_test_case {
      * @return string
      */
     protected function get_plugin_type() {
-        return "totara";
+        return "core";
     }
 
     /**
@@ -50,6 +54,15 @@ final class test extends \logstore_xapi\xapi_test_case {
      * @return string
      */
     protected function get_plugin_name() {
-        return "program";
+        return "course_section";
+    }
+
+    /**
+     * Appease auto-detecting of test cases. xapi_test_case has default test cases.
+     *
+     * @covers ::course_section_created
+     * @return void
+     */
+    public function test_init(): void {
     }
 }
