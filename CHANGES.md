@@ -10,7 +10,12 @@ Privacy and reliability release. Supports Moodle 4.5 to 5.3.
 [Release notes](https://github.com/davidpesce/moodle-logstore_xapi/releases/tag/v5.1.1)
 
 - **Privacy:** anonymous Feedback responses were sent to the LRS with the respondent's identity.
-  They are now sent anonymously. Statements already in your LRS may identify respondents.
+  They are now sent anonymously, and without the session-based registration that could link them
+  to the same user's other statements in real-time mode. Statements already in your LRS may
+  identify respondents.
+- A user tour ending on a relative page URL produced a statement the LRS rejected, along with the
+  rest of its batch. The object id is now always absolute.
+- Quiz attempt view statements named the wrong attempt, or failed to send.
 - Automatically awarded badges are now sent; manually awarded badges name the correct awarder.
 - One failing event can no longer stall delivery for the whole site.
 - In real-time mode, failed events are kept in the failed log so they can be replayed.
@@ -18,6 +23,9 @@ Privacy and reliability release. Supports Moodle 4.5 to 5.3.
 - Feedback multiple-choice answers other than the first option are no longer rejected by the LRS
   (#899).
 - The privacy registry lists the LRS as an external location.
+- Resending events from the report can no longer select every row when given an empty list.
+- Failure notification emails are checked every two hours, instead of every minute in alternate
+  hours.
 - Moodle 5.3 support.
 
 ## 5.1.0 (2026-07-21)

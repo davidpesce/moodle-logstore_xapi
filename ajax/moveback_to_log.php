@@ -31,7 +31,11 @@ require_login();
 
 require_sesskey();
 
-$eventids = optional_param_array('events', 0, PARAM_INT);
+// Ids that fail cleaning are dropped, so check something is left.
+$eventids = array_filter(required_param_array('events', PARAM_INT));
+if (empty($eventids)) {
+    throw new moodle_exception('invalidparameter', 'debug');
+}
 $historical = optional_param('historical', 0, PARAM_BOOL);
 
 $systemcontext = context_system::instance();
