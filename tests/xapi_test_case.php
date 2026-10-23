@@ -90,6 +90,9 @@ abstract class xapi_test_case extends \advanced_testcase {
     /**
      * Retrieve the expected statement from statements.json.
      *
+     * A null in statements.json means the property must be absent, so a test can drop a
+     * property that tests/common/statement.json would otherwise add.
+     *
      * @return array
      */
     protected function get_expected_statements() {
@@ -99,8 +102,25 @@ abstract class xapi_test_case extends \advanced_testcase {
         $commonstatement = json_decode(file_get_contents($CFG->dirroot . '/admin/tool/log/store/xapi/tests/common/statement.json'));
         return array_map(function ($statement) use ($commonstatement) {
             // Add common expectations for all statements.
-            return utils\deep_merge_objects($commonstatement, $statement);
+            return $this->remove_null_properties(utils\deep_merge_objects($commonstatement, $statement));
         }, json_decode(file_get_contents($this->get_test_dir() . '/statements.json')));
+    }
+
+    /**
+     * Recursively remove properties whose value is null.
+     *
+     * @param \stdClass $object The expected statement, or part of it.
+     * @return \stdClass
+     */
+    private function remove_null_properties(\stdClass $object): \stdClass {
+        foreach (get_object_vars($object) as $property => $value) {
+            if ($value === null) {
+                unset($object->$property);
+            } else if ($value instanceof \stdClass) {
+                $object->$property = $this->remove_null_properties($value);
+            }
+        }
+        return $object;
     }
 
     /**
