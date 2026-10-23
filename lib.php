@@ -183,7 +183,13 @@ function logstore_xapi_get_distinct_options_from_failed_table($column) {
     $results = $DB->get_fieldset_select('logstore_xapi_failed_log', "DISTINCT $column", '');
     if ($results) {
         foreach ($results as $result) {
-            $options[$result] = $result;
+            // The response column holds raw LRS error bodies, and core's select template prints
+            // option labels unescaped, so escape (and shorten) the label. The value stays raw.
+            $label = (string) $result;
+            if (core_text::strlen($label) > 100) {
+                $label = core_text::substr($label, 0, 100) . '…';
+            }
+            $options[$result] = s($label);
         }
     }
     return $options;
@@ -406,15 +412,24 @@ function logstore_xapi_get_failed_events($events) {
 /**
  * Store failed events in logstore_xapi_failed_log.
  *
+ * Events are inserted one at a time. insert_records() requires every record to have the same
+ * fields, but an event that failed to transform carries only a response while one that failed
+ * to load also carries an errortype, so a batch with both would throw.
+ *
  * @param array $events An array of events.
+ * @param bool $trace Whether to print a summary with mtrace(). Off when called during a web request.
  * @return void
  */
-function logstore_xapi_store_failed_events($events) {
+function logstore_xapi_store_failed_events($events, $trace = true) {
     global $DB;
 
     $failedevents = logstore_xapi_get_failed_events($events);
-    $DB->insert_records('logstore_xapi_failed_log', $failedevents);
-    mtrace(count($failedevents) . " " . get_string('failed_events', 'logstore_xapi'));
+    foreach ($failedevents as $failedevent) {
+        $DB->insert_record('logstore_xapi_failed_log', $failedevent);
+    }
+    if ($trace) {
+        mtrace(count($failedevents) . " " . get_string('failed_events', 'logstore_xapi'));
+    }
 }
 
 /**

@@ -51,7 +51,7 @@ function handler(array $config, array $events) {
         $loadedevents = \src\loader\handler($loaderconfig, $transformedevents);
 
         return $loadedevents;
-    } catch (\Exception $e) {
+    } catch (\Throwable $e) {
         $logerror($e);
         return [];
     }

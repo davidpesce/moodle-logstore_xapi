@@ -41,6 +41,12 @@ function apply_statement_defaults(array $config, \stdClass $event, array $statem
             ],
             'timestamp' => get_event_timestamp($event),
         ];
+        // The registration is derived from the session, so in real-time mode it is shared by every
+        // statement from that session. Leave it off anonymised statements so it cannot link them
+        // to the same user's identified statements.
+        if (($statement['actor']['account']['name'] ?? null) === 'anonymous') {
+            unset($defaultstatement['context']['registration']);
+        }
         // Merge event output into defaults.
         return deep_merge_arrays($defaultstatement, $statement);
     }, $statements);
