@@ -57,7 +57,7 @@ function lesson_question_page(array $config, \stdClass $course, \stdClass $lesso
             $correctresponses = array_values(
                 array_map(
                     function ($answer) {
-                        return utils\get_string_html_removed($answer->response);
+                        return utils\get_string_html_removed($answer->answer);
                     },
                     $correctanswers
                 )
@@ -83,7 +83,7 @@ function lesson_question_page(array $config, \stdClass $course, \stdClass $lesso
             $choices = array_values(
                 array_map(
                     function ($answer) {
-                        return utils\get_string_html_removed($answer->response);
+                        return utils\get_string_html_removed($answer->answer);
                     },
                     $answers
                 )
@@ -91,7 +91,7 @@ function lesson_question_page(array $config, \stdClass $course, \stdClass $lesso
             $correctchoices = array_values(
                 array_map(
                     function ($answer) {
-                        return utils\get_string_html_removed($answer->response);
+                        return utils\get_string_html_removed($answer->answer);
                     },
                     $correctanswers
                 )
@@ -124,18 +124,26 @@ function lesson_question_page(array $config, \stdClass $course, \stdClass $lesso
             );
             break;
         case 8: // LESSON_PAGE_NUMERICAL.
-            // XAPI Numerical can only have one discrete correct response, or a
-            // range but lessons do not support ranges, so taking first correct
-            // answer to cover most cases.
+            // xAPI allows one correct response pattern, so the first correct answer is used. A
+            // lesson answer is a number or a "min:max" range.
             $cchoice = reset($correctanswers);
+            $min = $max = $exact = null;
+            if ($cchoice) {
+                $correct = trim(utils\get_string_html_removed($cchoice->answer));
+                if (strpos($correct, ':') !== false) {
+                    [$min, $max] = array_map('trim', explode(':', $correct, 2));
+                } else {
+                    $exact = $correct;
+                }
+            }
             $activity['definition'] = utils\get_activity\definition\cmi\numeric(
                 $config,
                 $page->title,
                 utils\get_string_html_removed($page->contents),
-                null,
-                null,
+                $min,
+                $max,
                 $courselang,
-                utils\get_string_html_removed($cchoice->response)
+                $exact
             );
             break;
     }

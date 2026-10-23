@@ -73,6 +73,26 @@ function get_lesson_question_result(array $config, \stdClass $lesson, \stdClass 
             }
             $result['success'] = ($attempt->correct == 1);
             $result['response'] = implode("[,]", $responses);
+        } else if ($page->qtype == 2 || $page->qtype == 3) { // LESSON_PAGE_TRUEFALSE, LESSON_PAGE_MULTICHOICE.
+            // A choice response is the ids of the selected choices, built from the answer text as
+            // the definition's choice ids are. True/false and single-answer pages store the answer
+            // text; a multiple-answer page (qoption set) stores comma-separated lesson_answers ids.
+            $result['success'] = ($attempt->correct == 1);
+            if ($page->qtype == 3 && !empty($page->qoption)) {
+                $answertexts = [];
+                foreach ($repo->read_records('lesson_answers', ['pageid' => $page->id]) as $ans) {
+                    $answertexts[$ans->id] = get_string_html_removed($ans->answer);
+                }
+                $selected = [];
+                foreach (explode(',', (string) $attempt->useranswer) as $answerid) {
+                    if (isset($answertexts[(int) $answerid])) {
+                        $selected[] = slugify($answertexts[(int) $answerid]);
+                    }
+                }
+                $result['response'] = implode('[,]', $selected);
+            } else {
+                $result['response'] = slugify(get_string_html_removed($attempt->useranswer));
+            }
         } else {
             // Other questions know if they are correct or not immediately.
             $result['success'] = ($attempt->correct == 1);

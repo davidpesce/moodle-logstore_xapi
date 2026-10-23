@@ -18,26 +18,26 @@
       "definition": {
         "choices": [
           {
-            "id": "a",
+            "id": "option-a",
             "description": {
-              "en": "a"
+              "en": "Option A"
             }
           },
           {
-            "id": "b",
+            "id": "option-b",
             "description": {
-              "en": "b"
+              "en": "Option B"
             }
           },
           {
-            "id": "c",
+            "id": "option-c",
             "description": {
-              "en": "c"
+              "en": "Option C"
             }
           }
         ],
         "correctResponsesPattern": [
-          "a[,]b"
+          "option-a[,]option-b"
         ],
         "description": {
           "en": "lesson_question_page_contents"
@@ -108,7 +108,7 @@
       "language": "en"
     },
     "result": {
-      "response": "a",
+      "response": "option-a",
       "success": true
     }
   }

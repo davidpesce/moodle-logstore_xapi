@@ -8,18 +8,24 @@
   ],
   "lesson_answers": [
     {
+      "id": 1,
       "pageid": 1,
-      "response": "a",
+      "answer": "Option A",
+      "response": "Feedback: Option A",
       "score": 1
     },
     {
+      "id": 2,
       "pageid": 1,
-      "response": "b",
+      "answer": "Option B",
+      "response": "Feedback: Option B",
       "score": 1
     },
     {
+      "id": 3,
       "pageid": 1,
-      "response": "c",
+      "answer": "Option C",
+      "response": "Feedback: Option C",
       "score": 0
     }
   ],

@@ -102,9 +102,6 @@
             }
           }
         ],
-        "correctResponsesPattern": [
-          "yes[,]no"
-        ],
         "interactionType": "choice",
         "name": {
           "en": "test_feedback_item"

@@ -34,11 +34,18 @@ namespace src\transformer\utils;
  * @return array
  */
 function get_scorm_verb(array $scormscoestracks, string $lang) {
-    $scormstatus = null;
+    // SCORM 1.2 reports one cmi.core.lesson_status. SCORM 2004 splits it into
+    // cmi.success_status (passed/failed) and cmi.completion_status (completed); passed or failed
+    // takes precedence, as it does in SCORM 1.2's lesson_status.
+    $values = [];
     foreach ($scormscoestracks as $st) {
-        if ($st->element == 'cmi.core.lesson_status') {
-            $scormstatus = $st->value;
-        }
+        $values[$st->element] = $st->value;
+    }
+    $scormstatus = $values['cmi.core.lesson_status'] ?? null;
+    if (in_array($values['cmi.success_status'] ?? null, ['passed', 'failed'], true)) {
+        $scormstatus = $values['cmi.success_status'];
+    } else if ($scormstatus === null) {
+        $scormstatus = $values['cmi.completion_status'] ?? null;
     }
 
     switch ($scormstatus) {

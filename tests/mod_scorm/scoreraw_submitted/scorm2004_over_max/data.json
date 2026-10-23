@@ -1,0 +1,78 @@
+{
+  "modules": [
+    {
+      "id": 1,
+      "name": "scorm"
+    }
+  ],
+  "scorm": [
+    {
+      "id": 1,
+      "name": "test_name"
+    }
+  ],
+  "scorm_attempt": [
+    {
+      "id": 7,
+      "userid": 1,
+      "scormid": 1,
+      "attempt": 1
+    }
+  ],
+  "scorm_element": [
+    {
+      "id": 11,
+      "element": "cmi.completion_status"
+    },
+    {
+      "id": 12,
+      "element": "cmi.success_status"
+    },
+    {
+      "id": 13,
+      "element": "cmi.score.raw"
+    },
+    {
+      "id": 14,
+      "element": "cmi.score.min"
+    },
+    {
+      "id": 15,
+      "element": "cmi.score.max"
+    }
+  ],
+  "scorm_scoes_value": [
+    {
+      "id": 1,
+      "scoid": 4,
+      "attemptid": 7,
+      "elementid": 12,
+      "value": "passed",
+      "timemodified": 0
+    },
+    {
+      "id": 2,
+      "scoid": 4,
+      "attemptid": 7,
+      "elementid": 13,
+      "value": "120",
+      "timemodified": 0
+    },
+    {
+      "id": 3,
+      "scoid": 4,
+      "attemptid": 7,
+      "elementid": 14,
+      "value": "0",
+      "timemodified": 0
+    },
+    {
+      "id": 4,
+      "scoid": 4,
+      "attemptid": 7,
+      "elementid": 15,
+      "value": "100",
+      "timemodified": 0
+    }
+  ]
+}

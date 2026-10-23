@@ -74,5 +74,13 @@
       "timefinish": 1,
       "timestart": 0
     }
+  ],
+  "question_truefalse": [
+    {
+      "id": 1,
+      "question": 1,
+      "trueanswer": 1,
+      "falseanswer": 2
+    }
   ]
 }

@@ -30,9 +30,6 @@
             }
           }
         ],
-        "correctResponsesPattern": [
-          "to-be[,]not-to-be"
-        ],
         "description": {
           "en": "That is the question."
         },
@@ -92,7 +89,10 @@
       "language": "en"
     },
     "result": {
-      "response": "To be"
+      "response": "to-be",
+      "extensions": {
+        "http://learninglocker.net/xapi/cmi/choice/response": "To be"
+      }
     }
   }
 ]
