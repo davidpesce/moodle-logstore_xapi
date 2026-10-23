@@ -210,8 +210,9 @@ define(['core/str', 'core/config', 'core/notification', 'core/templates', 'jquer
                         self.enableFormControls();
                         self.enablePagination();
                     },
-                    fail: function(ex) {
-                        notification.exception(ex);
+                    // The option is error, not fail. jQuery ignored fail, so a failed replay left the spinner showing.
+                    error: function(jqxhr, textstatus, errorthrown) {
+                        notification.exception({message: errorthrown || textstatus});
 
                         element.empty();
                         element.append(failedHTML);
