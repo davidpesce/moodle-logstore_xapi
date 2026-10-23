@@ -5,6 +5,6 @@
   "objectid": 1,
   "userid": 1,
   "eventname": "\\mod_scorm\\event\\scoreraw_submitted",
-  "other": "a:2:{s:8:\"cmivalue\";i:100;s:9:\"attemptid\";i:1;}",
+  "other": "a:3:{s:9:\"attemptid\";i:7;s:10:\"cmielement\";s:18:\"cmi.core.score.raw\";s:8:\"cmivalue\";i:100;}",
   "timecreated": 1433946701
 }
