@@ -140,4 +140,16 @@ final class build_curl_options_test extends advanced_testcase {
         $this->assertContains('Authorization: Basic ' . base64_encode('user:pass'), $options[CURLOPT_HTTPHEADER]);
         $this->assertContains('X-Experience-API-Version: 1.0.3', $options[CURLOPT_HTTPHEADER]);
     }
+
+    /**
+     * Requests time out rather than waiting indefinitely on an unresponsive LRS.
+     *
+     * @return void
+     */
+    public function test_timeouts_are_set(): void {
+        $options = $this->build([]);
+
+        $this->assertSame(10, $options[CURLOPT_CONNECTTIMEOUT]);
+        $this->assertSame(60, $options[CURLOPT_TIMEOUT]);
+    }
 }
