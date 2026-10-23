@@ -29,55 +29,43 @@ namespace src\transformer\utils;
 /**
  * Transformer utility for retrieving the SCORM result.
  *
+ * Reads the score bounds from SCORM 1.2 (cmi.core.score.*) or SCORM 2004 (cmi.score.*)
+ * elements. xAPI requires the raw score to lie between min and max when they are given, and
+ * an LRS rejects the statement (and its whole batch) otherwise, so bounds that the content's
+ * own raw score falls outside are left out, along with the scaled score derived from them.
+ *
  * @param array $scormscoestracks An array of the SCORM tracks
- * @param int $rawscore The score of the event.
+ * @param float $rawscore The score of the event.
  * @return array
  */
-function get_scorm_result(array $scormscoestracks, int $rawscore) {
+function get_scorm_result(array $scormscoestracks, float $rawscore) {
     $maxscore = null;
     $minscore = null;
 
     foreach ($scormscoestracks as $st) {
-        if ($st->element == 'cmi.core.score.min') {
+        if (in_array($st->element, ['cmi.core.score.min', 'cmi.score.min'], true) && is_numeric($st->value)) {
             $minscore = floatval($st->value);
-        } else if ($st->element == 'cmi.core.score.max') {
+        } else if (in_array($st->element, ['cmi.core.score.max', 'cmi.score.max'], true) && is_numeric($st->value)) {
             $maxscore = floatval($st->value);
         }
     }
 
-    if ($maxscore !== null && $minscore !== null) {
-        $scaledscore = get_scaled_score($rawscore, $minscore, $maxscore);
-        return [
-            'score' => [
-                'raw' => $rawscore,
-                'min' => $minscore,
-                'max' => $maxscore,
-                'scaled' => $scaledscore,
-            ],
-        ];
+    if ($minscore !== null && $rawscore < $minscore) {
+        $minscore = null;
+    }
+    if ($maxscore !== null && $rawscore > $maxscore) {
+        $maxscore = null;
     }
 
-    if ($maxscore !== null && $minscore === null) {
-        return [
-            'score' => [
-                'raw' => $rawscore,
-                'max' => $maxscore,
-            ],
-        ];
+    $score = ['raw' => $rawscore];
+    if ($minscore !== null) {
+        $score['min'] = $minscore;
     }
-
-    if ($maxscore === null && $minscore !== null) {
-        return [
-            'score' => [
-                'raw' => $rawscore,
-                'min' => $minscore,
-            ],
-        ];
+    if ($maxscore !== null) {
+        $score['max'] = $maxscore;
     }
-
-    return [
-        'score' => [
-            'raw' => $rawscore,
-        ],
-    ];
+    if ($minscore !== null && $maxscore !== null) {
+        $score['scaled'] = get_scaled_score($rawscore, $minscore, $maxscore);
+    }
+    return ['score' => $score];
 }
