@@ -8,7 +8,10 @@
 
 This is a Moodle logstore plugin (`logstore_xapi`) that intercepts Moodle events and transforms them into [xAPI statements](https://github.com/adlnet/xAPI-Spec/blob/master/xAPI.md), sending them to a Learning Record Store (LRS). When installed in Moodle, the plugin lives at `admin/tool/log/store/xapi/` relative to the Moodle root.
 
-Current version: **5.0.0** (supports Moodle 4.3–5.1)
+Current version: **5.1.0** (supports Moodle 4.5–5.3)
+
+Every change is verified against all supported branches before merging:
+`make mpci-matrix PLUGIN=moodle-logstore_xapi` from the harness, plus green GitHub CI.
 
 ### Plugin Commands
 
