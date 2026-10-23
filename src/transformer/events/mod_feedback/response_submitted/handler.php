@@ -43,7 +43,9 @@ function handler(array $config, \stdClass $event) {
         'completed' => $event->objectid,
     ]);
     $feedbackcompleted = $repo->read_record_by_id('feedback_completed', $event->objectid);
-    $isanon = ($feedbackcompleted->anonymous_response === 1) ? true : false;
+    // The database returns anonymous_response as a string, so compare as an int. 1 is
+    // FEEDBACK_ANONYMOUS_YES. Core also flags the event itself as anonymous.
+    $isanon = !empty($event->anonymous) || (int) $feedbackcompleted->anonymous_response === 1;
     $actor = ($isanon)
         ? [
             'name' => 'Anonymous Course Participant',

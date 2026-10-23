@@ -165,7 +165,10 @@ class store extends php_obj implements log_writer {
             $events = $this->get_persistent_eventids($events);
             $DB->insert_records('logstore_xapi_log', $events);
         } else {
-            $this->process_events($events);
+            // Keep events that fail so they can be replayed, as the scheduled tasks do. This
+            // runs during a web request, so no mtrace() output.
+            $loadedevents = $this->process_events($events);
+            logstore_xapi_store_failed_events($loadedevents, false);
         }
     }
 

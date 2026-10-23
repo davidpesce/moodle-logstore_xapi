@@ -8,7 +8,7 @@
   "feedback_completed": [
     {
       "id": 1,
-      "anonymous_response": 1,
+      "anonymous_response": "1",
       "feedback": 1
     }
   ],

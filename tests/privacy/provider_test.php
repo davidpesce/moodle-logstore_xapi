@@ -231,12 +231,35 @@ final class provider_test extends advanced_testcase {
         $collection = provider::get_metadata(new \core_privacy\local\metadata\collection('logstore_xapi'));
 
         foreach ($collection->get_collection() as $item) {
+            if (!$item instanceof \core_privacy\local\metadata\types\database_table) {
+                continue;
+            }
             $table = $item->get_name();
             $columns = $DB->get_columns($table);
 
             foreach (array_keys($item->get_privacy_fields()) as $field) {
                 $this->assertArrayHasKey($field, $columns, "Declared field $field does not exist in $table");
             }
+        }
+    }
+
+    /**
+     * The LRS is declared as an external location, along with every local table
+     * that holds personal data.
+     *
+     * @return void
+     */
+    public function test_metadata_declares_lrs_and_all_tables(): void {
+        $collection = provider::get_metadata(new \core_privacy\local\metadata\collection('logstore_xapi'));
+
+        $items = [];
+        foreach ($collection->get_collection() as $item) {
+            $items[$item->get_name()] = $item;
+        }
+
+        $this->assertInstanceOf(\core_privacy\local\metadata\types\external_location::class, $items['lrs']);
+        foreach (['logstore_xapi_log', 'logstore_xapi_failed_log', 'logstore_xapi_notif_sent_log'] as $table) {
+            $this->assertInstanceOf(\core_privacy\local\metadata\types\database_table::class, $items[$table]);
         }
     }
 }
