@@ -179,7 +179,7 @@
         "http://learninglocker.net/xapi/cmi/choice/response": "test_choice_3",
         "http://learninglocker.net/xapi/moodle/feedback_item_rating": 1
       },
-      "response": "test_choice_3"
+      "response": "test-choice-3"
     }
   }
 ]
