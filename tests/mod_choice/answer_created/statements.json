@@ -89,7 +89,10 @@
       "language": "en"
     },
     "result": {
-      "response": "To be"
+      "response": "to-be",
+      "extensions": {
+        "http://learninglocker.net/xapi/cmi/choice/response": "To be"
+      }
     }
   }
 ]
