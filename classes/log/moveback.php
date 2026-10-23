@@ -64,11 +64,12 @@ class moveback {
     protected $type = XAPI_IMPORT_TYPE_FAILED;
 
     /**
-     * A list containing the constructed sql fragment.
+     * A list containing the constructed sql fragment. Matches nothing until ids are given, so an
+     * empty id list can never select the whole source table.
      *
      * @var string
      */
-    protected $select = '1=1';
+    protected $select = '1=0';
 
     /**
      * An array of parameters.
