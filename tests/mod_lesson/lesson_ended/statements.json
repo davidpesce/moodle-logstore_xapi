@@ -89,7 +89,7 @@
         "max": 100,
         "min": 0,
         "raw": 75,
-        "scaled": 0.5
+        "scaled": 0.75
       },
       "success": true
     }
