@@ -32,7 +32,6 @@ use src\transformer\utils;
  * @covers    ::\src\transformer\utils\slugify
  */
 final class slugify_test extends \basic_testcase {
-
     /**
      * ASCII input keeps producing the same slugs as before.
      *
