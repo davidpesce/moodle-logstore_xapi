@@ -1,0 +1,38 @@
+{
+  "feedback": [
+    {
+      "id": 1,
+      "name": "test_feedback_name"
+    }
+  ],
+  "feedback_completed": [
+    {
+      "id": 1,
+      "anonymous_response": 0,
+      "feedback": 1
+    }
+  ],
+  "feedback_item": [
+    {
+      "id": 1,
+      "name": "test_feedback_item",
+      "feedback": 1,
+      "presentation": "c>>>>>Red|Green|Blue<<<<<1",
+      "typ": "multichoice"
+    }
+  ],
+  "feedback_value": [
+    {
+      "id": 1,
+      "completed": 1,
+      "item": 1,
+      "value": "1|3"
+    }
+  ],
+  "modules": [
+    {
+      "id": 1,
+      "name": "feedback"
+    }
+  ]
+}
