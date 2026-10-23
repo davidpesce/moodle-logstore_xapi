@@ -181,7 +181,7 @@
       "extensions": {
         "http://learninglocker.net/xapi/cmi/choice/response": "Red[,]Blue"
       },
-      "response": "Red[,]Blue"
+      "response": "red[,]blue"
     }
   }
 ]
