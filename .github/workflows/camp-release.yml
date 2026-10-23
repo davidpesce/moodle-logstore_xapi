@@ -50,10 +50,16 @@ jobs:
       # Releases are built at immutable tags only; the publish service
       # additionally refuses branch-minted tokens, so this guard just
       # fails earlier with a better message (camp-tools#15).
+      # The ref name reaches the shell as a variable, never spliced into the
+      # script text: a branch name may contain shell syntax, and a spliced
+      # name would run as code under workflow_dispatch.
       - name: Require a tag ref
+        env:
+          REF_NAME: ${{ github.ref_name }}
+          REF_TYPE: ${{ github.ref_type }}
         run: |
-          if [ "${{ github.ref_type }}" != "tag" ]; then
-            echo "::error::This workflow must run at a tag. From workflow_dispatch, pick the tag in the ref dropdown (or: gh workflow run camp-release.yml --ref v1.2.3). Current ref: ${{ github.ref_name }} (${{ github.ref_type }})"
+          if [ "$REF_TYPE" != "tag" ]; then
+            echo "::error::This workflow must run at a tag. From workflow_dispatch, pick the tag in the ref dropdown (or: gh workflow run camp-release.yml --ref v1.2.3). Current ref: $REF_NAME ($REF_TYPE)"
             exit 1
           fi
 
@@ -76,7 +82,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install camp tools
-        run: pip install --quiet "git+https://github.com/camp-registry/camp-tools@v0.2.51"
+        run: pip install --quiet "git+https://github.com/camp-registry/camp-tools@v0.2.90"
 
       # Stale template copies are the recurring failure mode (they have
       # broken releases before); this nudge compares the copy's pin
@@ -86,8 +92,9 @@ jobs:
         continue-on-error: true
         run: |
           current=$(curl -s --max-time 5 -A "camp-release" https://camp-registry.org/version.json | sed -nE 's/.*"camp-tools": *"([0-9.]+)".*/\1/p')
-          if [ -n "$current" ] && [ "v$current" != "v0.2.51" ]; then
-            echo "::warning::This workflow pins camp-tools v0.2.51 but the current release is v${current}. Refresh your copy from templates/author-release.yml in camp-registry/camp-index."
+          pinned=$(python -c "import camp; print(camp.__version__)" 2>/dev/null)
+          if [ -n "$current" ] && [ -n "$pinned" ] && [ "$current" != "$pinned" ]; then
+            echo "::warning::This workflow pins camp-tools v${pinned} but the current release is v${current}. Refresh your copy from templates/author-release.yml in camp-registry/camp-index."
           fi
 
       - name: Resolve component name
