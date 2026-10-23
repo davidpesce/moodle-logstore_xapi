@@ -36,6 +36,10 @@ reports or dashboards filter on the values below, review them before upgrading.
 - **SCORM 2004** passed and failed statuses are recorded as such (they were all "completed"),
   SCORM 2004 score bounds are read, and decimal scores are kept. A score outside its own bounds
   no longer gets the LRS to reject the statement.
+- **Totara support removed.** The `\totara_program\event\program_assigned` transformer and the
+  Totara platform name in statements are gone. Totara reports a Moodle 3.4-era version, and this
+  plugin has required Moodle 3.5 or later since 4.6.0 (March 2020), so 4.5.0 was the last release
+  that could be installed on Totara.
 
 ## 5.1.1 (2026-10-23)
 

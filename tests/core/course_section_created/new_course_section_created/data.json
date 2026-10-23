@@ -1,11 +1,4 @@
 {
-  "course": [
-    {
-      "id": 1,
-      "fullname": "test_name",
-      "lang": "en"
-    }
-  ],
   "course_sections": [
     {
       "id": 1,

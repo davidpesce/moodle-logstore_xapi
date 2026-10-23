@@ -295,21 +295,11 @@ class store extends php_obj implements log_writer {
             ],
         ];
 
-        if (isset($CFG->totara_release)) {
-            $source = [
-                'source_url' => 'http://totaralearning.com',
-                'source_name' => 'Totara Learn',
-                'source_version' => $CFG->totara_version,
-            ];
-        } else {
-            $source = [
-                'source_url' => 'http://moodle.org',
-                'source_name' => 'Moodle',
-                'source_version' => $CFG->release,
-            ];
-        }
-
-        $handlerconfig['transformer'] = array_merge($handlerconfig['transformer'], $source);
+        $handlerconfig['transformer'] = array_merge($handlerconfig['transformer'], [
+            'source_url' => 'http://moodle.org',
+            'source_name' => 'Moodle',
+            'source_version' => $CFG->release,
+        ]);
 
         return $handlerconfig;
     }

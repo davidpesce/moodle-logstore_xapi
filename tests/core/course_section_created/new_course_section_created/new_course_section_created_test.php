@@ -60,6 +60,7 @@ final class new_course_section_created_test extends \logstore_xapi\xapi_test_cas
     /**
      * Appease auto-detecting of test cases. xapi_test_case has default test cases.
      *
+     * @covers ::course_section_created
      * @return void
      */
     public function test_init(): void {
