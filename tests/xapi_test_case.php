@@ -198,6 +198,72 @@ abstract class xapi_test_case extends \advanced_testcase {
             return (string) $error;
         }, $errors));
         $this->assertEmpty($errors, $errorsjson);
+        $this->assert_consistent_with_definition($statement);
+    }
+
+    /**
+     * Assert the rules the schema validator does not check: responses and correct response
+     * patterns must use the ids the interaction defines, true-false values must be "true" or
+     * "false", and a score must fit its own bounds.
+     *
+     * @param array $statement The xAPI statement.
+     * @return void
+     */
+    private function assert_consistent_with_definition(array $statement) {
+        $definition = $statement['object']['definition'] ?? [];
+        $result = $statement['result'] ?? [];
+        $values = [];
+        if (isset($result['response'])) {
+            $values['result.response'] = $result['response'];
+        }
+        foreach ($definition['correctResponsesPattern'] ?? [] as $i => $pattern) {
+            $values["correctResponsesPattern[$i]"] = $pattern;
+        }
+
+        $ids = function ($key) use ($definition) {
+            return array_column($definition[$key] ?? [], 'id');
+        };
+        foreach ($values as $where => $value) {
+            if ($value === '') {
+                continue;
+            }
+            switch ($definition['interactionType'] ?? '') {
+                case 'true-false':
+                    $this->assertContains($value, ['true', 'false'], "$where must be true or false");
+                    break;
+                case 'choice':
+                case 'sequencing':
+                    if ($choices = $ids('choices')) {
+                        foreach (explode('[,]', $value) as $id) {
+                            $this->assertContains($id, $choices, "$where uses an id that is not a defined choice");
+                        }
+                    }
+                    break;
+                case 'matching':
+                    $source = $ids('source');
+                    $target = $ids('target');
+                    if ($source && $target) {
+                        foreach (explode('[,]', $value) as $pair) {
+                            [$s, $t] = array_pad(explode('[.]', $pair, 2), 2, null);
+                            $this->assertContains($s, $source, "$where uses an id that is not a defined source");
+                            $this->assertContains($t, $target, "$where uses an id that is not a defined target");
+                        }
+                    }
+                    break;
+            }
+        }
+
+        $score = $result['score'] ?? [];
+        if (isset($score['scaled'])) {
+            $this->assertGreaterThanOrEqual(-1, $score['scaled'], 'score.scaled must be at least -1');
+            $this->assertLessThanOrEqual(1, $score['scaled'], 'score.scaled must be at most 1');
+        }
+        if (isset($score['raw'], $score['min'])) {
+            $this->assertGreaterThanOrEqual($score['min'], $score['raw'], 'score.raw must not be below score.min');
+        }
+        if (isset($score['raw'], $score['max'])) {
+            $this->assertLessThanOrEqual($score['max'], $score['raw'], 'score.raw must not exceed score.max');
+        }
     }
 
     /**
