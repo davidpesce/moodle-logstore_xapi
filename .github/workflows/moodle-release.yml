@@ -53,7 +53,7 @@ jobs:
                                          --data-urlencode "vcssystem=git" \
                                          --data-urlencode "vcsrepositoryurl=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}" \
                                          --data-urlencode "vcstag=${TAGNAME}" \
-                                         --data-urlencode "changelogurl=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/commits/${TAGNAME}" \
+                                         --data-urlencode "changelogurl=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/tag/${TAGNAME}" \
                                          --data-urlencode "altdownloadurl=${ZIPURL}")
           echo "response=${RESPONSE}" >> $GITHUB_OUTPUT
 
