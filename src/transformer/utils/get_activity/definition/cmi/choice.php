@@ -34,7 +34,9 @@ use src\transformer\utils;
  * @param ?string $description The activity description.
  * @param array $choices The choices available.
  * @param string $lang The language.
- * @param ?array $rightchoices The correct or sequenced options, optional.
+ * @param ?array $rightchoices The correct options. Omit for questions with no correct answer
+ *                            (surveys, Choice activities), and no correctResponsesPattern is sent.
+ * @return array
  */
 function choice(
     array $config,
@@ -61,30 +63,20 @@ function choice(
     return [
         ...common($config, $name, $description, $lang),
         'interactionType' => 'choice',
-        ...($config['send_response_choices'] && !empty($cmichoices)
+        // A correctResponsesPattern says which response is correct, so it is only sent when there
+        // is a correct answer. Claiming that every choice together was correct made an LRS mark
+        // survey and Choice activity answers as wrong.
+        ...($config['send_response_choices'] && !empty($cmichoices) && !empty($rightchoices)
             ? [
                 'correctResponsesPattern' => [
-                    implode(
-                        '[,]',
-                        // If we are given correct choices, normalize and use.
-                        !empty($rightchoices)
-                            ? array_map(
-                                function ($rightchoice) {
-                                    return utils\slugify($rightchoice);
-                                },
-                                $rightchoices
-                            )
-                        // Otherwise, just use the choices (no right answer).
-                            : array_map(
-                                function ($cmichoice) {
-                                    return $cmichoice['id'];
-                                },
-                                $cmichoices
-                            )
-                    ),
+                    implode('[,]', array_map(function ($rightchoice) {
+                        return utils\slugify($rightchoice);
+                    }, $rightchoices)),
                 ],
-                'choices' => $cmichoices,
             ]
+            : []),
+        ...($config['send_response_choices'] && !empty($cmichoices)
+            ? ['choices' => $cmichoices]
             : []),
     ];
 }
