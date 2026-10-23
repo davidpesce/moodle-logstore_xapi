@@ -12,8 +12,11 @@
   ],
   "badge_manual_award": [
     {
-      "id": 2,
-      "issuerid": 2
+      "id": 7,
+      "badgeid": 1,
+      "recipientid": 1,
+      "issuerid": 2,
+      "datemet": 1433946700
     }
   ],
   "course": [
