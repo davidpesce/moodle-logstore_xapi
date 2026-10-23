@@ -181,7 +181,7 @@
       "extensions": {
         "http://learninglocker.net/xapi/cmi/choice/response": "test_choice_2"
       },
-      "response": "test_choice_2"
+      "response": "test-choice-2"
     }
   }
 ]

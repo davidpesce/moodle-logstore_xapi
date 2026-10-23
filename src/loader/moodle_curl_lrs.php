@@ -54,6 +54,10 @@ function build_curl_options(array $config, string $url, string $auth, string $po
         CURLOPT_URL => $url,
         CURLOPT_POSTFIELDS => $postdata,
         CURLOPT_RETURNTRANSFER => true,
+        // Without limits, an unresponsive LRS blocks the emit task, or in real-time mode
+        // the page request that flushes the log buffer. The total allows for a full batch.
+        CURLOPT_CONNECTTIMEOUT => 10,
+        CURLOPT_TIMEOUT => 60,
         CURLOPT_SSL_VERIFYPEER => true,
         CURLOPT_SSL_VERIFYHOST => 2,
         CURLOPT_HTTPHEADER => [

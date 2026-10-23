@@ -14,10 +14,10 @@
       }
     },
     "object": {
-      "id": "http://www.example.org/mod/quiz/attempt.php?attempt=1&cmid=1",
+      "id": "http://www.example.org/mod/quiz/attempt.php?attempt=5&cmid=1",
       "definition": {
         "name": {
-          "en": "test_quiz_name Attempt 1"
+          "en": "test_quiz_name Attempt 5"
         },
         "type": "http://adlnet.gov/expapi/activities/attempt"
       },

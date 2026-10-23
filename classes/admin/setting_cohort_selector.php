@@ -117,9 +117,9 @@ class setting_cohort_selector extends \admin_setting {
         $taghtml = '';
         foreach ($selectedcohorts as $cohort) {
             $cohortname = s($cohort->name);
-            $taghtml .= '<span class="cohort-tag badge badge-info mr-1" data-id="' . (int)$cohort->id . '">'
+            $taghtml .= '<span class="cohort-tag badge badge-info bg-info mr-1 me-1" data-id="' . (int)$cohort->id . '">'
                 . $cohortname
-                . ' <a href="#" class="cohort-remove ml-1" data-id="' . (int)$cohort->id . '"'
+                . ' <a href="#" class="cohort-remove ml-1 ms-1" data-id="' . (int)$cohort->id . '"'
                 . ' aria-label="' . get_string('remove') . '">&times;</a></span>';
         }
 

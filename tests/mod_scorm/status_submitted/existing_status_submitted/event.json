@@ -5,6 +5,6 @@
   "objectid": 1,
   "userid": 1,
   "eventname": "\\mod_scorm\\event\\status_submitted",
-  "other": "a:1:{s:9:\"attemptid\";i:1;}",
+  "other": "a:3:{s:9:\"attemptid\";i:7;s:10:\"cmielement\";s:22:\"cmi.core.lesson_status\";s:8:\"cmivalue\";s:9:\"completed\";}",
   "timecreated": 1433946701
 }

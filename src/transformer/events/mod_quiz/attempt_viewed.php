@@ -44,7 +44,7 @@ function attempt_viewed(array $config, \stdClass $event) {
     return [[
         'actor' => utils\get_user($config, $user),
         'verb' => utils\get_verb('viewed', $config, $lang),
-        'object' => utils\get_activity\quiz_attempt($config, $event->id, $event->contextinstanceid),
+        'object' => utils\get_activity\quiz_attempt($config, $event->objectid, $event->contextinstanceid),
         'context' => [
             ...utils\get_context_base($config, $event, $lang, $course),
             'contextActivities' => [

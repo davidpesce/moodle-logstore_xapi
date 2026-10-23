@@ -30,6 +30,27 @@ namespace src\transformer\events\mod_feedback\item_answered;
 use src\transformer\utils;
 
 /**
+ * Split a multichoice item's presentation into its options, the way mod_feedback does.
+ *
+ * The presentation is "<subtype>>>>>>option|option|option", where the subtype is r (radio),
+ * c (checkbox) or d (dropdown). Horizontal radio and checkbox items end with "<<<<<1", which is
+ * not part of the last option. Options were once separated by "\n|", so surrounding whitespace
+ * is trimmed.
+ *
+ * @param string $presentation The feedback_item presentation.
+ * @return array The option texts, in order.
+ */
+function get_multichoice_choices(string $presentation): array {
+    $parts = explode('>>>>>', $presentation, 2);
+    $subtype = $parts[0];
+    $options = $parts[1] ?? '';
+    if ($subtype !== 'd') {
+        $options = explode('<<<<<', $options)[0];
+    }
+    return array_map('trim', explode('|', $options));
+}
+
+/**
  * Transformer for the mod_feedback item answered event.
  *
  * @param array $config The transformer config settings.
@@ -50,8 +71,23 @@ function multichoice(
     $course = $repo->read_record_by_id('course', $event->courseid);
     $feedback = $repo->read_record_by_id('feedback', $feedbackitem->feedback);
     $lang = utils\get_course_lang($course);
-    $choices = explode("\n|", substr($feedbackitem->presentation, 6));
-    $selectedchoice = $choices[intval($feedbackvalue->value) - 1];
+    $choices = get_multichoice_choices($feedbackitem->presentation);
+
+    // Radio and dropdown items store one 1-based index; checkbox items store several, separated
+    // by "|". Indexes outside the list are skipped so the response is never null.
+    $selected = [];
+    foreach (explode('|', (string) $feedbackvalue->value) as $index) {
+        $position = intval($index) - 1;
+        if (isset($choices[$position])) {
+            $selected[] = $choices[$position];
+        }
+    }
+    // The xAPI spec defines a choice response as the [,]-delimited ids of the selected choices, using the
+    // same ids as the definition. The readable text goes in the extension, as for quiz questions.
+    $selectedids = implode('[,]', array_map(function ($choice) {
+        return utils\slugify($choice);
+    }, $selected));
+    $selectedtext = implode('[,]', $selected);
 
     return [[
         'actor' => $actor,
@@ -73,10 +109,10 @@ function multichoice(
             ),
         ],
         'result' => [
-            'response' => $selectedchoice,
+            'response' => $selectedids,
             'completion' => $feedbackvalue->value !== '',
             "extensions" => [
-                "http://learninglocker.net/xapi/cmi/choice/response" => $selectedchoice,
+                "http://learninglocker.net/xapi/cmi/choice/response" => $selectedtext,
             ],
         ],
         'context' => [
