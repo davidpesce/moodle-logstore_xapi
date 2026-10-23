@@ -179,30 +179,39 @@ function get_shortanswer_definition(array $config, \stdClass $question, string $
 }
 
 /**
+ * Whether "true" is the correct answer to a true/false question.
+ *
+ * The answer texts are stored in the language the question was created in ("Vrai", "正しい"),
+ * so they cannot be compared with 'True'. question_truefalse records which answer is the
+ * true choice; the answer with full marks is the correct one.
+ *
+ * @param array $config The transformer config settings.
+ * @param \stdClass $question The question object.
+ * @return bool
+ */
+function get_true_false_correct_answer(array $config, \stdClass $question): bool {
+    $repo = $config['repo'];
+    $answers = $repo->read_records('question_answers', [
+        'question' => $question->id,
+    ]);
+    $correctanswers = array_filter($answers, function ($answer) {
+        return $answer->fraction == 1.0;
+    });
+    $correctanswer = reset($correctanswers);
+    $options = $repo->read_record('question_truefalse', ['question' => $question->id]);
+    return $correctanswer && $correctanswer->id == $options->trueanswer;
+}
+
+/**
  * Transformer util for creating true/false definitions
  *
  * @param array $config The transformer config settings.
  * @param \stdClass $question The question object.
  * @param string $lang The language.
+ * @return array
  */
 function get_true_false_definition(array $config, \stdClass $question, string $lang) {
-    $repo = $config['repo'];
-    $answers = $repo->read_records('question_answers', [
-        'question' => $question->id,
-    ]);
-    $correctanswerobjarr = array_filter(
-        $answers,
-        function ($answer) {
-            return $answer->fraction == 1.0;
-        }
-    );
-    $correctanswerobj = reset(
-        $correctanswerobjarr
-    );
-
-    $correctanswer = ($correctanswerobj->answer === 'True')
-        ? true
-        : false;
+    $correctanswer = get_true_false_correct_answer($config, $question);
 
     return cmi\true_false(
         $config,
