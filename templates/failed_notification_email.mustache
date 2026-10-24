@@ -26,14 +26,23 @@
     * none
 
     Context variables required for this template:
-    * none
+    * lang - The language of the email, as an HTML lang attribute value.
+    * lmsinstance - The site URL.
+    * errorlogpageurl - The URL of the error log report.
+    * errors - The failed event names and how many of each failed.
 
     Example context (json):
     {
+        "lang": "en",
+        "lmsinstance": "https://moodle.example.com/",
+        "errorlogpageurl": "https://moodle.example.com/admin/tool/log/store/xapi/report.php",
+        "errors": [
+            {"eventname": "\\core\\event\\course_viewed", "count": 3}
+        ]
     }
 }}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{lang}}">
 <head>
   <meta charset="UTF-8">
   <title>{{#str}}failedsubject, logstore_xapi{{/str}}</title>

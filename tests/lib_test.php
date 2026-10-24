@@ -36,6 +36,7 @@ require_once($CFG->dirroot . '/admin/tool/log/store/xapi/src/autoload.php');
  * @covers    ::logstore_xapi_get_cohort_members
  * @covers    ::logstore_xapi_get_users_for_notifications
  * @covers    ::logstore_xapi_get_default_routes
+ * @covers    ::logstore_xapi_clean_report_filters
  */
 final class lib_test extends advanced_testcase {
     /**
@@ -257,6 +258,9 @@ final class lib_test extends advanced_testcase {
         $members = logstore_xapi_get_cohort_members([$id]);
 
         $this->assertSame([(int)$active->id], array_map('intval', array_keys($members)));
+        // Only the fields needed to send email are loaded.
+        $this->assertSame($active->email, $members[$active->id]->email);
+        $this->assertFalse(isset($members[$active->id]->password));
     }
 
     /**
@@ -301,5 +305,49 @@ final class lib_test extends advanced_testcase {
         }
         $this->assertCount(count($eventnames) - count(XAPI_ROUTES_OFF_BY_DEFAULT), $defaults);
         $this->assertArrayHasKey('\\mod_quiz\\event\\attempt_submitted', $defaults);
+    }
+
+    /**
+     * Report filters from the URL keep only known filters, with the expected types.
+     *
+     * @return void
+     */
+    public function test_clean_report_filters_keeps_valid_values(): void {
+        $eventnames = ['\\core\\event\\course_viewed' => '\\core\\event\\course_viewed'];
+        $onpage = json_encode([
+            'userfullname' => 'Ann',
+            'response' => '{"error":"x"}',
+            'errortype' => '400',
+            'eventcontext' => 12,
+            'datefrom' => 1700000000,
+            'dateto' => 'tomorrow',
+            'eventnames' => ['\\core\\event\\course_viewed', '\\fake\\event\\x', ['nested']],
+            'unknown' => 'dropped',
+        ]);
+
+        $filters = logstore_xapi_clean_report_filters($onpage, $eventnames);
+
+        $this->assertEquals((object) [
+            'userfullname' => 'Ann',
+            'response' => '{"error":"x"}',
+            'errortype' => 400,
+            'eventcontext' => 12,
+            'datefrom' => 1700000000,
+            'eventnames' => ['\\core\\event\\course_viewed'],
+        ], $filters);
+    }
+
+    /**
+     * Malformed or wrongly typed report filters are ignored.
+     *
+     * @return void
+     */
+    public function test_clean_report_filters_ignores_bad_input(): void {
+        $this->assertEquals(new \stdClass(), logstore_xapi_clean_report_filters('not json', []));
+        $this->assertEquals(new \stdClass(), logstore_xapi_clean_report_filters('"a string"', []));
+        $this->assertEquals(new \stdClass(), logstore_xapi_clean_report_filters(
+            json_encode(['userfullname' => ['x'], 'errortype' => -1, 'eventnames' => 'core']),
+            []
+        ));
     }
 }

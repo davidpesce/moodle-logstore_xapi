@@ -156,10 +156,10 @@ class admin_setting_configroutes extends \admin_setting_configmulticheckbox {
      */
     private static function get_component_display_name($component) {
         if ($component === 'core') {
-            return 'Core';
+            return get_string('routegroupcore', 'logstore_xapi');
         }
         if ($component === 'core_h5p') {
-            return 'H5P';
+            return get_string('routegrouph5p', 'logstore_xapi');
         }
 
         $sm = get_string_manager();

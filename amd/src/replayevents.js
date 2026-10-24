@@ -19,8 +19,8 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-define(['core/str', 'core/config', 'core/notification', 'core/templates', 'jquery', 'jqueryui'],
-    function(str, mdlcfg, notification, templates, $) {
+define(['core/str', 'core/config', 'core/notification', 'jquery'],
+    function(str, mdlcfg, notification, $) {
 
         /**
          * Store a sum.
@@ -342,7 +342,7 @@ define(['core/str', 'core/config', 'core/notification', 'core/templates', 'jquer
                 var elements = $(SELECTORS.PAGE_LINKS);
 
                 this.disableElements(elements);
-                elements.bind('click', function(e) {
+                elements.on('click', function(e) {
                     e.preventDefault();
                 });
             },
@@ -357,7 +357,7 @@ define(['core/str', 'core/config', 'core/notification', 'core/templates', 'jquer
                 var elements = $(SELECTORS.PAGE_LINKS);
 
                 this.enableElements(elements);
-                elements.unbind('click');
+                elements.off('click');
             },
 
             /**

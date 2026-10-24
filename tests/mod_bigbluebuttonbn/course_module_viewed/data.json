@@ -1,0 +1,14 @@
+{
+  "bigbluebuttonbn": [
+    {
+      "id": 1,
+      "name": "test_bigbluebuttonbn_name"
+    }
+  ],
+  "modules": [
+    {
+      "id": 1,
+      "name": "bigbluebuttonbn"
+    }
+  ]
+}

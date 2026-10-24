@@ -21,7 +21,6 @@ defined('MOODLE_INTERNAL') || die();
 global $CFG;
 
 require_once($CFG->dirroot . '/admin/tool/log/store/xapi/tests/logstore_test_skeleton.php');
-require_once($CFG->dirroot . '/admin/tool/log/store/xapi/classes/form/reportfilter_form.php');
 
 /**
  * Test case for failed events in a report.
@@ -49,7 +48,7 @@ final class failed_report_test extends logstore_test_skeleton {
     /**
      * Get submitted and validated form.
      *
-     * @return tool_logstore_xapi_reportfilter_form
+     * @return form\reportfilter_form
      */
     protected function get_validated_form() {
         $filterparams = [
@@ -60,7 +59,7 @@ final class failed_report_test extends logstore_test_skeleton {
             'responses' => logstore_xapi_get_distinct_options_from_failed_table('response'),
         ];
 
-        $form = new form\tool_logstore_xapi_reportfilter_form('', $filterparams);
+        $form = new form\reportfilter_form('', $filterparams);
         $this->assertTrue($form->is_validated());
         $this->assertTrue($form->is_submitted());
 
@@ -71,7 +70,7 @@ final class failed_report_test extends logstore_test_skeleton {
      * Creating minimum a single course view event to xapi logstore.
      * Submit form and validate form data.
      *
-     * @covers \form\tool_logstore_xapi_reportfilter_form
+     * @covers \logstore_xapi\form\reportfilter_form
      * @return void
      */
     public function test_single_element(): void {
@@ -84,7 +83,7 @@ final class failed_report_test extends logstore_test_skeleton {
         $records = $DB->get_records('logstore_xapi_failed_log');
         $this->assertCount($this->generatedxapilog, $records);
 
-        form\tool_logstore_xapi_reportfilter_form::mock_submit($this->simulatedsubmitteddata);
+        form\reportfilter_form::mock_submit($this->simulatedsubmitteddata);
 
         $form = $this->get_validated_form();
         $this->validate_submitted_data($form->get_data());
@@ -95,7 +94,7 @@ final class failed_report_test extends logstore_test_skeleton {
      * Record number depends on $multipletestnumber.
      * Submit form and validate form data.
      *
-     * @covers \form\tool_logstore_xapi_reportfilter_form
+     * @covers \logstore_xapi\form\reportfilter_form
      * @return void
      */
     public function test_multiple_elements(): void {
@@ -108,7 +107,7 @@ final class failed_report_test extends logstore_test_skeleton {
         $records = $DB->get_records('logstore_xapi_failed_log');
         $this->assertCount($this->multipletestnumber * $this->generatedxapilog, $records);
 
-        form\tool_logstore_xapi_reportfilter_form::mock_submit($this->simulatedsubmitteddata);
+        form\reportfilter_form::mock_submit($this->simulatedsubmitteddata);
 
         $form = $this->get_validated_form();
         $this->validate_submitted_data($form->get_data());

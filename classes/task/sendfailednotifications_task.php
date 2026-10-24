@@ -19,7 +19,6 @@ defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot . '/admin/tool/log/store/xapi/lib.php');
 require_once($CFG->libdir . '/weblib.php');
-require_once($CFG->libdir . '/classes/user.php');
 require_once($CFG->libdir . '/messagelib.php');
 
 use tool_log\log\manager;
@@ -180,6 +179,7 @@ class sendfailednotifications_task extends \core\task\scheduled_task {
         $subject = get_string('failedsubject', 'logstore_xapi');
         $messagedata = new \stdClass();
         $messagedata->lmsinstance = new \moodle_url('/');
+        $messagedata->lang = get_html_lang_attribute_value(current_language());
 
         $messagedata->errorlogpageurl = new \moodle_url('/admin/tool/log/store/xapi/report.php');
         $errors = $this->get_failed_counts($lastsentid);

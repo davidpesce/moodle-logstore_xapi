@@ -29,7 +29,6 @@ use core\output\notification;
 require_once(__DIR__ . '/../../../../../config.php');
 require_once($CFG->dirroot . '/lib/adminlib.php');
 require_once($CFG->dirroot . '/admin/tool/log/store/xapi/lib.php');
-require_once($CFG->dirroot . '/admin/tool/log/store/xapi/classes/form/reportfilter_form.php');
 
 // Set context.
 $systemcontext = context_system::instance();
@@ -40,8 +39,10 @@ require_login(null, false);
 // Read parameters.
 $id           = optional_param('id', XAPI_REPORT_ID_ERROR, PARAM_INT); // This is the report ID.
 $run          = optional_param('run', false, PARAM_BOOL);
-$page         = optional_param('page', XAPI_REPORT_STARTING_PAGE, PARAM_INT);
+$page         = max(0, optional_param('page', XAPI_REPORT_STARTING_PAGE, PARAM_INT));
 $perpage      = optional_param('perpage', XAPI_REPORT_PERPAGE_DEFAULT, PARAM_INT);
+// A limit of 0 would fetch every row, so keep the page size within bounds.
+$perpage      = min(max(1, $perpage), XAPI_REPORT_PERPAGE_MAX);
 $onpage       = optional_param('onpage', XAPI_REPORT_ONPAGE_DEFAULT, PARAM_TEXT);
 
 // Check access before doing any work: building the filter options scans the log tables.
@@ -92,7 +93,7 @@ $defaults = [
 
 // Reread submitted params.
 if (!empty($onpage)) {
-    $formelements = json_decode($onpage);
+    $formelements = logstore_xapi_clean_report_filters($onpage, $eventnames);
 
     foreach (array_keys($defaults) as $element) {
         if (isset($formelements->$element) && !empty($formelements->$element)) {
@@ -142,7 +143,7 @@ switch ($id) {
 }
 
 $notifications = [];
-$mform = new logstore_xapi\form\tool_logstore_xapi_reportfilter_form($url, $filterparams);
+$mform = new logstore_xapi\form\reportfilter_form($url, $filterparams);
 
 $params = [];
 $where = ['1 = 1'];
