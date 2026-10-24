@@ -18,6 +18,7 @@ namespace logstore_xapi\form;
 
 defined('MOODLE_INTERNAL') || die();
 
+global $CFG;
 require_once($CFG->libdir . '/formslib.php');
 
 /**
@@ -28,7 +29,7 @@ require_once($CFG->libdir . '/formslib.php');
  * @author Stephen O'Hara <stephen.ohara@learningpool.com>
  * @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class tool_logstore_xapi_reportfilter_form extends \moodleform {
+class reportfilter_form extends \moodleform {
     /**
      * Form definition.
      */

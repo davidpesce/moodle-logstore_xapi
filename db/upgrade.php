@@ -31,7 +31,7 @@
   * @param string $tablename The name of the table.
   * @return void
   */
-function create_xapi_log_table($dbman, $tablename) {
+function logstore_xapi_create_xapi_log_table($dbman, $tablename) {
     // Define table to be created.
     $table = new xmldb_table($tablename);
 
@@ -86,7 +86,7 @@ function create_xapi_log_table($dbman, $tablename) {
   * @param string $tablename The name of the table.
   * @return void
   */
-function create_xapi_sent_log_table($dbman, $tablename) {
+function logstore_xapi_create_xapi_sent_log_table($dbman, $tablename) {
     // Define table to be created.
     $table = new xmldb_table($tablename);
 
@@ -117,7 +117,7 @@ function create_xapi_sent_log_table($dbman, $tablename) {
   * @param string $tablename The name of the table.
   * @return void
   */
-function add_logstorestandardlogid_type_to_table($dbman, $tablename) {
+function logstore_xapi_add_logstorestandardlogid_type_to_table($dbman, $tablename) {
     // Select table.
     $table = new xmldb_table($tablename);
 
@@ -150,9 +150,9 @@ function add_logstorestandardlogid_type_to_table($dbman, $tablename) {
   * @param object $dbman     Database manipulation object.
   * @return void
   */
-function create_logstoreid_and_type_columns($dbman) {
-    add_logstorestandardlogid_type_to_table($dbman, 'logstore_xapi_log');
-    add_logstorestandardlogid_type_to_table($dbman, 'logstore_xapi_failed_log');
+function logstore_xapi_create_logstoreid_and_type_columns($dbman) {
+    logstore_xapi_add_logstorestandardlogid_type_to_table($dbman, 'logstore_xapi_log');
+    logstore_xapi_add_logstorestandardlogid_type_to_table($dbman, 'logstore_xapi_failed_log');
 }
 
  /**
@@ -162,7 +162,7 @@ function create_logstoreid_and_type_columns($dbman) {
   * @param string $tablename The name of the table.
   * @return void
   */
-function create_xapi_notification_table($dbman, $tablename) {
+function logstore_xapi_create_xapi_notification_table($dbman, $tablename) {
     // Define table to be created.
     $table = new xmldb_table($tablename);
 
@@ -198,12 +198,12 @@ function xmldb_logstore_xapi_upgrade($oldversion) {
     $dbman = $DB->get_manager();
 
     if ($oldversion < 2015081001) {
-        create_xapi_log_table($dbman, 'logstore_xapi_log');
+        logstore_xapi_create_xapi_log_table($dbman, 'logstore_xapi_log');
         upgrade_plugin_savepoint(true, 2015081001, 'logstore', 'xapi');
     }
 
     if ($oldversion < 2018082100) {
-        create_xapi_log_table($dbman, 'logstore_xapi_failed_log');
+        logstore_xapi_create_xapi_log_table($dbman, 'logstore_xapi_failed_log');
         upgrade_plugin_savepoint(true, 2018082100, 'logstore', 'xapi');
     }
 
@@ -230,17 +230,17 @@ function xmldb_logstore_xapi_upgrade($oldversion) {
     }
 
     if ($oldversion < 2020041506) {
-        create_xapi_notification_table($dbman, 'logstore_xapi_notif_sent_log');
+        logstore_xapi_create_xapi_notification_table($dbman, 'logstore_xapi_notif_sent_log');
         upgrade_plugin_savepoint(true, 2020041506, 'logstore', 'xapi');
     }
 
     if ($oldversion < 2020050100) {
-        create_logstoreid_and_type_columns($dbman);
+        logstore_xapi_create_logstoreid_and_type_columns($dbman);
         upgrade_plugin_savepoint(true, 2020050100, 'logstore', 'xapi');
     }
 
     if ($oldversion < 2020050600) {
-        create_xapi_sent_log_table($dbman, "logstore_xapi_sent_log");
+        logstore_xapi_create_xapi_sent_log_table($dbman, "logstore_xapi_sent_log");
 
         // The xAPI savepoint reached.
         upgrade_plugin_savepoint(true, 2020050600, 'logstore', 'xapi');

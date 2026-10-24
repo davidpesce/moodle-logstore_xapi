@@ -56,6 +56,16 @@ reports or dashboards filter on the values below, review them before upgrading.
   address of every recipient of a failure notification, though only the last notified failure
   is ever read. The upgrade drops the `email` column, deleting the stored addresses, and each run
   is now logged once.
+- **Reports:** the filters carried in the report URL are checked, so a malformed link shows the
+  unfiltered report instead of an error, and the page size is limited to 1 to 500 rows. A page
+  size of 0 used to load every row at once.
+- The three report capabilities are flagged as giving access to personal data (`RISK_PERSONAL`),
+  since the reports show users' names and events.
+- The "Core" and "H5P" headings in the routes setting and the cohort remove button's
+  screen-reader label can be translated.
+- Code clean-up: the report filter form class is `\logstore_xapi\form\reportfilter_form`, the
+  upgrade helpers are prefixed with `logstore_xapi_`, and an unused jQuery UI dependency, an empty
+  helper and a mapping for a BigBlueButton event that does not exist are removed.
 - **Message viewed** statements failed for every message read on a real site: the transformer
   read the read-receipt record instead of the message. They now describe the message, and their
   object id is the message's id. Message sent statements and Certificate revoked statements
