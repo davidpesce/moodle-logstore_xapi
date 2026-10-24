@@ -158,7 +158,9 @@ function logstore_xapi_get_cohort_members($cohortids) {
     [$insql, $params] = $DB->get_in_or_equal($cohortids, SQL_PARAMS_NAMED);
     $params['deleted'] = 0;
     $params['suspended'] = 0;
-    $sql = "SELECT u.*
+    // Only the fields email_to_user() needs, not the whole user record.
+    $namefields = \core_user\fields::for_name()->get_sql('u', false, '', '', false)->selects;
+    $sql = "SELECT u.id, u.username, u.email, u.auth, u.mailformat, u.suspended, u.deleted, $namefields
               FROM {user} u
              WHERE u.deleted = :deleted
                AND u.suspended = :suspended

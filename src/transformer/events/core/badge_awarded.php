@@ -33,14 +33,7 @@ use src\transformer\utils;
  * @return array
  */
 function badge_awarded(array $config, \stdClass $event) {
-    global $CFG;
     $repo = $config['repo'];
-
-    if (isset($event->objecttable) && isset($event->objectid)) {
-        $eventobject = $repo->read_record_by_id($event->objecttable, $event->objectid);
-    } else {
-        $eventobject = [];
-    }
 
     $recipient = $repo->read_record_by_id('user', $event->relateduserid);
     $actor = utils\get_user($config, $recipient);

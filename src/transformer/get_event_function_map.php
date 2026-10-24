@@ -176,11 +176,9 @@ function get_event_function_map() {
         '\tool_usertours\event\tour_ended' => 'tool_usertours\tour_ended',
     ];
 
-    $environmentevents = class_exists("report_eventlist_list_generator") ?
-        array_keys(\report_eventlist_list_generator::get_all_events_list(false)) : array_keys($availableevents);
-
-    $map = array_filter($availableevents, function ($k) use ($environmentevents) {
-        return in_array($k, $environmentevents);
+    // Keep only the events whose class exists on this site. Checking each mapped class is much
+    // cheaper than listing every event of every installed component, which this used to do.
+    return array_filter($availableevents, function ($eventname) {
+        return class_exists($eventname);
     }, ARRAY_FILTER_USE_KEY);
-    return $map;
 }

@@ -19,8 +19,8 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-define(['core/str', 'core/config', 'core/notification', 'core/templates', 'jquery'],
-    function(str, mdlcfg, notification, templates, $) {
+define(['core/str', 'core/config', 'core/notification', 'jquery'],
+    function(str, mdlcfg, notification, $) {
 
         /**
          * Store a sum.

@@ -258,6 +258,9 @@ final class lib_test extends advanced_testcase {
         $members = logstore_xapi_get_cohort_members([$id]);
 
         $this->assertSame([(int)$active->id], array_map('intval', array_keys($members)));
+        // Only the fields needed to send email are loaded.
+        $this->assertSame($active->email, $members[$active->id]->email);
+        $this->assertFalse(isset($members[$active->id]->password));
     }
 
     /**
