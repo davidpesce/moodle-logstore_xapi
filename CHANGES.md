@@ -49,6 +49,13 @@ reports or dashboards filter on the values below, review them before upgrading.
   the full text of the message or note. On a new site, the message sent, message viewed, group
   message sent, note created, note updated and notes viewed events start unticked in "Include
   actions with these routes". Existing sites keep their current selection.
+- **Feedback numeric items** no longer send a `correctResponsesPattern`. It was the item's
+  allowed input range, not a correct answer, since Feedback is not graded. Quiz and Lesson
+  numeric questions keep theirs.
+- **Notification log without email addresses.** `logstore_xapi_notif_sent_log` stored the
+  address of every recipient of a failure notification, though only the last notified failure
+  is ever read. The upgrade drops the `email` column, deleting the stored addresses, and each run
+  is now logged once.
 - **Message viewed** statements failed for every message read on a real site: the transformer
   read the read-receipt record instead of the message. They now describe the message, and their
   object id is the message's id. Message sent statements and Certificate revoked statements

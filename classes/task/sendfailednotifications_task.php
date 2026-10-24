@@ -130,13 +130,9 @@ class sendfailednotifications_task extends \core\task\scheduled_task {
      * @param string $message email message
      * @param string $subject email subject
      * @param object $user user to receive email
-     * @param int $lastfailedid
      * @return bool
-     * @throws \dml_exception
      */
-    private function send_notification_email($message, $subject, $user, $lastfailedid) {
-        global $DB;
-
+    private function send_notification_email($message, $subject, $user) {
         // Check if we have an actual moodle user, if not we need to setup a temp user.
         if (empty($user->id)) {
             $email = $user->email;
@@ -153,21 +149,7 @@ class sendfailednotifications_task extends \core\task\scheduled_task {
         $from->deleted = 0;
         $from->mailformat = FORMAT_HTML;
 
-        // Send the email.
-        $messagesent = email_to_user($user, $from, $subject, html_to_text($message), $message);
-        if ($messagesent) {
-            // Log that these notifications have been sent.
-            $now = time();
-            $lastfailed = new \stdClass();
-            $lastfailed->failedlogid = $lastfailedid;
-            $lastfailed->email = $user->email;
-            $lastfailed->timecreated = $now;
-
-            $DB->insert_record('logstore_xapi_notif_sent_log', $lastfailed);
-            return $messagesent;
-        }
-
-        return 0;
+        return (bool) email_to_user($user, $from, $subject, html_to_text($message), $message);
     }
 
     /**
@@ -175,7 +157,7 @@ class sendfailednotifications_task extends \core\task\scheduled_task {
      * Throw exceptions on errors (the job will be retried).
      */
     public function execute() {
-        global $OUTPUT;
+        global $DB, $OUTPUT;
 
         mtrace(get_string('insendfailednotificationstask', 'logstore_xapi'));
 
@@ -205,8 +187,18 @@ class sendfailednotifications_task extends \core\task\scheduled_task {
         $message = $OUTPUT->render_from_template('logstore_xapi/failed_notification_email', $messagedata);
 
         $users = logstore_xapi_get_users_for_notifications();
+        $sent = false;
         foreach ($users as $user) {
-            $this->send_notification_email($message, $subject, $user, $lastfailedid);
+            $sent = $this->send_notification_email($message, $subject, $user) || $sent;
+        }
+
+        // Record that these failures have been notified, so the next run starts after them. If no
+        // email could be sent, nothing is recorded and the next run tries again.
+        if ($sent) {
+            $DB->insert_record('logstore_xapi_notif_sent_log', (object) [
+                'failedlogid' => $lastfailedid,
+                'timecreated' => time(),
+            ]);
         }
     }
 }
