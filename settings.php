@@ -278,8 +278,8 @@ if ($hassiteconfig) {
     $settings->add(new \logstore_xapi\admin_setting_configroutes(
         'logstore_xapi/routes',
         get_string('routes', 'logstore_xapi'),
-        '',
-        $menuroutes,
+        get_string('routes_desc', 'logstore_xapi'),
+        logstore_xapi_get_default_routes(array_keys($menuroutes)),
         $menuroutes
     ));
 

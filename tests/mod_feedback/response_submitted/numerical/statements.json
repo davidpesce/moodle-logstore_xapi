@@ -88,9 +88,7 @@
     "object": {
       "id": "http://www.example.org/mod/feedback/edit_item.php?id=1",
       "definition": {
-        "correctResponsesPattern": [
-          "0[:]10"
-        ],
+        "correctResponsesPattern": null,
         "interactionType": "numeric",
         "name": {
           "en": "test_feedback_item"

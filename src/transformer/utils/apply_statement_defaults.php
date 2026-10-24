@@ -34,19 +34,14 @@ namespace src\transformer\utils;
  */
 function apply_statement_defaults(array $config, \stdClass $event, array $statements) {
     return array_map(function ($statement) use ($config, $event) {
+        // No context.registration: Moodle has no session-wide registration, and one derived
+        // from the session key grouped statements that do not belong to the same attempt.
         $defaultstatement = [
             'context' => [
                 'platform' => $config['context_platform'] ?? 'Moodle',
-                'registration' => stringToUuidV5($config['session_id']),
             ],
             'timestamp' => get_event_timestamp($event),
         ];
-        // The registration is derived from the session, so in real-time mode it is shared by every
-        // statement from that session. Leave it off anonymised statements so it cannot link them
-        // to the same user's identified statements.
-        if (($statement['actor']['account']['name'] ?? null) === 'anonymous') {
-            unset($defaultstatement['context']['registration']);
-        }
         // Merge event output into defaults.
         return deep_merge_arrays($defaultstatement, $statement);
     }, $statements);

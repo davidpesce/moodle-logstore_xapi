@@ -258,7 +258,7 @@ final class provider_test extends advanced_testcase {
         }
 
         $this->assertInstanceOf(\core_privacy\local\metadata\types\external_location::class, $items['lrs']);
-        foreach (['logstore_xapi_log', 'logstore_xapi_failed_log', 'logstore_xapi_notif_sent_log'] as $table) {
+        foreach (['logstore_xapi_log', 'logstore_xapi_failed_log'] as $table) {
             $this->assertInstanceOf(\core_privacy\local\metadata\types\database_table::class, $items[$table]);
         }
     }

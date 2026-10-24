@@ -246,5 +246,19 @@ function xmldb_logstore_xapi_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2020050600, 'logstore', 'xapi');
     }
 
+    if ($oldversion < 2026102301) {
+        // Only MAX(failedlogid) is ever read, so the recipients' email addresses are not kept.
+        $table = new xmldb_table('logstore_xapi_notif_sent_log');
+        $index = new xmldb_index('email', XMLDB_INDEX_NOTUNIQUE, ['email']);
+        if ($dbman->index_exists($table, $index)) {
+            $dbman->drop_index($table, $index);
+        }
+        $field = new xmldb_field('email');
+        if ($dbman->field_exists($table, $field)) {
+            $dbman->drop_field($table, $field);
+        }
+        upgrade_plugin_savepoint(true, 2026102301, 'logstore', 'xapi');
+    }
+
     return true;
 }

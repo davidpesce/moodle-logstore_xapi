@@ -44,7 +44,7 @@ The core flow is: **Moodle Event → Logstore Queue → Scheduled Task → Trans
 4. `src/handler.php` (the top-level handler) calls `src/transformer/handler.php`
 5. The transformer looks up the event in `src/transformer/get_event_function_map.php`
 6. The mapped transformer function in `src/transformer/events/` converts the event to xAPI statements
-7. `src/transformer/utils/apply_statement_defaults.php` merges in context defaults (platform, registration, timestamp)
+7. `src/transformer/utils/apply_statement_defaults.php` merges in context defaults (platform, timestamp)
 8. Statements are sent to the configured LRS; failures go to `logstore_xapi_failed_log`
 
 #### Key Files

@@ -100,12 +100,6 @@ class provider implements
             );
         }
 
-        $collection->add_database_table(
-            'logstore_xapi_notif_sent_log',
-            ['email' => 'privacy:metadata:logstore_xapi_notif_sent_log:email'],
-            'privacy:metadata:logstore_xapi_notif_sent_log'
-        );
-
         // Sending events to the configured LRS is the plugin's purpose.
         $collection->add_external_location_link(
             'lrs',
