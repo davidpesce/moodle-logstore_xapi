@@ -36,18 +36,25 @@ use src\transformer\utils\get_activity as activity;
  * @return array
  */
 function message_viewed(array $config, \stdClass $event) {
-    global $CFG;
     $repo = $config['repo'];
-    if (isset($event->objecttable) && isset($event->objectid)) {
-        $eventobject = $repo->read_record_by_id($event->objecttable, $event->objectid);
-    } else {
-        $eventobject = [];
+
+    // Core records the read in message_user_actions and points the event at
+    // that row, so the message itself is identified by other['messageid'].
+    // Older events that pointed straight at the messages table are still read.
+    $other = utils\decode_other($event->other ?? null);
+    $messageid = $other['messageid'] ?? null;
+    if (is_null($messageid) && ($event->objecttable ?? null) === 'messages') {
+        $messageid = $event->objectid;
     }
+    if (is_null($messageid)) {
+        throw new \Exception('message_viewed event ' . ($event->id ?? '') . ' has no message id');
+    }
+    $message = $repo->read_record_by_id('messages', $messageid);
 
     $user = $repo->read_record_by_id('user', $event->userid);
     $recipient = $user;
     $sender = $repo->read_record_by_id('user', $event->relateduserid);
-    $course = (isset($event->courseid) && $event->courseid !== 0)
+    $course = (isset($event->courseid) && $event->courseid != 0)
         ? $repo->read_record_by_id('course', $event->courseid)
         : null;
     $lang = is_null($course) ? $config['source_lang'] : utils\get_course_lang($course);
@@ -60,7 +67,7 @@ function message_viewed(array $config, \stdClass $event) {
                 'en' => 'Viewed',
             ],
         ],
-        'object' => activity\message($config, $lang, $eventobject),
+        'object' => activity\message($config, $lang, $message),
         'context' => [
             ...utils\get_context_base($config, $event, $lang, $course),
             'contextActivities' => [

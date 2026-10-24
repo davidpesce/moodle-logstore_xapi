@@ -22,6 +22,7 @@ defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
 require_once($CFG->dirroot . '/admin/tool/log/store/xapi/lib.php');
+require_once($CFG->dirroot . '/cohort/lib.php');
 
 /**
  * Unit tests for lib.php helper functions.
@@ -31,6 +32,8 @@ require_once($CFG->dirroot . '/admin/tool/log/store/xapi/lib.php');
  * @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @covers    ::logstore_xapi_get_selected_cohorts
  * @covers    ::logstore_xapi_get_distinct_options_from_failed_table
+ * @covers    ::logstore_xapi_get_cohort_members
+ * @covers    ::logstore_xapi_get_users_for_notifications
  */
 final class lib_test extends advanced_testcase {
     /**
@@ -211,5 +214,71 @@ final class lib_test extends advanced_testcase {
 
         $this->expectException(\coding_exception::class);
         logstore_xapi_get_distinct_options_from_failed_table('id FROM {user} WHERE 1=1 --');
+    }
+
+    /**
+     * A user in several selected cohorts is returned once.
+     *
+     * @return void
+     */
+    public function test_cohort_members_are_unique(): void {
+        $this->resetAfterTest();
+
+        $user = $this->getDataGenerator()->create_user();
+        $id1 = $this->create_cohort('Cohort One');
+        $id2 = $this->create_cohort('Cohort Two');
+        cohort_add_member($id1, $user->id);
+        cohort_add_member($id2, $user->id);
+
+        $members = logstore_xapi_get_cohort_members([$id1, $id2]);
+
+        $this->assertSame([(int)$user->id], array_map('intval', array_keys($members)));
+    }
+
+    /**
+     * Suspended and deleted users are not returned as cohort members.
+     *
+     * @return void
+     */
+    public function test_cohort_members_exclude_inactive_users(): void {
+        $this->resetAfterTest();
+
+        $active = $this->getDataGenerator()->create_user();
+        $suspended = $this->getDataGenerator()->create_user(['suspended' => 1]);
+        $deleted = $this->getDataGenerator()->create_user();
+        $id = $this->create_cohort('Cohort One');
+        foreach ([$active, $suspended, $deleted] as $user) {
+            cohort_add_member($id, $user->id);
+        }
+        delete_user($deleted);
+
+        $members = logstore_xapi_get_cohort_members([$id]);
+
+        $this->assertSame([(int)$active->id], array_map('intval', array_keys($members)));
+    }
+
+    /**
+     * Each address is notified once, even when it is both a cohort member and an additional address.
+     *
+     * @return void
+     */
+    public function test_notification_recipients_are_unique(): void {
+        $this->resetAfterTest();
+
+        $user = $this->getDataGenerator()->create_user(['email' => 'member@example.com']);
+        $id1 = $this->create_cohort('Cohort One');
+        $id2 = $this->create_cohort('Cohort Two');
+        cohort_add_member($id1, $user->id);
+        cohort_add_member($id2, $user->id);
+        set_config('cohorts', "$id1,$id2", 'logstore_xapi');
+        $additional = 'Member@Example.com, other@example.com,other@example.com,not-an-email';
+        set_config('send_additional_email_addresses', $additional, 'logstore_xapi');
+
+        $recipients = logstore_xapi_get_users_for_notifications();
+
+        $this->assertCount(2, $recipients);
+        $this->assertEquals($user->id, $recipients[0]->id);
+        $this->assertSame('other@example.com', $recipients[1]->email);
+        $this->assertFalse(isset($recipients[1]->id));
     }
 }

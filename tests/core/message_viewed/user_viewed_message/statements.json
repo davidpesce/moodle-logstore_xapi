@@ -14,7 +14,7 @@
       }
     },
     "object": {
-      "id": "http://www.example.org/message?id=1",
+      "id": "http://www.example.org/message?id=3",
       "definition": {
         "description": {
           "en": "hi there!(messagetext)"
@@ -36,18 +36,6 @@
                 "en": "test_site_fullname"
               },
               "type": "http://id.tincanapi.com/activitytype/lms"
-            },
-            "objectType": "Activity"
-          }
-        ],
-        "parent": [
-          {
-            "id": "http://www.example.org/course/view.php?id=2",
-            "definition": {
-              "name": {
-                "en": "test_name"
-              },
-              "type": "https://w3id.org/xapi/cmi5/activitytype/course"
             },
             "objectType": "Activity"
           }

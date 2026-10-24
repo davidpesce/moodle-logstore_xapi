@@ -108,56 +108,69 @@ function logstore_xapi_get_selected_cohorts() {
 }
 
 /**
- * Return all members for a cohort
+ * Return the active members of the given cohorts.
+ *
+ * A user who belongs to several of the cohorts is returned once, and deleted
+ * or suspended users are left out, since they should not be notified.
  *
  * @param array $cohortids array of cohort ids
- * @return array with cohort id keys containing arrays of user email addresses
+ * @return array user records keyed by user id
  */
 function logstore_xapi_get_cohort_members($cohortids) {
     global $DB;
 
-    $members = [];
-
-    foreach ($cohortids as $cohortid) {
-        // Validate params.
-        $cohort = $DB->get_record('cohort', ['id' => $cohortid], '*', MUST_EXIST);
-        if (!empty($cohort)) {
-            $sql = "SELECT u.*
-                      FROM {user} u, {cohort_members} cm
-                     WHERE u.id = cm.userid AND cm.cohortid = ?
-                  ORDER BY lastname ASC, firstname ASC";
-            $cohortmembers = $DB->get_records_sql($sql, [$cohort->id]);
-            $members = array_merge($members, $cohortmembers);
-        }
+    if (empty($cohortids)) {
+        return [];
     }
-    return $members;
+
+    [$insql, $params] = $DB->get_in_or_equal($cohortids, SQL_PARAMS_NAMED);
+    $params['deleted'] = 0;
+    $params['suspended'] = 0;
+    $sql = "SELECT u.*
+              FROM {user} u
+             WHERE u.deleted = :deleted
+               AND u.suspended = :suspended
+               AND EXISTS (SELECT 1
+                             FROM {cohort_members} cm
+                            WHERE cm.userid = u.id
+                              AND cm.cohortid $insql)
+          ORDER BY u.lastname ASC, u.firstname ASC, u.id ASC";
+
+    return $DB->get_records_sql($sql, $params);
 }
 
 /**
- * Get the selected cohorts from the settings.
+ * Get the users to send failure notifications to.
+ *
+ * Each email address is returned once, so that nobody is emailed twice when
+ * they are both a cohort member and listed as an additional address.
  *
  * @return array Returns an array of user objects from cohorts and additional email addresses.
  */
 function logstore_xapi_get_users_for_notifications() {
     // Get selected cohort users, will return a blank array if no cohorts are set.
     $cohorts = logstore_xapi_get_selected_cohorts();
-    $users = logstore_xapi_get_cohort_members($cohorts);
+    $users = [];
+    foreach (logstore_xapi_get_cohort_members($cohorts) as $user) {
+        $users[core_text::strtolower($user->email)] = $user;
+    }
 
     // Get the manually set email addresses from the config.
     $emailaddresses = get_config('logstore_xapi', 'send_additional_email_addresses');
-    $emailaddresses = explode(",", $emailaddresses);
+    $emailaddresses = explode(",", (string) $emailaddresses);
     foreach ($emailaddresses as $email) {
         // Remove whitespace from email addresses.
         $email = preg_replace('/\s+/', '', $email);
-        if (validate_email($email)) {
+        $key = core_text::strtolower($email);
+        if (validate_email($email) && !isset($users[$key])) {
             // If the email address is valid then add it to the list of users.
             $user = new stdClass();
             $user->email = $email;
-            $users[] = $user;
+            $users[$key] = $user;
         }
     }
 
-    return $users;
+    return array_values($users);
 }
 
 /**

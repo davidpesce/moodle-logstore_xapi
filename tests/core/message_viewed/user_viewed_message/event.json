@@ -1,10 +1,11 @@
 {
-  "courseid": 2,
+  "courseid": "0",
   "id": 1,
-  "objectid": 1,
+  "objectid": 7,
   "relateduserid": 1,
   "userid": 2,
   "eventname": "\\core\\event\\message_viewed",
-  "objecttable": "messages",
+  "objecttable": "message_user_actions",
+  "other": "a:1:{s:9:\"messageid\";i:3;}",
   "timecreated": 1433946701
 }

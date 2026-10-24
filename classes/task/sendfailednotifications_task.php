@@ -177,11 +177,11 @@ class sendfailednotifications_task extends \core\task\scheduled_task {
     public function execute() {
         global $OUTPUT;
 
-        echo get_string('insendfailednotificationstask', 'logstore_xapi') . PHP_EOL;
+        mtrace(get_string('insendfailednotificationstask', 'logstore_xapi'));
 
         $enablesendingnotifications = get_config('logstore_xapi', 'enablesendingnotifications');
         if (empty($enablesendingnotifications)) {
-            echo get_string('notificationsnotenabled', 'logstore_xapi') . PHP_EOL;
+            mtrace(get_string('notificationsnotenabled', 'logstore_xapi'));
             return;
         }
 
@@ -190,7 +190,7 @@ class sendfailednotifications_task extends \core\task\scheduled_task {
         $lastfailedid = $this->get_failed_last_id($lastsentid);
 
         if (empty($lastfailedid)) {
-            echo get_string('notificationtriggerlimitnotreached', 'logstore_xapi') . PHP_EOL;
+            mtrace(get_string('notificationtriggerlimitnotreached', 'logstore_xapi'));
             return;
         }
 
