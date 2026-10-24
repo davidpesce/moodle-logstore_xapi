@@ -141,6 +141,7 @@ $string['resendfailedbatches'] = 'Resend failed batches';
 $string['resendfailedbatches_desc'] = 'When processing events in batches, try re-sending events in smaller batches if a batch fails. If not selected, the whole batch will not be sent in the event of a failed event.';
 $string['response'] = 'Response';
 $string['routes'] = 'Include actions with these routes';
+$string['routes_desc'] = 'Private message and note events are off by default on new sites, because their statements include the text of the message or note.';
 $string['send_additional_email_addresses'] = 'Additional email addresses';
 $string['send_additional_email_addresses_desc'] = 'Send notifications to list of email addresses. Comma separated values.';
 $string['send_name'] = 'Set the actor name field';

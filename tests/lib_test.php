@@ -23,6 +23,7 @@ defined('MOODLE_INTERNAL') || die();
 global $CFG;
 require_once($CFG->dirroot . '/admin/tool/log/store/xapi/lib.php');
 require_once($CFG->dirroot . '/cohort/lib.php');
+require_once($CFG->dirroot . '/admin/tool/log/store/xapi/src/autoload.php');
 
 /**
  * Unit tests for lib.php helper functions.
@@ -34,6 +35,7 @@ require_once($CFG->dirroot . '/cohort/lib.php');
  * @covers    ::logstore_xapi_get_distinct_options_from_failed_table
  * @covers    ::logstore_xapi_get_cohort_members
  * @covers    ::logstore_xapi_get_users_for_notifications
+ * @covers    ::logstore_xapi_get_default_routes
  */
 final class lib_test extends advanced_testcase {
     /**
@@ -280,5 +282,24 @@ final class lib_test extends advanced_testcase {
         $this->assertEquals($user->id, $recipients[0]->id);
         $this->assertSame('other@example.com', $recipients[1]->email);
         $this->assertFalse(isset($recipients[1]->id));
+    }
+
+    /**
+     * New installs enable every route except private messages and notes.
+     *
+     * @return void
+     */
+    public function test_default_routes_leave_out_messages_and_notes(): void {
+        $eventnames = array_keys(\src\transformer\get_event_function_map());
+
+        $defaults = logstore_xapi_get_default_routes($eventnames);
+
+        // Every route that is off by default must be a real event, so a typo cannot silently enable one.
+        foreach (XAPI_ROUTES_OFF_BY_DEFAULT as $eventname) {
+            $this->assertContains($eventname, $eventnames);
+            $this->assertArrayNotHasKey($eventname, $defaults);
+        }
+        $this->assertCount(count($eventnames) - count(XAPI_ROUTES_OFF_BY_DEFAULT), $defaults);
+        $this->assertArrayHasKey('\\mod_quiz\\event\\attempt_submitted', $defaults);
     }
 }

@@ -65,6 +65,37 @@ define('XAPI_REPORT_USERNAME_DEFAULT', '');
 define('XAPI_REPORT_DATEFROM_DEFAULT', 0);
 define('XAPI_REPORT_DATETO_DEFAULT', 0);
 
+// Events whose statements carry the text of private messages or of notes about
+// a user. They are left out of the default routes so that a new install does
+// not copy that text to the LRS unless an administrator chooses to.
+define('XAPI_ROUTES_OFF_BY_DEFAULT', [
+    '\\core\\event\\group_message_sent',
+    '\\core\\event\\message_sent',
+    '\\core\\event\\message_viewed',
+    '\\core\\event\\note_created',
+    '\\core\\event\\note_updated',
+    '\\core\\event\\notes_viewed',
+]);
+
+/**
+ * Get the routes that are enabled on a new install.
+ *
+ * Every supported event is enabled except those in XAPI_ROUTES_OFF_BY_DEFAULT.
+ * Sites that already have the setting keep their choice.
+ *
+ * @param array $eventnames The supported event names.
+ * @return array The default setting, event names mapped to 1.
+ */
+function logstore_xapi_get_default_routes(array $eventnames) {
+    $defaults = [];
+    foreach ($eventnames as $eventname) {
+        if (!in_array($eventname, XAPI_ROUTES_OFF_BY_DEFAULT, true)) {
+            $defaults[$eventname] = 1;
+        }
+    }
+    return $defaults;
+}
+
 /**
  * Get all visible cohorts in the system.
  *
