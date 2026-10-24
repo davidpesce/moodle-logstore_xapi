@@ -63,6 +63,10 @@ reports or dashboards filter on the values below, review them before upgrading.
   since the reports show users' names and events.
 - The "Core" and "H5P" headings in the routes setting and the cohort remove button's
   screen-reader label can be translated.
+- **BigBlueButton views** are sent as "viewed" statements. The mapping pointed at an event that
+  does not exist, so they were never sent. On existing sites, tick "Course module viewed" under
+  BigBlueButton in "Include actions with these routes" to send them; new installs send them by
+  default.
 - Code clean-up: the report filter form class is `\logstore_xapi\form\reportfilter_form`, the
   upgrade helpers are prefixed with `logstore_xapi_`, and an unused jQuery UI dependency, an empty
   helper and a mapping for a BigBlueButton event that does not exist are removed.
