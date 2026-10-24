@@ -4,10 +4,16 @@ A summary of each release. The full notes, including upgrade instructions, are o
 [GitHub releases page](https://github.com/davidpesce/moodle-logstore_xapi/releases), which is
 the authoritative record.
 
-## 5.2.0 (unreleased)
+## 5.2.0 (2026-10-24)
+
+xAPI compliance, privacy and bug-fix release. Supports Moodle 4.5 to 5.3.
+[Release notes](https://github.com/davidpesce/moodle-logstore_xapi/releases/tag/v5.2.0)
 
 This release changes some statement values to follow the xAPI specification. If your LRS
-reports or dashboards filter on the values below, review them before upgrading.
+reports or dashboards filter on the values below, review them before upgrading. The upgrade
+changes the database (see "Notification log" below).
+
+### Statement changes
 
 - **Scaled scores now read as a fraction of the maximum.** `result.score.scaled` is sent for quiz
   attempts and manually graded questions, assignment grades, lesson results and essays, and SCORM
@@ -17,6 +23,11 @@ reports or dashboards filter on the values below, review them before upgrading.
   that can go negative (some SCORM packages) use the range below 0, with 0 meaning no score.
   Statements already in your LRS keep the old values, so adjust any report or threshold that
   compares `scaled` across the upgrade, or use `raw`, `min` and `max`.
+- **No more `context.registration`.** It was made from the Moodle session key, so it did not
+  identify an attempt or enrolment as xAPI intends: in background mode, statements from different
+  users could share one value, and in real-time mode it linked everything a user did in one
+  login. Statements no longer carry it. If your LRS reports group or filter by registration, they
+  will not match new statements.
 - **Interaction ids** (choice, matching and sequencing questions) now keep accented and
   non-Latin letters, and a non-breaking space becomes a dash. For example `naïve` was `nave` and
   is now `naïve`, and a Japanese answer that used to give an empty id now gets one (#894, #897).
@@ -28,7 +39,9 @@ reports or dashboards filter on the values below, review them before upgrading.
   response extension.
 - **No made-up correct answers:** Feedback items and Choice activities no longer send a
   `correctResponsesPattern`, which claimed that selecting every option was the only correct
-  answer and made LRSs mark real answers as wrong.
+  answer and made LRSs mark real answers as wrong. Feedback numeric items no longer send one
+  either: it was the item's allowed input range, and Feedback is not graded. Quiz and Lesson
+  numeric questions keep theirs.
 - **Lesson questions** described their choices and correct answers with the feedback text
   instead of the answer text. Numerical ranges are now sent as ranges.
 - **Quiz true/false** responses are always `true` or `false`; on non-English sites they were the
@@ -36,53 +49,60 @@ reports or dashboards filter on the values below, review them before upgrading.
 - **SCORM 2004** passed and failed statuses are recorded as such (they were all "completed"),
   SCORM 2004 score bounds are read, and decimal scores are kept. A score outside its own bounds
   no longer gets the LRS to reject the statement.
-- **Totara support removed.** The `\totara_program\event\program_assigned` transformer and the
-  Totara platform name in statements are gone. Totara reports a Moodle 3.4-era version, and this
-  plugin has required Moodle 3.5 or later since 4.6.0 (March 2020), so 4.5.0 was the last release
-  that could be installed on Totara.
-- **No more `context.registration`.** It was made from the Moodle session key, so it did not
-  identify an attempt or enrolment as xAPI intends: in background mode, statements from different
-  users could share one value, and in real-time mode it linked everything a user did in one
-  login. Statements no longer carry it. If your LRS reports group or filter by registration, they
-  will not match new statements.
+- **Quiz attempt names** use the attempt number ("Quiz Attempt 2") instead of the database id.
+  The activity id is unchanged.
+
+### Privacy
+
 - **Private messages and notes are off by default on new installs.** Their statements include
   the full text of the message or note. On a new site, the message sent, message viewed, group
   message sent, note created, note updated and notes viewed events start unticked in "Include
   actions with these routes". Existing sites keep their current selection.
-- **Feedback numeric items** no longer send a `correctResponsesPattern`. It was the item's
-  allowed input range, not a correct answer, since Feedback is not graded. Quiz and Lesson
-  numeric questions keep theirs.
 - **Notification log without email addresses.** `logstore_xapi_notif_sent_log` stored the
   address of every recipient of a failure notification, though only the last notified failure
   is ever read. The upgrade drops the `email` column, deleting the stored addresses, and each run
   is now logged once.
-- **Reports:** the filters carried in the report URL are checked, so a malformed link shows the
-  unfiltered report instead of an error, and the page size is limited to 1 to 500 rows. A page
-  size of 0 used to load every row at once.
 - The three report capabilities are flagged as giving access to personal data (`RISK_PERSONAL`),
   since the reports show users' names and events.
-- The "Core" and "H5P" headings in the routes setting and the cohort remove button's
-  screen-reader label can be translated.
-- **BigBlueButton views** are sent as "viewed" statements. The mapping pointed at an event that
-  does not exist, so they were never sent. On existing sites, tick "Course module viewed" under
-  BigBlueButton in "Include actions with these routes" to send them; new installs send them by
-  default.
-- **Faster admin pages:** the plugin's settings no longer list every event on the site to work
-  out which of its events are available, which ran on every admin page.
-- Failure notification emails load only the recipient fields needed to send them, and the
-  email's `lang` attribute follows the site language instead of always being English.
-- Code clean-up: the report filter form class is `\logstore_xapi\form\reportfilter_form`, the
-  upgrade helpers are prefixed with `logstore_xapi_`, and an unused jQuery UI dependency, an empty
-  helper and a mapping for a BigBlueButton event that does not exist are removed.
+
+### Fixes
+
 - **Message viewed** statements failed for every message read on a real site: the transformer
   read the read-receipt record instead of the message. They now describe the message, and their
   object id is the message's id. Message sent statements and Certificate revoked statements
   outside a course also failed, looking up a course with id 0.
-- **Quiz attempt names** use the attempt number ("Quiz Attempt 2") instead of the database id.
-  The activity id is unchanged.
+- **BigBlueButton views** are sent as "viewed" statements. The mapping pointed at an event that
+  does not exist, so they were never sent. On existing sites, tick "Course module viewed" under
+  BigBlueButton in "Include actions with these routes" to send them; new installs send them by
+  default.
 - **Failure notification emails** are sent once per address. A user in two selected cohorts, or
   in a cohort and also listed as an additional address, used to get one email for each. Suspended
-  and deleted users are no longer emailed, and the task's output goes to the task log.
+  and deleted users are no longer emailed, and the task's output goes to the task log. The emails
+  load only the recipient fields needed to send them, and their `lang` attribute follows the site
+  language instead of always being English.
+- **Reports:** the filters carried in the report URL are checked, so a malformed link shows the
+  unfiltered report instead of an error, and the page size is limited to 1 to 500 rows. A page
+  size of 0 used to load every row at once.
+- **Faster admin pages:** the plugin's settings no longer list every event on the site to work
+  out which of its events are available, which ran on every admin page.
+- The "Core" and "H5P" headings in the routes setting and the cohort remove button's
+  screen-reader label can be translated.
+
+### Removed
+
+- **Totara support.** The `\totara_program\event\program_assigned` transformer and the Totara
+  platform name in statements are gone. Totara reports a Moodle 3.4-era version, and this plugin
+  has required Moodle 3.5 or later since 4.6.0 (March 2020), so 4.5.0 was the last release that
+  could be installed on Totara.
+- Code clean-up: the report filter form class is `\logstore_xapi\form\reportfilter_form`, the
+  upgrade helpers are prefixed with `logstore_xapi_`, and an unused jQuery UI dependency, an empty
+  helper and a mapping for a BigBlueButton event that does not exist are removed.
+
+### Known issue
+
+- Requests to the LRS do not use Moodle's proxy settings, so a site that can only reach its LRS
+  through a proxy cannot send statements. This is not new in 5.2.0. The LRS client is moving to
+  Moodle's `\curl` class in 5.3.0 (#910).
 
 ## 5.1.1 (2026-10-23)
 
