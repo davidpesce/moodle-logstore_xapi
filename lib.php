@@ -56,6 +56,7 @@ define('XAPI_REPORT_RESEND_TRUE', 1);
 // Default values on url parameters.
 define('XAPI_REPORT_STARTING_PAGE', 0);
 define('XAPI_REPORT_PERPAGE_DEFAULT', 40);
+define('XAPI_REPORT_PERPAGE_MAX', 500);
 define('XAPI_REPORT_ONPAGE_DEFAULT', '');
 define('XAPI_REPORT_EVENTCONTEXT_DEFAULT', '');
 define('XAPI_REPORT_EVENTNAMES_DEFAULT', []);
@@ -285,6 +286,47 @@ function logstore_xapi_get_event_names_array() {
         $eventnames[$eventname] = $eventname;
     }
     return $eventnames;
+}
+
+/**
+ * Read the report filters carried in the onpage parameter.
+ *
+ * The parameter is JSON from the URL, so only the known filters are kept, each
+ * with the type the report expects, and event names must be supported events.
+ *
+ * @param string $onpage The JSON-encoded filters.
+ * @param array $eventnames The supported event names, as keys.
+ * @return \stdClass The filters that were valid.
+ */
+function logstore_xapi_clean_report_filters(string $onpage, array $eventnames) {
+    $filters = new \stdClass();
+    $decoded = json_decode($onpage, true);
+    if (!is_array($decoded)) {
+        return $filters;
+    }
+
+    foreach (['userfullname', 'response'] as $name) {
+        if (isset($decoded[$name]) && is_string($decoded[$name])) {
+            $filters->$name = $decoded[$name];
+        }
+    }
+
+    foreach (['errortype', 'eventcontext', 'datefrom', 'dateto'] as $name) {
+        if (isset($decoded[$name]) && is_numeric($decoded[$name]) && (int) $decoded[$name] >= 0) {
+            $filters->$name = (int) $decoded[$name];
+        }
+    }
+
+    if (isset($decoded['eventnames']) && is_array($decoded['eventnames'])) {
+        $names = array_values(array_filter($decoded['eventnames'], function ($name) use ($eventnames) {
+            return is_string($name) && isset($eventnames[$name]);
+        }));
+        if (!empty($names)) {
+            $filters->eventnames = $names;
+        }
+    }
+
+    return $filters;
 }
 
 /**
