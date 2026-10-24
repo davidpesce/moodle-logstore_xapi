@@ -76,7 +76,6 @@ final class multichoicerated_horizontal_test extends \logstore_xapi\xapi_test_ca
             'send_short_course_id' => false,
             'send_course_and_module_idnumber' => false,
             'send_username' => false,
-            'session_id' => 'test_session_id',
             'send_name' => true,
             'account_homepage' => 'http://www.example.org',
             'plugin_url' => 'https://github.com/xAPI-vle/moodle-logstore_xapi',
