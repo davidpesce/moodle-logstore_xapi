@@ -40,6 +40,15 @@ reports or dashboards filter on the values below, review them before upgrading.
   Totara platform name in statements are gone. Totara reports a Moodle 3.4-era version, and this
   plugin has required Moodle 3.5 or later since 4.6.0 (March 2020), so 4.5.0 was the last release
   that could be installed on Totara.
+- **Message viewed** statements failed for every message read on a real site: the transformer
+  read the read-receipt record instead of the message. They now describe the message, and their
+  object id is the message's id. Message sent statements and Certificate revoked statements
+  outside a course also failed, looking up a course with id 0.
+- **Quiz attempt names** use the attempt number ("Quiz Attempt 2") instead of the database id.
+  The activity id is unchanged.
+- **Failure notification emails** are sent once per address. A user in two selected cohorts, or
+  in a cohort and also listed as an additional address, used to get one email for each. Suspended
+  and deleted users are no longer emailed, and the task's output goes to the task log.
 
 ## 5.1.1 (2026-10-23)
 

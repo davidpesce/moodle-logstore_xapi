@@ -1,7 +1,9 @@
 {
   "messages": [
     {
-      "id": 1,
+      "id": 3,
+      "useridfrom": 1,
+      "conversationid": 1,
       "fullmessage": "hi there!(messagetext)",
       "subject": "hi there(subject)"
     }
@@ -20,6 +22,15 @@
       "lastname": "receiverson",
       "username": "receiver",
       "email": "receiver@example.com"
+    }
+  ],
+  "message_user_actions": [
+    {
+      "id": 7,
+      "userid": 2,
+      "messageid": 3,
+      "action": 1,
+      "timecreated": 1433946701
     }
   ]
 }

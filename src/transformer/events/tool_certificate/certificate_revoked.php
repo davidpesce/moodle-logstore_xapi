@@ -38,7 +38,7 @@ function certificate_revoked(array $config, \stdClass $event) {
     $user = $repo->read_record_by_id('user', $event->relateduserid);
     $revoker = $repo->read_record_by_id('user', $event->userid);
     $code = utils\decode_other($event->other)['code'];
-    $course = ($event->courseid !== 0)
+    $course = ($event->courseid != 0)
         ? $repo->read_record_by_id('course', $event->courseid)
         : null;
     $lang = is_null($course)
