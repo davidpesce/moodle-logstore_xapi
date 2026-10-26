@@ -48,8 +48,8 @@ function lesson_question_page(array $config, \stdClass $course, \stdClass $lesso
     ];
 
     $answers = $repo->read_records('lesson_answers', ['pageid' => $page->id]);
-    $correctanswers = array_filter($answers, function ($a) {
-        return ($a->score > 0);
+    $correctanswers = array_filter($answers, function ($a) use ($config, $lesson, $page) {
+        return utils\is_lesson_answer_correct($config, $lesson, $page, $a);
     });
 
     switch ($page->qtype) {

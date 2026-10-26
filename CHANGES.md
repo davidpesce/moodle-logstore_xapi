@@ -70,6 +70,11 @@ the authoritative record.
   like `[.]purple`; distractors are targets only. A choice shared by several stems is listed
   once, so target ids are unique. Lesson matching pages no longer send their correct and wrong
   answer feedback as sources.
+- **Lesson correct answers follow the lesson's scoring mode.** With custom scoring, an answer is
+  correct when it scores more than 0, as before. Without it, an answer is correct when it moves
+  the learner forward (to the next page, a later page or the end of the lesson), as in core.
+  Those lessons sent no correct answers, or outdated ones from scores left over from custom
+  scoring.
 - **"Actor Account HomePage" applies to every actor account**, as its description says. It was
   only used with "Send username" on; accounts identified by user id, and the anonymous actor,
   always used the site URL. The setting must now be an absolute URL (or empty, for the site
