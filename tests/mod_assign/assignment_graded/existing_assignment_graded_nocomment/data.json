@@ -21,7 +21,9 @@
       "grademin": 0,
       "gradepass": 1,
       "iteminstance": 1,
-      "itemmodule": "assign"
+      "itemmodule": "assign",
+      "itemtype": "mod",
+      "itemnumber": 0
     }
   ],
   "modules": [

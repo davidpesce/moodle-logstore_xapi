@@ -1,0 +1,69 @@
+{
+  "grade_grades": [
+    {
+      "itemid": 2,
+      "userid": 1,
+      "rawgrade": 3
+    },
+    {
+      "itemid": 1,
+      "userid": 1,
+      "rawgrade": 9
+    }
+  ],
+  "grade_items": [
+    {
+      "id": 2,
+      "grademax": 3,
+      "grademin": 1,
+      "gradepass": 0,
+      "iteminstance": 1,
+      "itemmodule": "quiz",
+      "itemtype": "mod",
+      "itemnumber": 1000
+    },
+    {
+      "id": 1,
+      "grademax": 10,
+      "grademin": 0,
+      "gradepass": 8,
+      "iteminstance": 1,
+      "itemmodule": "quiz",
+      "itemtype": "mod",
+      "itemnumber": 0
+    }
+  ],
+  "modules": [
+    {
+      "id": 1,
+      "name": "quiz"
+    }
+  ],
+  "question": [],
+  "question_attempts": [],
+  "question_usages": [
+    {
+      "id": 1
+    }
+  ],
+  "quiz": [
+    {
+      "id": 1,
+      "name": "test_quiz_name",
+      "grade": 10,
+      "sumgrades": 20
+    }
+  ],
+  "quiz_attempts": [
+    {
+      "id": 1,
+      "uniqueid": 1,
+      "quiz": 1,
+      "attempt": 1,
+      "state": "finished",
+      "sumgrades": 15,
+      "timefinish": 1,
+      "timestart": 0
+    }
+  ]
+}

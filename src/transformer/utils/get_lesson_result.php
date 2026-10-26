@@ -39,10 +39,7 @@ function get_lesson_result(array $config, \stdClass $lesson, int $userid) {
     ];
 
     // Score and success if exists.
-    $gradeitem = $repo->read_record('grade_items', [
-        'itemmodule' => 'lesson',
-        'iteminstance' => $lesson->id,
-    ]);
+    $gradeitem = get_module_grade_item($config, 'lesson', $lesson->id);
 
     if (!empty($gradeitem)) {
         $grades = $repo->read_records('grade_grades', [
@@ -53,11 +50,12 @@ function get_lesson_result(array $config, \stdClass $lesson, int $userid) {
             $grade = reset($grades);
             $min = floatval($grade->rawgrademin ?: 0);
             $max = floatval($grade->rawgrademax ?: 0);
-            $pass = floatval($gradeitem->gradepass ?: 0);
-
             $result['score'] = get_score(floatval($grade->rawgrade ?: 0), $min, $max);
 
-            $result['success'] = ($result['score']['raw'] >= $pass);
+            $success = get_success($result['score']['raw'], $gradeitem);
+            if (!is_null($success)) {
+                $result['success'] = $success;
+            }
         }
     }
 

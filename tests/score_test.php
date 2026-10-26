@@ -24,13 +24,14 @@ require_once($CFG->dirroot . '/admin/tool/log/store/xapi/src/autoload.php');
 use src\transformer\utils;
 
 /**
- * Unit tests for the result.score built from a raw score and its bounds.
+ * Unit tests for the result.score built from a raw score and its bounds, and result.success.
  *
  * @package   logstore_xapi
  * @copyright 2026 David Pesce <david.pesce@exputo.com>
  * @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @covers    ::\src\transformer\utils\get_score
  * @covers    ::\src\transformer\utils\get_scorm_result
+ * @covers    ::\src\transformer\utils\get_success
  */
 final class score_test extends \basic_testcase {
     /**
@@ -65,5 +66,28 @@ final class score_test extends \basic_testcase {
             (object) ['element' => 'cmi.core.score.max', 'value' => '0'],
         ];
         $this->assertSame(['score' => ['raw' => 0.0]], utils\get_scorm_result($tracks, 0));
+    }
+
+    /**
+     * A grade passes when it reaches the pass grade.
+     *
+     * @return void
+     */
+    public function test_success_against_pass_grade(): void {
+        $gradeitem = (object) ['grademin' => 0, 'grademax' => 10, 'gradepass' => 5];
+        $this->assertTrue(utils\get_success(5, $gradeitem));
+        $this->assertFalse(utils\get_success(4.9, $gradeitem));
+    }
+
+    /**
+     * With no pass grade there is no pass or fail, so success is null (left out).
+     *
+     * @return void
+     */
+    public function test_no_pass_grade_gives_no_success(): void {
+        $this->assertNull(utils\get_success(0, (object) ['grademin' => 0, 'gradepass' => 0]));
+        $this->assertNull(utils\get_success(0, (object) ['grademin' => 0, 'gradepass' => null]));
+        $this->assertNull(utils\get_success(5, (object) ['grademin' => 5, 'gradepass' => 5]));
+        $this->assertNull(utils\get_success(5, null));
     }
 }

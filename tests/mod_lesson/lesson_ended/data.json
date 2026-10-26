@@ -14,7 +14,9 @@
       "id": 1,
       "gradepass": 50,
       "iteminstance": 1,
-      "itemmodule": "lesson"
+      "itemmodule": "lesson",
+      "itemtype": "mod",
+      "itemnumber": 0
     }
   ],
   "lesson": [

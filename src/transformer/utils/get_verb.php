@@ -39,6 +39,15 @@ function get_verb(string $verb, array $config, string $lang) {
     $verb = strtolower($verb);
     $output = [];
     switch ($verb) {
+        case 'abandoned':
+            $output = [
+                'id' => 'https://w3id.org/xapi/adl/verbs/abandoned',
+                'display' => [
+                    'en' => 'Abandoned',
+                ],
+            ];
+            break;
+
         case 'completed':
             $output = [
                 'id' => 'http://adlnet.gov/expapi/verbs/completed',

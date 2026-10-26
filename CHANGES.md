@@ -38,6 +38,18 @@ the authoritative record.
   xAPI requires max to be greater than min, and strict LRSs rejected these statements. This
   applies to quiz attempts and manually graded questions, lessons, lesson essays, SCORM and
   assignment grades.
+- **Quiz attempts are scored with the attempt's own grade.** The "completed" statement for an
+  attempt sent the user's gradebook grade, which follows the quiz's grading method (highest,
+  average, first or last attempt), so attempt 2 could report attempt 1's score. It is now the
+  attempt's marks scaled to the quiz's maximum grade. An attempt that still needs manual
+  grading is sent without a score or success.
+- **Abandoned quiz attempts** (time ran out and the attempt was never submitted) are sent as
+  "abandoned" and incomplete. They were sent as "completed", with an "answered" statement for
+  every question.
+- **`success` is left out when no pass grade is set.** Quiz attempts, lessons and assignment
+  grades sent `success: true` for any grade, including 0, when the pass grade was 0.
+- **Grade items are looked up by item number**, so an activity with outcomes uses its own grade
+  item rather than whichever item the database returned first.
 
 ### Development
 

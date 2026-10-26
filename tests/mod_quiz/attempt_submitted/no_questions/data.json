@@ -13,7 +13,9 @@
       "grademin": 0,
       "gradepass": 50,
       "iteminstance": 1,
-      "itemmodule": "quiz"
+      "itemmodule": "quiz",
+      "itemtype": "mod",
+      "itemnumber": 0
     }
   ],
   "modules": [
@@ -32,7 +34,9 @@
   "quiz": [
     {
       "id": 1,
-      "name": "test_quiz_name"
+      "name": "test_quiz_name",
+      "grade": 100,
+      "sumgrades": 100
     }
   ],
   "quiz_attempts": [
