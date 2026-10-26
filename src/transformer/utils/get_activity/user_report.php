@@ -38,13 +38,17 @@ use src\transformer\utils;
  * @return array
  */
 function user_report(array $config, \stdClass $user, \stdClass $course, string $courselang) {
+    // Name the viewed user only when the site sends names.
+    $username = !empty($config['send_name'])
+        ? utils\get_full_name($user)
+        : 'user ' . $user->id;
 
     $activity = [
         ...base(),
         'definition' => [
             'type' => 'http://id.tincanapi.com/activitytype/user-profile',
             'name' => [
-                $courselang => 'forum posts of ' . utils\get_full_name($user),
+                $courselang => 'forum posts of ' . $username,
             ],
             'extensions' => [
                 'https://moodle.org/xapi/extensions/user_id' => $user->id,
