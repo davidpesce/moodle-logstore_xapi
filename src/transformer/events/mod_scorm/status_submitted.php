@@ -50,9 +50,15 @@ function status_submitted(array $config, \stdClass $event) {
         $unserializedcmi['cmivalue']
     );
 
+    // A status that reports no progress (not attempted, unknown, browsed) is not sent.
+    $verb = utils\get_scorm_verb($scormscoestracks, $lang);
+    if (is_null($verb)) {
+        return [];
+    }
+
     return [[
         'actor' => utils\get_user($config, $user),
-        'verb' => utils\get_scorm_verb($scormscoestracks, $lang),
+        'verb' => $verb,
         'object' => utils\get_activity\scorm_content_object(
             $config,
             $course,

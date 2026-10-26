@@ -1,0 +1,12 @@
+{
+  "contextinstanceid": 5,
+  "contextlevel": 50,
+  "courseid": 2,
+  "id": 1,
+  "objectid": 1,
+  "objecttable": "h5p",
+  "userid": 1,
+  "eventname": "\\core_h5p\\event\\h5p_viewed",
+  "other": "a:2:{s:3:\"url\";s:70:\"http://www.example.org/pluginfile.php/5/course/summary/0/My%20quiz.h5p\";s:4:\"time\";i:1433946701;}",
+  "timecreated": 1433946701
+}

@@ -4,5 +4,9 @@
   "id": 1,
   "userid": 1,
   "eventname": "\\core_h5p\\event\\h5p_viewed",
-  "timecreated": 1433946701
+  "timecreated": 1433946701,
+  "contextlevel": 70,
+  "objectid": 1,
+  "objecttable": "h5p",
+  "other": "a:2:{s:3:\"url\";s:74:\"http://www.example.org/pluginfile.php/5/mod_h5pactivity/package/0/test.h5p\";s:4:\"time\";i:1433946701;}"
 }

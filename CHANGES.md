@@ -50,6 +50,13 @@ the authoritative record.
   grades sent `success: true` for any grade, including 0, when the pass grade was 0.
 - **Grade items are looked up by item number**, so an activity with outcomes uses its own grade
   item rather than whichever item the database returned first.
+- **SCORM statuses are no longer all sent as "completed".** Only `completed` is sent as
+  completed; `incomplete` is sent as "progressed". `not attempted`, `unknown` and `browsed` say
+  nothing about progress (a SCO writes them when it is launched), so no statement is sent for
+  them. A raw score saved while the status is one of those is sent as "scored".
+- **H5P content viewed outside an activity** (the content bank, or content embedded in a course,
+  section or user text) is identified by its file URL, with the course as parent when there is
+  one. It was transformed as a course module view, which read the wrong activity or failed.
 
 ### Development
 
