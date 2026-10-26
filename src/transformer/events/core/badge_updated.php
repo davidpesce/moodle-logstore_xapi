@@ -41,12 +41,11 @@ function badge_updated(array $config, \stdClass $event) {
     $course = (isset($event->courseid) && $event->courseid != 0)
         ? $repo->read_record_by_id('course', $event->courseid)
         : null;
-    $lang = $badge->language ??
-      (
-          !is_null($course)
-              ? utils\get_course_lang($course)
-              : $config['source_lang']
-      );
+    // The badge's language is a Moodle code such as pt_br, and may be empty.
+    $lang = utils\get_lang_tag(
+        $badge->language ?? null,
+        !is_null($course) ? utils\get_course_lang($course) : $config['source_lang']
+    );
 
     $statement = [
         'actor' => utils\get_user($config, $user),

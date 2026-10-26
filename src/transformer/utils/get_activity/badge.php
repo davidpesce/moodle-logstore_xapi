@@ -50,7 +50,9 @@ function badge($config, $lang, $badge) {
         'id' => $config['app_url'] . '/badges/overview.php?id=' . $badge->id,
         'definition' => [
             'name' => [$lang => $badge->name],
-            'description' => [$lang => $badge->description],
+            ...(($badge->description ?? '') !== ''
+                ? ['description' => [$lang => $badge->description]]
+                : []),
             'type' => 'https://xapi.edlm/profiles/edlm-lms/concepts/activity-types/badge',
             'extensions' => [
                 'https://xapi.edlm/profiles/edlm-lms/v1/concepts/activity-extensions/badge-type' => $badgetype,

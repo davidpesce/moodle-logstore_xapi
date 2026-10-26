@@ -79,6 +79,11 @@ $PAGE->set_url($url);
 
 // Set filter params and defaults.
 $eventnames = logstore_xapi_get_event_names_array();
+if ($id == XAPI_REPORT_ID_HISTORIC) {
+    // Offer only the events the admin has chosen to send.
+    $routes = array_flip(explode(',', get_config('logstore_xapi', 'routes') ?: ''));
+    $eventnames = array_intersect_key($eventnames, $routes);
+}
 
 $defaults = [
     'datefrom' => XAPI_REPORT_DATEFROM_DEFAULT,
@@ -197,7 +202,8 @@ if (isset($formelements)) {
 }
 
 if ($run) {
-    [$insql, $inparams] = $DB->get_in_or_equal($eventnames, SQL_PARAMS_NAMED, 'evt');
+    // With no events to offer (no routes enabled), match nothing rather than throw.
+    [$insql, $inparams] = $DB->get_in_or_equal($eventnames, SQL_PARAMS_NAMED, 'evt', true, '');
     $where[] = "x.eventname $insql";
     $params = array_merge($params, $inparams);
 
@@ -286,12 +292,14 @@ if (!empty($results)) {
         if ($id == XAPI_REPORT_ID_ERROR) {
             $row[] = $result->errortype;
         }
-        $row[] = $result->eventname;
+        $row[] = s($result->eventname);
         if ($id == XAPI_REPORT_ID_HISTORIC) {
             $row[] = s($result->username);
 
             if ($context = context::instance_by_id($result->contextid, IGNORE_MISSING)) {
-                $row[] = $context->get_context_name();
+                // Escape the unescaped name ourselves: user context names are never escaped by
+                // core, and html_writer::table() emits cell text verbatim.
+                $row[] = s($context->get_context_name(true, false, false));
             } else {
                 $row[] = get_string('contextidnolongerexists', 'logstore_xapi', $result->contextid);
             }
@@ -299,14 +307,9 @@ if (!empty($results)) {
         if ($id == XAPI_REPORT_ID_ERROR) {
             $response = '';
             if (isset($result->response)) {
-                // The response body originates from the LRS and is untrusted.
-                // Escape both at encode time and on output before it reaches
-                // the table cell, which html_writer::table() emits verbatim.
-                $decoded = json_encode(
-                    logstore_xapi_decode_response($result->response),
-                    JSON_PRETTY_PRINT | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_QUOT
-                );
-                $response = \html_writer::tag('pre', s($decoded));
+                // The response body originates from the LRS and is untrusted, and
+                // html_writer::table() emits cell text verbatim, so escape it.
+                $response = \html_writer::tag('pre', s(logstore_xapi_get_response_display($result->response)));
             } else {
                 $response = '-';
             }

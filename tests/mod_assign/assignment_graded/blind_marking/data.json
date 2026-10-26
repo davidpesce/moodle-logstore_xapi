@@ -1,0 +1,52 @@
+{
+  "assign": [
+    {
+      "id": 1,
+      "name": "test_name"
+    }
+  ],
+  "assignfeedback_comments": [
+    {
+      "id": 1,
+      "assignment": 1,
+      "commenttext": "test_comment_text",
+      "grade": 1
+    }
+  ],
+  "grade": [
+    {
+      "id": 1,
+      "userid": 2,
+      "assignment": 1,
+      "grade": 1
+    }
+  ],
+  "grade_items": [
+    {
+      "id": 1,
+      "grademax": 2,
+      "grademin": 0,
+      "gradepass": 1,
+      "iteminstance": 1,
+      "itemmodule": "assign"
+    }
+  ],
+  "modules": [
+    {
+      "id": 1,
+      "name": "assign"
+    }
+  ],
+  "user": [
+    {
+      "id": 1,
+      "firstname": "test_fullname",
+      "email": "test@test.com"
+    },
+    {
+      "id": 2,
+      "firstname": "test2_fullname",
+      "email": "test2@test.com"
+    }
+  ]
+}

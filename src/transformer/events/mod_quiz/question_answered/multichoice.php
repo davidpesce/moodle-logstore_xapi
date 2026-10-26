@@ -46,7 +46,9 @@ function multichoice(array $config, \stdClass $event, \stdClass $questionattempt
     $quiz = $repo->read_record_by_id('quiz', $attempt->quiz);
     $coursemodule = $repo->read_record_by_id('course_modules', $event->contextinstanceid);
     $lang = utils\get_course_lang($course);
-    $selections = explode('; ', utils\get_string_html_removed($questionattempt->responsesummary));
+    // Moodle stores NULL for a question the learner didn't answer.
+    $responsesummary = $questionattempt->responsesummary ?? '';
+    $selections = explode('; ', utils\get_string_html_removed($responsesummary));
     return [[
         'actor' => utils\get_user($config, $user),
         'verb' => [
@@ -73,11 +75,11 @@ function multichoice(array $config, \stdClass $event, \stdClass $questionattempt
                 },
                 $selections
             )),
-            'success' => $questionattempt->rightanswer == $questionattempt->responsesummary,
-            'completion' => $questionattempt->responsesummary !== '',
+            'success' => $questionattempt->rightanswer == $responsesummary,
+            'completion' => $responsesummary !== '',
             'extensions' => [
                 'http://learninglocker.net/xapi/cmi/choice/response' =>
-                    utils\get_string_html_removed($questionattempt->responsesummary),
+                    utils\get_string_html_removed($responsesummary),
             ],
         ],
         'context' => [

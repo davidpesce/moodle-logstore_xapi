@@ -1,0 +1,10 @@
+{
+  "courseid": 2,
+  "id": 1,
+  "objectid": 1,
+  "relateduserid": 1,
+  "eventname": "\\core\\event\\badge_awarded",
+  "objecttable": "badge",
+  "other": "a:1:{s:13:\"badgeissuedid\";i:2;}",
+  "timecreated": 1433946701
+}

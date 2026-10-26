@@ -53,7 +53,8 @@ function matching(
                 ],
             ];
         },
-        $source
+        // Renumber so that source and target are JSON arrays, whatever the caller's keys.
+        array_values($source)
     );
     $targetitems = array_map(
         function ($answer) use ($lang) {
@@ -64,7 +65,7 @@ function matching(
                 ],
             ];
         },
-        $target
+        array_values($target)
     );
 
     return [

@@ -9,6 +9,12 @@
     {
       "id": 1,
       "questionattemptid": 1,
+      "fraction": 1.0,
+      "sequencenumber": 1
+    },
+    {
+      "id": 2,
+      "questionattemptid": 2,
       "fraction": 0.5,
       "sequencenumber": 1
     }
@@ -17,6 +23,14 @@
     {
       "id": 1,
       "questionusageid": 1,
+      "slot": 1,
+      "maxfraction": 1.0,
+      "minfraction": 0.0
+    },
+    {
+      "id": 2,
+      "questionusageid": 1,
+      "slot": 2,
       "maxfraction": 1.0,
       "minfraction": 0.0
     }

@@ -51,7 +51,7 @@ abstract class Repository extends PhpObj {
         if (empty($records)) {
             throw new \Exception("$type not found.");
         }
-        return $records[0];
+        return reset($records);
     }
 
     /**

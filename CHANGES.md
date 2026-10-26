@@ -4,6 +4,61 @@ A summary of each release. The full notes, including upgrade instructions, are o
 [GitHub releases page](https://github.com/davidpesce/moodle-logstore_xapi/releases), which is
 the authoritative record.
 
+## 5.2.1 (2026-10-26)
+
+Bug-fix and privacy release. Supports Moodle 4.5 to 5.3. No database changes; one new setting.
+[Release notes](https://github.com/davidpesce/moodle-logstore_xapi/releases/tag/v5.2.1)
+
+### Privacy
+
+- **Anonymous events no longer identify the hidden user.** Moodle marks an event as anonymous
+  when a user's identity must stay hidden, as with assignments while blind marking is on, and
+  anonymous Feedback activities. Assignment statements still named the student under blind
+  marking. That user is now replaced by an anonymous actor wherever they appear (actor,
+  instructor, team or extensions); other people, such as the grader, are still identified, and
+  assignment feedback comments are left out. A new setting, "Anonymous events", can instead keep
+  these events out of the LRS entirely.
+- **Routes and "Log guest actions" now apply to every event that is sent**, not only when an event is
+  captured. Before, the historic report (whose event list offered every supported event, not only
+  the enabled ones), a resend from the error report, and `moveback_to_log.php` could send events
+  whose route is off, such as messages and notes, which 5.2.0 turned off by default. Events whose
+  route is off are now dropped from the queue without being sent, and the historic report lists
+  only enabled events.
+- **The forum user report statement no longer names the viewed user when "Set the actor name field" is
+  off.** Its activity name is now "forum posts of user 123".
+- **LRS error responses are escaped** before being shown as debugging output, and stack traces
+  are shown at developer debugging level only.
+
+### Statement fixes
+
+- **Choice activity `choices` are a JSON array.** With "Send response choices" on, they were sent
+  as an object keyed by option id, which strict LRSs reject.
+- **Unanswered numerical, short-answer and multiple-choice quiz questions** send `response: ""`
+  and `completion: false`. Numerical and short-answer questions sent `response: null` (rejected by
+  strict LRSs), and all three sent `completion: true`.
+- **Manually graded quiz questions** report the graded question. The first question in the
+  attempt was reported whichever one was graded.
+- **Badges** send the badge's language as a language tag (`pt-br`, not `pt_br`). Empty badge,
+  course category and message descriptions are left out instead of being sent as `null`.
+- **Top-level course categories:** "category created" statements failed for every top-level
+  category. They are now sent, without a parent.
+- **Face-to-face attendance** sends `completion: true` for a fully attended session; it was
+  always false.
+- **Assignment submission unlocked** displays "Unlocked" (was "Unocked").
+
+### Other fixes
+
+- **The error report shows non-JSON responses as text.** cURL errors and plain-text or HTML
+  error pages from the LRS were shown as `false`. Context and event names in the reports are
+  escaped.
+- **Failure notification emails** sent to an additional address no longer change Moodle's
+  cached support user, which could send later support mail in the same cron run to that address.
+
+### Known issue
+
+- Requests to the LRS still do not use Moodle's proxy settings (see 5.2.0). The LRS client is
+  moving to Moodle's `\curl` class in 5.3.0 (#910).
+
 ## 5.2.0 (2026-10-24)
 
 xAPI compliance, privacy and bug-fix release. Supports Moodle 4.5 to 5.3.

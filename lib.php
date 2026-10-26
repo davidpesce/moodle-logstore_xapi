@@ -78,6 +78,12 @@ define('XAPI_ROUTES_OFF_BY_DEFAULT', [
     '\\core\\event\\notes_viewed',
 ]);
 
+// What to do with events core flags as anonymous (the user's identity must stay hidden, for
+// example assignment events under blind marking): send them with the protected user replaced
+// by an anonymous actor, or don't send them. The anonymousevents setting holds one of these.
+define('XAPI_ANONYMOUS_EVENTS_ANONYMISE', 'anonymise');
+define('XAPI_ANONYMOUS_EVENTS_SKIP', 'skip');
+
 /**
  * Get the routes that are enabled on a new install.
  *
@@ -344,6 +350,23 @@ function logstore_xapi_decode_response($response) {
         return $decode;
     }
     return false;
+}
+
+/**
+ * Text to show for a stored LRS response in the error report.
+ *
+ * JSON is pretty-printed. Anything else (cURL errors, plain-text or HTML error pages) is
+ * shown as it is. The result is not escaped: the caller must escape it.
+ *
+ * @param string $response The stored response.
+ * @return string
+ */
+function logstore_xapi_get_response_display(string $response): string {
+    $decoded = json_decode($response, true);
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        return $response;
+    }
+    return json_encode($decoded, JSON_PRETTY_PRINT | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_QUOT);
 }
 
 /**
