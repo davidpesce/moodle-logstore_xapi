@@ -10,6 +10,10 @@ Bug-fix and privacy release. Supports Moodle 4.5 to 5.3. No database changes.
 
 ### Privacy
 
+- **Anonymous events are no longer sent.** Moodle flags an event as anonymous when the user's
+  identity must stay hidden, as with assignments that use blind marking, and anonymous Feedback
+  activities. Assignment statements still named the learner under blind marking. These events
+  are now dropped. Feedback responses are still sent, with an anonymous actor as before.
 - **Routes and "Log guest actions" now apply to every event that is sent**, not only when an event is
   captured. Before, the historic report (whose event list offered every supported event, not only
   the enabled ones), a resend from the error report, and `moveback_to_log.php` could send events
@@ -37,6 +41,14 @@ Bug-fix and privacy release. Supports Moodle 4.5 to 5.3. No database changes.
 - **Face-to-face attendance** sends `completion: true` for a fully attended session; it was
   always false.
 - **Assignment submission unlocked** displays "Unlocked" (was "Unocked").
+
+### Other fixes
+
+- **The error report shows non-JSON responses as text.** cURL errors and plain-text or HTML
+  error pages from the LRS were shown as `false`. Context and event names in the reports are
+  escaped.
+- **Failure notification emails** sent to an additional address no longer change Moodle's
+  cached support user, which could send later support mail in the same cron run to that address.
 
 ## 5.2.0 (2026-10-24)
 
