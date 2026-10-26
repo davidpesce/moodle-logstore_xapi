@@ -238,7 +238,7 @@ class store extends php_obj implements log_writer {
      */
     public function process_events(array $events, $eventtype = XAPI_IMPORT_TYPE_LIVE) {
         $events = $this->convert_array_to_objects($events);
-        [$events, $skippedevents] = $this->split_unrouted_events($events);
+        [$events, $skippedevents] = $this->split_skipped_events($events);
         $events = $this->get_persistent_eventids($events, $eventtype);
 
         $config = $this->get_handler_config();
@@ -249,12 +249,17 @@ class store extends php_obj implements log_writer {
     }
 
     /**
-     * Separate the events the admin has chosen not to send.
+     * Separate the events that must not be sent.
      *
-     * Routes and logguests are checked when an event is captured (is_event_ignored()), but
-     * events also arrive from the historic report and the failed log, and a route may have been
-     * turned off since an event was queued. Every path goes through process_events(), so the
-     * check is repeated here.
+     * These are events the admin has chosen not to send, and anonymous events. Routes and
+     * logguests are checked when an event is captured (is_event_ignored()), but events also
+     * arrive from the historic report and the failed log, and a route may have been turned off
+     * since an event was queued. Every path goes through process_events(), so the check is
+     * repeated here.
+     *
+     * Core flags an event as anonymous when the user's identity must stay hidden (assignment
+     * blind marking, anonymous feedback). Those events are skipped unless their transformer
+     * replaces the user with an anonymous actor (XAPI_ANONYMOUS_EVENTS_SENT).
      *
      * Skipped events are returned with 'loaded' set to null: the tasks delete them from the
      * queue, but they are not recorded as sent or as failed.
@@ -262,7 +267,7 @@ class store extends php_obj implements log_writer {
      * @param array $events Event objects.
      * @return array The events to send, and the skipped events in the loaded-event format.
      */
-    private function split_unrouted_events(array $events) {
+    private function split_skipped_events(array $events) {
         global $CFG;
 
         $enabledevents = array_flip(explode(',', $this->get_config('routes', '')));
@@ -273,7 +278,9 @@ class store extends php_obj implements log_writer {
         foreach ($events as $event) {
             $isrouted = isset($event->eventname) && isset($enabledevents[$event->eventname]);
             $isguest = isset($event->userid) && !empty($CFG->siteguest) && $event->userid == $CFG->siteguest;
-            if ($isrouted && ($allowguestlogging || !$isguest)) {
+            $ishiddenanonymous = !empty($event->anonymous)
+                && !in_array($event->eventname, XAPI_ANONYMOUS_EVENTS_SENT, true);
+            if ($isrouted && ($allowguestlogging || !$isguest) && !$ishiddenanonymous) {
                 $routedevents[] = $event;
             } else {
                 $skippedevents[] = [

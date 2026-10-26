@@ -78,6 +78,13 @@ define('XAPI_ROUTES_OFF_BY_DEFAULT', [
     '\\core\\event\\notes_viewed',
 ]);
 
+// Core flags an event as anonymous when the user's identity must stay hidden, for example
+// assignment events under blind marking. Such events are not sent, except those whose
+// transformer replaces the user with an anonymous actor.
+define('XAPI_ANONYMOUS_EVENTS_SENT', [
+    '\\mod_feedback\\event\\response_submitted',
+]);
+
 /**
  * Get the routes that are enabled on a new install.
  *
