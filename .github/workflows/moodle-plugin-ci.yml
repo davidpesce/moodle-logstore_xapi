@@ -92,6 +92,7 @@ jobs:
           MOODLE_BRANCH: ${{ matrix.moodle-branch }}
         run: |
           moodle-plugin-ci add-plugin --branch MOODLE_403_STABLE catalyst/moodle-mod_facetoface
+          moodle-plugin-ci add-plugin bdaloukas/moodle-mod_game
           if [[ "$MOODLE_BRANCH" == "MOODLE_500_STABLE" ]] || [[ "$MOODLE_BRANCH" == "MOODLE_501_STABLE" ]] || [[ "$MOODLE_BRANCH" == "MOODLE_503_STABLE" ]]; then
             moodle-plugin-ci add-plugin --branch MOODLE_500_STABLE moodleworkplace/moodle-tool_certificate
           else

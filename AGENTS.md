@@ -107,7 +107,7 @@ Transformers return PHP arrays shaped as xAPI statements. The `statement.context
 
 - **`mod_survey`** — deprecated in Moodle 4.x, removed in 5.x. Transformers and tests remain but will be skipped automatically once the module is gone from Moodle's plugin registry. Remove the transformer and tests when dropping support for older Moodle versions.
 - **Totara** — support was removed in 5.2.0. Totara is a separate fork that reports a Moodle 3.4-era version, and this plugin has required Moodle 3.5 or later since 4.6.0, so it could not be installed on Totara and the `totara_program` transformer could never run.
-- **Third-party plugins in CI** — `moodle-tool_certificate` and `moodle-mod_facetoface` are installed as additional plugins in the CI workflow (`.github/workflows/moodle-plugin-ci.yml`). Other third-party plugin tests (questionnaire) are always skipped in CI.
+- **Third-party plugins in CI** — `moodle-tool_certificate`, `moodle-mod_facetoface` and `moodle-mod_game` are installed as additional plugins in the CI workflow (`.github/workflows/moodle-plugin-ci.yml`). Other third-party plugin tests (questionnaire) are always skipped in CI.
 
 #### Config Options Passed to Transformers
 
