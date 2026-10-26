@@ -60,6 +60,16 @@ the authoritative record.
 - **H5P content viewed outside an activity** (the content bank, or content embedded in a course,
   section or user text) is identified by its file URL, with the course as parent when there is
   one. It was transformed as a course module view, which read the wrong activity or failed.
+- **Select missing words (gapselect) questions are sent as `matching`, not `sequencing`.** Each
+  gap is a source and each choice a target, so the response says which choice went in which gap
+  (`gap-1[.]spicy[,]gap-2[.]mango`). Sequencing could not describe a choice that is right for
+  two gaps, distractors, or a gap left empty. The response extension is now
+  `http://learninglocker.net/xapi/cmi/matching/response`. LRS reports built on the old
+  sequencing statements need updating.
+- **Matching questions with distractors** no longer send a source with an empty id and a pair
+  like `[.]purple`; distractors are targets only. A choice shared by several stems is listed
+  once, so target ids are unique. Lesson matching pages no longer send their correct and wrong
+  answer feedback as sources.
 - **"Actor Account HomePage" applies to every actor account**, as its description says. It was
   only used with "Send username" on; accounts identified by user id, and the anonymous actor,
   always used the site URL. The setting must now be an absolute URL (or empty, for the site

@@ -112,15 +112,35 @@
         "description": {
           "en": "Example [[1]] missing [[2]] words [[3]]"
         },
-        "interactionType": "sequencing",
+        "interactionType": "matching",
         "name": {
           "en": "test_name"
         },
         "type": "http://adlnet.gov/expapi/activities/cmi.interaction",
         "correctResponsesPattern": [
-          "spicy[,]mango[,]milkshake"
+          "gap-1[.]spicy[,]gap-2[.]mango[,]gap-3[.]milkshake"
         ],
-        "choices": [
+        "source": [
+          {
+            "id": "gap-1",
+            "description": {
+              "en": "Gap 1"
+            }
+          },
+          {
+            "id": "gap-2",
+            "description": {
+              "en": "Gap 2"
+            }
+          },
+          {
+            "id": "gap-3",
+            "description": {
+              "en": "Gap 3"
+            }
+          }
+        ],
+        "target": [
           {
             "id": "spicy",
             "description": {
@@ -219,13 +239,13 @@
     "result": {
       "completion": true,
       "extensions": {
-        "http://learninglocker.net/xapi/cmi/sequencing/response": [
-          "spicy",
-          "mango",
-          "milkshake"
-        ]
+        "http://learninglocker.net/xapi/cmi/matching/response": {
+          "gap-1": "spicy",
+          "gap-2": "mango",
+          "gap-3": "milkshake"
+        }
       },
-      "response": "spicy[,]mango[,]milkshake",
+      "response": "gap-1[.]spicy[,]gap-2[.]mango[,]gap-3[.]milkshake",
       "success": true
     }
   }

@@ -29,12 +29,18 @@ use src\transformer\utils;
 /**
  * Transformer util for creating matching definitions
  *
+ * Source and target ids are made from their text, as responses are. Items with no text are left
+ * out, and an item listed twice (a choice shared by several stems or gaps) is sent once, so
+ * every id is unique. Targets that are in no correct pair are distractors.
+ *
  * @param array $config The transformer config settings.
  * @param string $name The activity name.
  * @param ?string $description The activity description.
- * @param array $source The source values.
- * @param array $target The target values, ordered as the source values.
+ * @param array $source The source texts.
+ * @param array $target The target texts, including distractors.
+ * @param array $correctpairs The correct response: [source text, target text] pairs.
  * @param string $lang The language.
+ * @return array
  */
 function matching(
     array $config,
@@ -42,6 +48,7 @@ function matching(
     ?string $description,
     array $source,
     array $target,
+    array $correctpairs,
     string $lang
 ) {
     $definition = [
@@ -49,51 +56,48 @@ function matching(
         'interactionType' => 'matching',
     ];
 
-    // The source and target lists are in matching order, so they give the answers away as
-    // much as the correct response does. All three are only sent when the admin has chosen to.
+    // The source and target lists can give the answers away as much as the correct response
+    // does. All three are only sent when the admin has chosen to.
     if (!$config['send_response_choices']) {
         return $definition;
     }
 
-    $sourceitems = array_map(
-        function ($answer) use ($lang) {
-            return [
-                'id' => utils\slugify($answer),
-                'description' => [
-                    $lang => $answer,
-                ],
-            ];
-        },
-        // Renumber so that source and target are JSON arrays, whatever the caller's keys.
-        array_values($source)
-    );
-    $targetitems = array_map(
-        function ($answer) use ($lang) {
-            return [
-                'id' => utils\slugify($answer),
-                'description' => [
-                    $lang => $answer,
-                ],
-            ];
-        },
-        array_values($target)
-    );
+    $pairs = [];
+    foreach ($correctpairs as [$sourcetext, $targettext]) {
+        if ((string) $sourcetext !== '' && (string) $targettext !== '') {
+            $pairs[] = utils\slugify($sourcetext) . '[.]' . utils\slugify($targettext);
+        }
+    }
 
     return [
         ...$definition,
-        'correctResponsesPattern' => [
-            implode(
-                '[,]',
-                array_map(
-                    function ($src, $tgt) {
-                        return $src['id'] . '[.]' . $tgt['id'];
-                    },
-                    $sourceitems,
-                    $targetitems
-                )
-            ),
-        ],
-        'source' => $sourceitems,
-        'target' => $targetitems,
+        ...(!empty($pairs) ? ['correctResponsesPattern' => [implode('[,]', $pairs)]] : []),
+        'source' => get_matching_items($source, $lang),
+        'target' => get_matching_items($target, $lang),
     ];
+}
+
+/**
+ * Build the source or target items of a matching interaction, with unique ids.
+ *
+ * @param array $texts The item texts.
+ * @param string $lang The language.
+ * @return array
+ */
+function get_matching_items(array $texts, string $lang): array {
+    $items = [];
+    foreach ($texts as $text) {
+        $text = (string) $text;
+        $id = utils\slugify($text);
+        if ($text === '' || isset($items[$id])) {
+            continue;
+        }
+        $items[$id] = [
+            'id' => $id,
+            'description' => [
+                $lang => $text,
+            ],
+        ];
+    }
+    return array_values($items);
 }

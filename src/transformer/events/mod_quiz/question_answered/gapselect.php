@@ -54,19 +54,27 @@ function gapselect(array $config, \stdClass $event, \stdClass $questionattempt, 
     ];
 
     if (!is_null($questionattempt->responsesummary) && $questionattempt->responsesummary !== '') {
+        // The summary has one {choice} per gap, in order, and {} for a gap left empty. Each
+        // filled gap is a gap-choice pair, with the same ids as the definition's sources and
+        // targets.
         $selections = explode('} {', rtrim(ltrim($questionattempt->responsesummary, '{'), '}'));
+        $pairs = [];
+        $extension = [];
+        foreach ($selections as $i => $selection) {
+            if ($selection === '') {
+                continue;
+            }
+            $gap = question\get_gap_name($i + 1);
+            $pairs[] = utils\slugify($gap) . '[.]' . utils\slugify($selection);
+            $extension[utils\slugify($gap)] = $selection;
+        }
 
         $result = [
-            'response' => implode('[,]', array_map(
-                function ($selection) {
-                    return utils\slugify($selection);
-                },
-                $selections
-            )),
+            'response' => implode('[,]', $pairs),
             'completion' => true,
             'success' => $questionattempt->rightanswer === $questionattempt->responsesummary,
             'extensions' => [
-                'http://learninglocker.net/xapi/cmi/sequencing/response' => $selections,
+                'http://learninglocker.net/xapi/cmi/matching/response' => (object) $extension,
             ],
         ];
     }
@@ -82,13 +90,7 @@ function gapselect(array $config, \stdClass $event, \stdClass $questionattempt, 
         'object' => [
             ...utils\get_activity\base(),
             'id' => utils\get_quiz_question_id($config, $coursemodule->id, $question->id),
-            'definition' => question\get_multichoice_definition(
-                $config,
-                $question,
-                $lang,
-                'sequencing',
-                $questionattempt->rightanswer,
-            ),
+            'definition' => question\get_gapselect_definition($config, $question, $lang),
         ],
         'result' => $result,
         'context' => [

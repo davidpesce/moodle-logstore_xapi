@@ -8,6 +8,20 @@
   ],
   "lesson_answers": [
     {
+      "id": 10,
+      "pageid": 1,
+      "answer": "Well done",
+      "response": null,
+      "score": 1
+    },
+    {
+      "id": 11,
+      "pageid": 1,
+      "answer": "Try again",
+      "response": null,
+      "score": 0
+    },
+    {
       "pageid": 1,
       "answer": "A",
       "response": "Apple",

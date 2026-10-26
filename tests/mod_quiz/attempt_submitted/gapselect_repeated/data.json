@@ -1,0 +1,92 @@
+{
+  "grade_grades": [
+    {
+      "itemid": 1,
+      "userid": 1,
+      "rawgrade": 50
+    }
+  ],
+  "grade_items": [
+    {
+      "id": 1,
+      "grademax": 100,
+      "grademin": 0,
+      "gradepass": 50,
+      "iteminstance": 1,
+      "itemmodule": "quiz",
+      "itemtype": "mod",
+      "itemnumber": 0
+    }
+  ],
+  "modules": [
+    {
+      "id": 1,
+      "name": "quiz"
+    }
+  ],
+  "question": [
+    {
+      "id": 1,
+      "name": "test_name",
+      "qtype": "gapselect",
+      "questiontext": "<p>[[1]] food, [[1]] sauce, [[2]] drink</p>"
+    }
+  ],
+  "question_answers": [
+    {
+      "id": 1,
+      "answer": "spicy",
+      "fraction": 0.0,
+      "feedback": "1",
+      "question": 1
+    },
+    {
+      "id": 2,
+      "answer": "mango",
+      "fraction": 0.0,
+      "feedback": "1",
+      "question": 1
+    },
+    {
+      "id": 3,
+      "answer": "chocolate",
+      "fraction": 0.0,
+      "feedback": "1",
+      "question": 1
+    }
+  ],
+  "question_attempts": [
+    {
+      "id": 1,
+      "questionid": 1,
+      "questionusageid": 1,
+      "responsesummary": "{spicy} {} {mango}",
+      "rightanswer": "{spicy} {spicy} {mango}"
+    }
+  ],
+  "question_usages": [
+    {
+      "id": 1
+    }
+  ],
+  "quiz": [
+    {
+      "id": 1,
+      "name": "test_quiz_name",
+      "grade": 100,
+      "sumgrades": 100
+    }
+  ],
+  "quiz_attempts": [
+    {
+      "id": 1,
+      "uniqueid": 1,
+      "quiz": 1,
+      "attempt": 1,
+      "state": "finished",
+      "sumgrades": 50,
+      "timefinish": 1,
+      "timestart": 0
+    }
+  ]
+}
