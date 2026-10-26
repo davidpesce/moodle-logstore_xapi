@@ -34,8 +34,11 @@ use src\transformer\utils;
  * @param ?string $description The activity description.
  * @param array $choices The choices available.
  * @param string $lang The language.
- * @param ?array $rightchoices The correct options. Omit for questions with no correct answer
- *                            (surveys, Choice activities), and no correctResponsesPattern is sent.
+ * @param ?array $correctresponses The correct responses, each a list of the options that are
+ *                                right together: [['A'], ['B']] when A or B is right on its own,
+ *                                [['A', 'B']] when both must be chosen. Omit for questions with no
+ *                                correct answer (surveys, Choice activities), and no
+ *                                correctResponsesPattern is sent.
  * @return array
  */
 function choice(
@@ -44,7 +47,7 @@ function choice(
     ?string $description,
     array $choices,
     string $lang,
-    ?array $rightchoices = null
+    ?array $correctresponses = null
 ) {
     $cmichoices = ($config['send_response_choices'] && !is_null($choices))
         ? array_map(
@@ -62,19 +65,23 @@ function choice(
         )
         : null;
 
+    $correctresponses = array_filter($correctresponses ?? [], function ($rightchoices) {
+        return !empty($rightchoices);
+    });
+
     return [
         ...common($config, $name, $description, $lang),
         'interactionType' => 'choice',
         // A correctResponsesPattern says which response is correct, so it is only sent when there
         // is a correct answer. Claiming that every choice together was correct made an LRS mark
         // survey and Choice activity answers as wrong.
-        ...($config['send_response_choices'] && !empty($cmichoices) && !empty($rightchoices)
+        ...($config['send_response_choices'] && !empty($cmichoices) && !empty($correctresponses)
             ? [
-                'correctResponsesPattern' => [
-                    implode('[,]', array_map(function ($rightchoice) {
+                'correctResponsesPattern' => array_values(array_map(function ($rightchoices) {
+                    return implode('[,]', array_map(function ($rightchoice) {
                         return utils\slugify($rightchoice);
-                    }, $rightchoices)),
-                ],
+                    }, $rightchoices));
+                }, $correctresponses)),
             ]
             : []),
         ...($config['send_response_choices'] && !empty($cmichoices)

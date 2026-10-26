@@ -33,8 +33,8 @@ use src\transformer\utils;
  * @param string $name The activity name.
  * @param ?string $description The activity description.
  * @param string $lang The language.
- * @param ?array $correctanswers Optional array of correct string answers. Sent only with
- *                               send_response_choices on.
+ * @param ?array $correctanswers Optional array of correct string answers, each correct on its
+ *                               own. Sent only with send_response_choices on.
  */
 function fill_in(
     array $config,
@@ -50,9 +50,9 @@ function fill_in(
         ...(
             $config['send_response_choices'] && !is_null($correctanswers)
                 ? [
-                    'correctResponsesPattern' => [
-                        implode('[,]', $correctanswers),
-                    ],
+                    // Each pattern is a complete correct response, so alternatives are separate
+                    // patterns; "[,]" would mean all of them together.
+                    'correctResponsesPattern' => array_values($correctanswers),
                 ]
                 : []
         ),

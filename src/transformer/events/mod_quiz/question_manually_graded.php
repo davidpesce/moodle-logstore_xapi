@@ -86,12 +86,7 @@ function question_manually_graded(array $config, \stdClass $event) {
             ],
         ],
         'result' => [
-            'score' => [
-                'min' => $minscore,
-                'max' => $maxscore,
-                'raw' => $rawscore,
-                'scaled' => utils\get_scaled_score($rawscore, $minscore, $maxscore),
-            ],
+            'score' => utils\get_score($rawscore, $minscore, $maxscore),
         ],
         'context' => [
             ...utils\get_context_base($config, $event, $lang, $course),

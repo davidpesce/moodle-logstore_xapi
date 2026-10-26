@@ -27,38 +27,53 @@ namespace src\transformer\utils\get_activity\definition\cmi;
 use src\transformer\utils;
 
 /**
+ * Format one correct numeric response: an exact value, or a range "min[:]max" in which either
+ * bound may be open.
+ *
+ * @param ?string $min The minimum numeric value.
+ * @param ?string $max The maximum numeric value.
+ * @param ?string $exact An exact correct value, used instead of the range.
+ * @return ?string The pattern, or null when there is no value and no bound.
+ */
+function numeric_pattern(?string $min, ?string $max, ?string $exact = null): ?string {
+    if (!is_null($exact)) {
+        return $exact;
+    }
+    // With no exact value and no bound there is no correct answer to state, rather than a
+    // meaningless "[:]".
+    if (is_null($min) && is_null($max)) {
+        return null;
+    }
+    return $min . '[:]' . $max;
+}
+
+/**
  * Transformer util for creating numeric definitions
  *
  * @param array $config The transformer config settings.
  * @param string $name The activity name.
  * @param ?string $description The activity description.
- * @param ?string $min The minimum numeric value.
- * @param ?string $max The maximum numeric value.
  * @param string $lang The language.
- * @param ?string $exact Override for a single correct numeric answer
+ * @param array $correctresponses The correct responses, each from numeric_pattern(). Each is
+ *                                correct on its own. Sent only with send_response_choices on.
  * @return array
  */
 function numeric(
     array $config,
     string $name,
     ?string $description,
-    ?string $min,
-    ?string $max,
     string $lang,
-    ?string $exact = null
+    array $correctresponses = []
 ) {
-    // With no exact value and no bound there is no correct answer to state, so the optional
-    // correctResponsesPattern is left out rather than sent as a meaningless "[:]". Correct
-    // answers are only sent when the admin has chosen to send them.
-    $hascorrect = $config['send_response_choices']
-        && (!is_null($exact) || !is_null($min) || !is_null($max));
+    $correctresponses = array_values(array_filter($correctresponses, function ($pattern) {
+        return !is_null($pattern);
+    }));
     return [
         ...common($config, $name, $description, $lang),
         'interactionType' => 'numeric',
-        ...($hascorrect ? [
-            'correctResponsesPattern' => [
-                !is_null($exact) ? $exact : $min . '[:]' . $max,
-            ],
-        ] : []),
+        // Correct answers are only sent when the admin has chosen to send them.
+        ...($config['send_response_choices'] && !empty($correctresponses)
+            ? ['correctResponsesPattern' => $correctresponses]
+            : []),
     ];
 }

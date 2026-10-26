@@ -24,6 +24,21 @@ the authoritative record.
   pairs, even with the setting off. Sites with the setting off no longer send them; turn it on
   if your LRS reports rely on them.
 
+### Statement fixes
+
+- **Lesson questions with several right answers** send each one as its own correct response.
+  They were joined into one pattern, which in xAPI means "all of these together", for
+  short-answer, numerical and single-answer multiple-choice pages. Multiple-answer pages still
+  need all their right answers together. Short-answer pages that use regular expressions no
+  longer send the expressions as correct responses.
+- **Quiz numerical answers typed with a unit** ("5 m") or a decimal comma ("12,5") send the
+  number alone as the response, which a numeric interaction requires. `success` is now right
+  for them too; they were always reported as wrong.
+- **Scores with no range** (a maximum grade of 0, or min equal to max) send the raw score only.
+  xAPI requires max to be greater than min, and strict LRSs rejected these statements. This
+  applies to quiz attempts and manually graded questions, lessons, lesson essays, SCORM and
+  assignment grades.
+
 ### Development
 
 - **The plugin's PHPUnit tests no longer need `composer install`.** On a git checkout without

@@ -1,0 +1,48 @@
+{
+  "lesson": [
+    {
+      "id": 1,
+      "name": "test_lesson",
+      "intro": "test_lesson_intro"
+    }
+  ],
+  "lesson_answers": [
+    {
+      "id": 1,
+      "pageid": 1,
+      "answer": "Th[a-z]+g",
+      "response": "Feedback: Thing",
+      "score": 1
+    },
+    {
+      "id": 2,
+      "pageid": 1,
+      "answer": "Some(thing)?",
+      "response": "Feedback: Something",
+      "score": 1
+    },
+    {
+      "id": 3,
+      "pageid": 1,
+      "answer": "Nothing",
+      "response": "Feedback: Nothing",
+      "score": 0
+    }
+  ],
+  "lesson_pages": [
+    {
+      "id": 1,
+      "lessonid": 1,
+      "contents": "lesson_question_page_contents",
+      "qtype": 1,
+      "title": "lesson_question_page_title",
+      "qoption": 1
+    }
+  ],
+  "modules": [
+    {
+      "id": 1,
+      "name": "lesson"
+    }
+  ]
+}

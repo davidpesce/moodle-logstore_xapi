@@ -62,13 +62,11 @@ function numerical(
         'object' => [
             ...utils\get_activity\base(),
             'id' => $config['app_url'] . '/mod/feedback/edit_item.php?id=' . $feedbackitem->id,
+            // The item's range only limits what can be entered. Feedback is not graded, so there
+            // is no correct answer and no correctResponsesPattern is sent.
             'definition' => utils\get_activity\definition\cmi\numeric(
                 $config,
                 $feedbackitem->name,
-                null,
-                // The item's range only limits what can be entered. Feedback is not graded, so
-                // there is no correct answer and no correctResponsesPattern is sent.
-                null,
                 null,
                 $lang
             ),

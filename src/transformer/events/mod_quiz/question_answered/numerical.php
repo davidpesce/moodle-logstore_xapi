@@ -51,9 +51,10 @@ function numerical(array $config, \stdClass $event, \stdClass $questionattempt, 
         'max' => $max,
         'target' => $target,
     ] = utils\quiz_question\get_numerical_answer($config, $question->id);
-    // Moodle stores NULL for a question the learner didn't answer.
+    // Moodle stores NULL for a question the learner didn't answer. The summary is the answer as
+    // typed, which can include a unit, so the response is the number alone.
     $responsesummary = $questionattempt->responsesummary ?? '';
-    $numanswer = $responsesummary;
+    $numanswer = utils\get_numeric_response($responsesummary);
 
     return [[
         'actor' => utils\get_user($config, $user),
@@ -69,13 +70,13 @@ function numerical(array $config, \stdClass $event, \stdClass $questionattempt, 
             'definition' => question\get_numerical_definition($config, $question, $lang),
         ],
         'result' => [
-            'response' => $responsesummary,
+            'response' => $numanswer,
             'completion' => $responsesummary !== '',
-            'success' => is_numeric($numanswer) && ($target == '*' || ($min <= $numanswer && $numanswer <= $max)),
-            ...($responsesummary !== ''
+            'success' => $numanswer !== '' && ($target == '*' || ($min <= $numanswer && $numanswer <= $max)),
+            ...($numanswer !== ''
                 ? [
                     'extensions' => [
-                        'http://learninglocker.net/xapi/cmi/numeric/response' => floatval($responsesummary),
+                        'http://learninglocker.net/xapi/cmi/numeric/response' => floatval($numanswer),
                     ],
                 ]
                 : []),

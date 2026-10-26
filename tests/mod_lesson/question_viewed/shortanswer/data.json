@@ -13,6 +13,20 @@
       "answer": "Thing",
       "response": "Feedback: Thing",
       "score": 1
+    },
+    {
+      "id": 2,
+      "pageid": 1,
+      "answer": "Something",
+      "response": "Feedback: Something",
+      "score": 1
+    },
+    {
+      "id": 3,
+      "pageid": 1,
+      "answer": "Nothing",
+      "response": "Feedback: Nothing",
+      "score": 0
     }
   ],
   "lesson_pages": [
@@ -21,7 +35,8 @@
       "lessonid": 1,
       "contents": "lesson_question_page_contents",
       "qtype": 1,
-      "title": "lesson_question_page_title"
+      "title": "lesson_question_page_title",
+      "qoption": 0
     }
   ],
   "modules": [

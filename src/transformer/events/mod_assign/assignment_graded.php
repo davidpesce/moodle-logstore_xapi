@@ -113,12 +113,7 @@ function assignment_graded(array $config, \stdClass $event) {
 
     // Only write a score if valid.
     if ($validscore) {
-        $statement['result']['score'] = [
-            'raw' => $scoreraw,
-            'min' => $scoremin,
-            'max' => $scoremax,
-            'scaled' => utils\get_scaled_score($scoreraw, $scoremin, $scoremax),
-        ];
+        $statement['result']['score'] = utils\get_score($scoreraw, $scoremin, $scoremax);
     }
 
     return [$statement];

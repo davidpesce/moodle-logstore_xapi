@@ -45,7 +45,8 @@
       "lessonid": 1,
       "contents": "lesson_question_page_contents",
       "qtype": 3,
-      "title": "lesson_question_page_title"
+      "title": "lesson_question_page_title",
+      "qoption": 0
     }
   ],
   "modules": [

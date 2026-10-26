@@ -95,8 +95,9 @@ function get_multichoice_definition(
             utils\get_string_html_removed($question->questiontext),
             $choices,
             $lang,
+            // The right answer lists every option that must be chosen, together.
             (!is_null($rightanswer))
-                ? explode('; ', utils\get_string_html_removed($rightanswer))
+                ? [explode('; ', utils\get_string_html_removed($rightanswer))]
                 : null
         );
     }
@@ -152,13 +153,15 @@ function get_numerical_definition(array $config, \stdClass $question, string $la
         $config,
         $question->name,
         utils\get_string_html_removed($question->questiontext),
-        $min,
-        $max,
         $lang,
-        // If we have an exact match, send that.
-        ($min === $target && $max === $target)
-            ? $target
-            : null
+        [
+            cmi\numeric_pattern(
+                $min,
+                $max,
+                // If we have an exact match, send that.
+                ($min === $target && $max === $target) ? $target : null
+            ),
+        ]
     );
 }
 
