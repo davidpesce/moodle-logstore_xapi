@@ -45,8 +45,9 @@ function true_false(
     return [
         ...common($config, $name, $description, $lang),
         'interactionType' => 'true-false',
+        // Correct answers are only sent when the admin has chosen to send them.
         ...(
-            !is_null($correctanswer)
+            $config['send_response_choices'] && !is_null($correctanswer)
                 ? [
                     'correctResponsesPattern' => [
                         $correctanswer

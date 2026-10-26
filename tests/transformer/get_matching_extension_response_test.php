@@ -91,7 +91,7 @@ final class get_matching_extension_response_test extends advanced_testcase {
     public function test_keys_match_definition_source_ids(): void {
         $stems = ['Red...', 'Blue.sky'];
         $definition = \src\transformer\utils\get_activity\definition\cmi\matching(
-            [],
+            ['send_response_choices' => true],
             'name',
             null,
             $stems,
