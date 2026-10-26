@@ -44,6 +44,17 @@ function matching(
     array $target,
     string $lang
 ) {
+    $definition = [
+        ...common($config, $name, $description, $lang),
+        'interactionType' => 'matching',
+    ];
+
+    // The source and target lists are in matching order, so they give the answers away as
+    // much as the correct response does. All three are only sent when the admin has chosen to.
+    if (!$config['send_response_choices']) {
+        return $definition;
+    }
+
     $sourceitems = array_map(
         function ($answer) use ($lang) {
             return [
@@ -69,8 +80,7 @@ function matching(
     );
 
     return [
-        ...common($config, $name, $description, $lang),
-        'interactionType' => 'matching',
+        ...$definition,
         'correctResponsesPattern' => [
             implode(
                 '[,]',

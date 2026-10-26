@@ -6,6 +6,15 @@ the authoritative record.
 
 ## 5.3.0 (unreleased)
 
+### Privacy
+
+- **Correct answers are only sent when "Send response choices" is on, for every question type.**
+  Before, the setting only covered multiple-choice and sequencing questions. True/false,
+  short-answer, numerical and matching questions in quizzes, lessons and feedback activities
+  always sent their correct answer (`correctResponsesPattern`), and matching questions their
+  pairs, even with the setting off. Sites with the setting off no longer send them; turn it on
+  if your LRS reports rely on them.
+
 ### Development
 
 - **The plugin's PHPUnit tests no longer need `composer install`.** On a git checkout without

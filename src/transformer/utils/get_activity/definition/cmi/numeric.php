@@ -48,8 +48,10 @@ function numeric(
     ?string $exact = null
 ) {
     // With no exact value and no bound there is no correct answer to state, so the optional
-    // correctResponsesPattern is left out rather than sent as a meaningless "[:]".
-    $hascorrect = !is_null($exact) || !is_null($min) || !is_null($max);
+    // correctResponsesPattern is left out rather than sent as a meaningless "[:]". Correct
+    // answers are only sent when the admin has chosen to send them.
+    $hascorrect = $config['send_response_choices']
+        && (!is_null($exact) || !is_null($min) || !is_null($max));
     return [
         ...common($config, $name, $description, $lang),
         'interactionType' => 'numeric',
