@@ -38,7 +38,10 @@ function course_category_created(array $config, \stdClass $event) {
     $user = $repo->read_record_by_id('user', $event->userid);
     $lang = $config['source_lang'];
     $category = $repo->read_record_by_id($event->objecttable, $event->objectid);
-    $parentcategory = $repo->read_record_by_id($event->objecttable, $category->parent);
+    // A top-level category has parent 0, so it has no parent to send.
+    $parentcategory = !empty($category->parent)
+        ? $repo->read_record_by_id($event->objecttable, $category->parent)
+        : null;
 
     return [[
         'actor' => utils\get_user($config, $user),
@@ -52,9 +55,13 @@ function course_category_created(array $config, \stdClass $event) {
         'context' => [
             ...utils\get_context_base($config, $event, $lang),
             'contextActivities' => [
-                'parent' => [
-                    utils\get_activity\course_category($config, $parentcategory),
-                ],
+                ...(!is_null($parentcategory)
+                    ? [
+                        'parent' => [
+                            utils\get_activity\course_category($config, $parentcategory),
+                        ],
+                    ]
+                    : []),
                 'category' => [
                     utils\get_activity\site($config),
                 ],

@@ -1,0 +1,17 @@
+{
+  "course_categories": [
+    {
+      "id": 2,
+      "name": "Base Category",
+      "description": "Default Moodle Course Category",
+      "parent": 0
+    }
+  ],
+  "user": [
+    {
+      "id": 1,
+      "firstname": "test_fullname",
+      "email": "test@test.com"
+    }
+  ]
+}

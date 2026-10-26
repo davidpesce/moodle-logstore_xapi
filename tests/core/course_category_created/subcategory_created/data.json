@@ -3,7 +3,8 @@
     {
       "id": 2,
       "name": "Base Category",
-      "description": "Default Moodle Course Category"
+      "description": "Default Moodle Course Category",
+      "parent": 0
     },
     {
       "id": 3,
