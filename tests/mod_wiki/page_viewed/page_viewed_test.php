@@ -45,7 +45,7 @@ final class page_viewed_test extends \logstore_xapi\xapi_test_case {
      * @return string
      */
     protected function get_plugin_type() {
-        return "core";
+        return "mod";
     }
 
     /**
@@ -54,7 +54,7 @@ final class page_viewed_test extends \logstore_xapi\xapi_test_case {
      * @return string
      */
     protected function get_plugin_name() {
-        return "mod_survey";
+        return "wiki";
     }
 
     /**

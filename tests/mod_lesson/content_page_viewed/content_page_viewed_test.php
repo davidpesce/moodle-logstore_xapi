@@ -54,7 +54,7 @@ final class content_page_viewed_test extends \logstore_xapi\xapi_test_case {
      * @return string
      */
     protected function get_plugin_name() {
-        return "glossary";
+        return "lesson";
     }
 
     /**
