@@ -257,11 +257,12 @@ class store extends php_obj implements log_writer {
 
         $plugin = core_plugin_manager::instance()->get_plugin_info('logstore_xapi');
 
+        // Messages can hold LRS response bodies, and debugging() prints them unescaped.
         $logerror = function ($message = '') {
-            debugging($message, DEBUG_NORMAL);
+            debugging(s(\core_text::substr((string) $message, 0, 2000)), DEBUG_NORMAL);
         };
         $loginfo = function ($message = '') {
-            debugging($message, DEBUG_DEVELOPER);
+            debugging(s((string) $message), DEBUG_DEVELOPER);
         };
 
         $handlerconfig = [

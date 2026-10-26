@@ -68,10 +68,11 @@ function handler(array $config, array $events) {
         } catch (\Throwable $e) {
             // Throwable, not Exception, so a PHP Error in one transformer fails only that event.
             $logerror = $config['log_error'];
+            $loginfo = $config['log_info'];
             $id = property_exists($eventobj, 'id') ? $eventobj->id : ' (id not present on event object) ';
             $errormessage = "Failed transform for event id #" . $id . ": " . $e->getMessage();
             $logerror($errormessage);
-            $logerror($e->getTraceAsString());
+            $loginfo($e->getTraceAsString());
             $eventobj->response = json_encode(['transfromerror' => $errormessage]);
 
             // Returns unsuccessfully transformed event without statements.
