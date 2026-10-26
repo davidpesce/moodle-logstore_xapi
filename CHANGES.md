@@ -4,9 +4,10 @@ A summary of each release. The full notes, including upgrade instructions, are o
 [GitHub releases page](https://github.com/davidpesce/moodle-logstore_xapi/releases), which is
 the authoritative record.
 
-## 5.2.1 (unreleased)
+## 5.2.1 (2026-10-26)
 
 Bug-fix and privacy release. Supports Moodle 4.5 to 5.3. No database changes; one new setting.
+[Release notes](https://github.com/davidpesce/moodle-logstore_xapi/releases/tag/v5.2.1)
 
 ### Privacy
 
@@ -52,6 +53,11 @@ Bug-fix and privacy release. Supports Moodle 4.5 to 5.3. No database changes; on
   escaped.
 - **Failure notification emails** sent to an additional address no longer change Moodle's
   cached support user, which could send later support mail in the same cron run to that address.
+
+### Known issue
+
+- Requests to the LRS still do not use Moodle's proxy settings (see 5.2.0). The LRS client is
+  moving to Moodle's `\curl` class in 5.3.0 (#910).
 
 ## 5.2.0 (2026-10-24)
 
