@@ -1,0 +1,76 @@
+[
+  {
+    "actor": {
+      "account": {
+        "homePage": "http://www.example.org",
+        "name": "1"
+      },
+      "name": "test_recipient_firstname test_recipient_lastname"
+    },
+    "verb": {
+      "id": "https://w3id.org/xapi/tla/verbs/achieved",
+      "display": {
+        "en": "Achieved"
+      }
+    },
+    "object": {
+      "id": "http://www.example.org/badges/overview.php?id=1",
+      "definition": {
+        "description": null,
+        "extensions": {
+          "https://xapi.edlm/profiles/edlm-lms/v1/concepts/activity-extensions/badge-type": "Course",
+          "https://xapi.edlm/profiles/edlm-lms/v1/concepts/activity-extensions/badge-version": "1.0"
+        },
+        "name": {
+          "pt-br": "test_badgename"
+        },
+        "type": "https://xapi.edlm/profiles/edlm-lms/concepts/activity-types/badge"
+      },
+      "objectType": "Activity"
+    },
+    "context": {
+      "contextActivities": {
+        "category": [
+          {
+            "id": "http://www.example.org",
+            "definition": {
+              "name": {
+                "en": "test_site_fullname"
+              },
+              "type": "http://id.tincanapi.com/activitytype/lms"
+            },
+            "objectType": "Activity"
+          }
+        ],
+        "parent": [
+          {
+            "id": "http://www.example.org/course/view.php?id=2",
+            "definition": {
+              "description": {
+                "pt-br": ""
+              },
+              "name": {
+                "pt-br": "test_name"
+              },
+              "type": "https://w3id.org/xapi/cmi5/activitytype/course"
+            },
+            "objectType": "Activity"
+          }
+        ]
+      },
+      "extensions": {
+        "http://lrs.learninglocker.net/define/extensions/info": {
+          "event_function": "\\src\\transformer\\events\\core\\badge_awarded",
+          "event_name": "\\core\\event\\badge_awarded",
+          "http://moodle.org": "1.0.0",
+          "https://github.com/xAPI-vle/moodle-logstore_xapi": "0.0.0-development"
+        },
+        "https://xapi.edlm/profiles/edlm-lms/v1/concepts/context-extensions/badge-assignment-method": "Automatic"
+      },
+      "language": "pt-br"
+    },
+    "result": {
+      "response": "you got the test badge!"
+    }
+  }
+]

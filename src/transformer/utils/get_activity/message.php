@@ -41,11 +41,15 @@ function message(array $config, string $lang, \stdClass $message) {
         'definition' => [
             'type' => 'http://id.tincanapi.com/activitytype/chat-message',
             'name' => [
-                $lang => $message->subject ?? '[Untitled Message]',
+                $lang => ($message->subject ?? '') !== '' ? $message->subject : '[Untitled Message]',
             ],
-            'description' => [
-                $lang => $message->fullmessage,
-            ],
+            ...(($message->fullmessage ?? '') !== ''
+                ? [
+                    'description' => [
+                        $lang => $message->fullmessage,
+                    ],
+                ]
+                : []),
         ],
     ];
 }

@@ -53,7 +53,7 @@ function submission_locked(array $config, \stdClass $event) {
             : [
                 'id' => 'https://xapi.edlm/profiles/edlm-lms/concepts/verbs/unlocked',
                 'display' => [
-                    'en' => 'Unocked',
+                    'en' => 'Unlocked',
                 ],
             ],
         'object' => utils\get_activity\assign_submission(

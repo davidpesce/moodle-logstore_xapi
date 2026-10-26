@@ -1,0 +1,44 @@
+{
+  "badge": [
+    {
+      "courseid": 2,
+      "id": 1,
+      "name": "test_badgename",
+      "description": null,
+      "message": "you got the test badge!",
+      "type": 2,
+      "version": "1.0",
+      "language": "pt_br"
+    }
+  ],
+  "badge_manual_award": [],
+  "course": [
+    {
+      "id": 1,
+      "fullname": "test_site_fullname",
+      "lang": "en"
+    },
+    {
+      "id": 2,
+      "fullname": "test_name",
+      "lang": "en",
+      "summary": null
+    }
+  ],
+  "user": [
+    {
+      "id": 1,
+      "firstname": "test_recipient_firstname",
+      "lastname": "test_recipient_lastname",
+      "username": "recipient",
+      "email": "recipient@test.com"
+    },
+    {
+      "id": 2,
+      "firstname": "test_awarder_firstname",
+      "lastname": "test_awarder_lastname",
+      "username": "awarder",
+      "email": "awarder@test.com"
+    }
+  ]
+}

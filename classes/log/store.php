@@ -238,13 +238,53 @@ class store extends php_obj implements log_writer {
      */
     public function process_events(array $events, $eventtype = XAPI_IMPORT_TYPE_LIVE) {
         $events = $this->convert_array_to_objects($events);
+        [$events, $skippedevents] = $this->split_unrouted_events($events);
         $events = $this->get_persistent_eventids($events, $eventtype);
 
         $config = $this->get_handler_config();
         $loadedevents = \src\handler($config, $events);
         $this->save_sent_events($loadedevents);
 
-        return $loadedevents;
+        return array_merge($loadedevents, $skippedevents);
+    }
+
+    /**
+     * Separate the events the admin has chosen not to send.
+     *
+     * Routes and logguests are checked when an event is captured (is_event_ignored()), but
+     * events also arrive from the historic report and the failed log, and a route may have been
+     * turned off since an event was queued. Every path goes through process_events(), so the
+     * check is repeated here.
+     *
+     * Skipped events are returned with 'loaded' set to null: the tasks delete them from the
+     * queue, but they are not recorded as sent or as failed.
+     *
+     * @param array $events Event objects.
+     * @return array The events to send, and the skipped events in the loaded-event format.
+     */
+    private function split_unrouted_events(array $events) {
+        global $CFG;
+
+        $enabledevents = array_flip(explode(',', $this->get_config('routes', '')));
+        $allowguestlogging = $this->get_config('logguests', 1);
+
+        $routedevents = [];
+        $skippedevents = [];
+        foreach ($events as $event) {
+            $isrouted = isset($event->eventname) && isset($enabledevents[$event->eventname]);
+            $isguest = isset($event->userid) && !empty($CFG->siteguest) && $event->userid == $CFG->siteguest;
+            if ($isrouted && ($allowguestlogging || !$isguest)) {
+                $routedevents[] = $event;
+            } else {
+                $skippedevents[] = [
+                    'event' => $event,
+                    'statements' => [],
+                    'transformed' => false,
+                    'loaded' => null,
+                ];
+            }
+        }
+        return [$routedevents, $skippedevents];
     }
 
     /**
@@ -257,11 +297,12 @@ class store extends php_obj implements log_writer {
 
         $plugin = core_plugin_manager::instance()->get_plugin_info('logstore_xapi');
 
+        // Messages can hold LRS response bodies, and debugging() prints them unescaped.
         $logerror = function ($message = '') {
-            debugging($message, DEBUG_NORMAL);
+            debugging(s(\core_text::substr((string) $message, 0, 2000)), DEBUG_NORMAL);
         };
         $loginfo = function ($message = '') {
-            debugging($message, DEBUG_DEVELOPER);
+            debugging(s((string) $message), DEBUG_DEVELOPER);
         };
 
         $handlerconfig = [

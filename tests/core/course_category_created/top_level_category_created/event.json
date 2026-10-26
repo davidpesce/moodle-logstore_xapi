@@ -1,0 +1,8 @@
+{
+  "id": 1,
+  "objectid": 2,
+  "userid": 1,
+  "eventname": "\\core\\event\\course_category_created",
+  "objecttable": "course_categories",
+  "timecreated": 1433946701
+}

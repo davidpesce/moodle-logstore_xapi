@@ -68,7 +68,7 @@ function take_attendance(array $config, \stdClass $event) {
                     ),
                     'result' => [
                         'duration' => "PT" . (string) $sessionduration . "S",
-                        'completion' => $currentstatus->statuscode === 100,
+                        'completion' => (int) $currentstatus->statuscode === 100,
                     ],
                     'context' => [
                         ...utils\get_context_base($config, $event, $lang, $course),

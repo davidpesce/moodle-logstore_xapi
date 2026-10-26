@@ -41,10 +41,11 @@ function badge_revoked(array $config, \stdClass $event) {
     $revoker = utils\get_user($config, $repo->read_record_by_id('user', $event->userid));
     $course = $badge->courseid ? $repo->read_record_by_id('course', $badge->courseid) : null;
 
-    $lang = $badge->language ??
-      ((!(is_null($course))) ?
-       utils\get_course_lang($course) :
-       $config['source_lang']);
+    // The badge's language is a Moodle code such as pt_br, and may be empty.
+    $lang = utils\get_lang_tag(
+        $badge->language ?? null,
+        !is_null($course) ? utils\get_course_lang($course) : $config['source_lang']
+    );
 
     $statement = [[
         'actor' => utils\get_user($config, $recipient),
@@ -77,7 +78,7 @@ function badge_revoked(array $config, \stdClass $event) {
             'objectType' => 'Activity',
             'definition' => [
                 'name' => [$lang => $course->fullname],
-                'description' => [$lang => $course->summary],
+                'description' => [$lang => utils\get_string_html_removed($course->summary)],
                 'type' => 'https://w3id.org/xapi/cmi5/activitytype/course',
             ],
         ]];

@@ -46,8 +46,9 @@ function load_batch(array $config, array $transformedevents, callable $loader) {
     } catch (\Throwable $e) {
         $batchsize = count($transformedevents);
         $logerror = $config['log_error'];
+        $loginfo = $config['log_info'];
         $logerror("Failed load batch (" . $batchsize . " events)" . $e->getMessage());
-        $logerror($e->getTraceAsString());
+        $loginfo($e->getTraceAsString());
 
         // Add error code.
         $errorcode = $e->getCode();

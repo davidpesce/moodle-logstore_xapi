@@ -1,0 +1,10 @@
+{
+  "courseid": 2,
+  "id": 1,
+  "objectid": null,
+  "relateduserid": 2,
+  "userid": 1,
+  "eventname": "\\mod_forum\\event\\user_report_viewed",
+  "objecttable": null,
+  "timecreated": 1433946701
+}

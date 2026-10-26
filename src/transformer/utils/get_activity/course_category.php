@@ -43,9 +43,14 @@ function course_category(array $config, \stdClass $category) {
             'name' => [
                 $lang => $category->name,
             ],
-            'description' => [
-                $lang => $category->description,
-            ],
+            // The description is optional HTML.
+            ...(($category->description ?? '') !== ''
+                ? [
+                    'description' => [
+                        $lang => utils\get_string_html_removed($category->description),
+                    ],
+                ]
+                : []),
             'type' => 'https://xapi.edlm/profiles/edlm-lms/concepts/activity-types/course-category',
         ],
     ];

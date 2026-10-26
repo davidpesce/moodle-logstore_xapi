@@ -51,7 +51,9 @@ function numerical(array $config, \stdClass $event, \stdClass $questionattempt, 
         'max' => $max,
         'target' => $target,
     ] = utils\quiz_question\get_numerical_answer($config, $question->id);
-    $numanswer = $questionattempt->responsesummary;
+    // Moodle stores NULL for a question the learner didn't answer.
+    $responsesummary = $questionattempt->responsesummary ?? '';
+    $numanswer = $responsesummary;
 
     return [[
         'actor' => utils\get_user($config, $user),
@@ -67,12 +69,16 @@ function numerical(array $config, \stdClass $event, \stdClass $questionattempt, 
             'definition' => question\get_numerical_definition($config, $question, $lang),
         ],
         'result' => [
-            'response' => $questionattempt->responsesummary,
-            'completion' => $questionattempt->responsesummary !== '',
+            'response' => $responsesummary,
+            'completion' => $responsesummary !== '',
             'success' => is_numeric($numanswer) && ($target == '*' || ($min <= $numanswer && $numanswer <= $max)),
-            'extensions' => [
-                'http://learninglocker.net/xapi/cmi/numeric/response' => floatval($questionattempt->responsesummary),
-            ],
+            ...($responsesummary !== ''
+                ? [
+                    'extensions' => [
+                        'http://learninglocker.net/xapi/cmi/numeric/response' => floatval($responsesummary),
+                    ],
+                ]
+                : []),
         ],
         'context' => [
             ...utils\get_context_base($config, $event, $lang, $course),

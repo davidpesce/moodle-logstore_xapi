@@ -33,11 +33,5 @@ namespace src\transformer\utils;
  * @return string
  */
 function get_course_lang($course) {
-    $haslang = is_null($course->lang) || $course->lang == '';
-
-    // Ensure en_US and the like get corrected to the standard en-US.
-    $preppedlang = mb_ereg_replace('_', '-', $haslang ? 'en' : $course->lang);
-
-    // Ensure valid language format.
-    return mb_ereg_match('^[a-zA-Z]{2}(-[a-zA-Z]{2})?$', $preppedlang) ? $preppedlang : 'en';
+    return get_lang_tag($course->lang ?? null);
 }

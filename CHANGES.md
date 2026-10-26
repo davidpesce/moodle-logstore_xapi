@@ -4,6 +4,40 @@ A summary of each release. The full notes, including upgrade instructions, are o
 [GitHub releases page](https://github.com/davidpesce/moodle-logstore_xapi/releases), which is
 the authoritative record.
 
+## 5.2.1 (unreleased)
+
+Bug-fix and privacy release. Supports Moodle 4.5 to 5.3. No database changes.
+
+### Privacy
+
+- **Routes and "Log guest actions" now apply to every event that is sent**, not only when an event is
+  captured. Before, the historic report (whose event list offered every supported event, not only
+  the enabled ones), a resend from the error report, and `moveback_to_log.php` could send events
+  whose route is off, such as messages and notes, which 5.2.0 turned off by default. Events whose
+  route is off are now dropped from the queue without being sent, and the historic report lists
+  only enabled events.
+- **The forum user report statement no longer names the viewed user when "Set the actor name field" is
+  off.** Its activity name is now "forum posts of user 123".
+- **LRS error responses are escaped** before being shown as debugging output, and stack traces
+  are shown at developer debugging level only.
+
+### Statement fixes
+
+- **Choice activity `choices` are a JSON array.** With "Send response choices" on, they were sent
+  as an object keyed by option id, which strict LRSs reject.
+- **Unanswered numerical, short-answer and multiple-choice quiz questions** send `response: ""`
+  and `completion: false`. Numerical and short-answer questions sent `response: null` (rejected by
+  strict LRSs), and all three sent `completion: true`.
+- **Manually graded quiz questions** report the graded question. The first question in the
+  attempt was reported whichever one was graded.
+- **Badges** send the badge's language as a language tag (`pt-br`, not `pt_br`). Empty badge,
+  course category and message descriptions are left out instead of being sent as `null`.
+- **Top-level course categories:** "category created" statements failed for every top-level
+  category. They are now sent, without a parent.
+- **Face-to-face attendance** sends `completion: true` for a fully attended session; it was
+  always false.
+- **Assignment submission unlocked** displays "Unlocked" (was "Unocked").
+
 ## 5.2.0 (2026-10-24)
 
 xAPI compliance, privacy and bug-fix release. Supports Moodle 4.5 to 5.3.

@@ -41,10 +41,11 @@ function badge_awarded(array $config, \stdClass $event) {
     $badge = $repo->read_record_by_id('badge', $event->objectid);
     $course = $badge->courseid ? $repo->read_record_by_id('course', $badge->courseid) : null;
 
-    $lang = $badge->language ??
-      ((!(is_null($course))) ?
-       utils\get_course_lang($course) :
-       $config['source_lang']);
+    // The badge's language is a Moodle code such as pt_br, and may be empty.
+    $lang = utils\get_lang_tag(
+        $badge->language ?? null,
+        !is_null($course) ? utils\get_course_lang($course) : $config['source_lang']
+    );
 
     // The event's badgeissuedid points at badge_issued, not badge_manual_award, so find
     // the manual award (if any) by badge and recipient. Automatic awards have none.
@@ -97,7 +98,7 @@ function badge_awarded(array $config, \stdClass $event) {
             'objectType' => 'Activity',
             'definition' => [
                 'name' => [$lang => $course->fullname],
-                'description' => [$lang => $course->summary],
+                'description' => [$lang => utils\get_string_html_removed($course->summary)],
                 'type' => 'https://w3id.org/xapi/cmi5/activitytype/course',
             ],
         ]];
