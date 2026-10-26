@@ -29,29 +29,36 @@ namespace src\transformer\utils;
 /**
  * Transformer utility to determine the attempt result.
  *
+ * The statement's object is the attempt, so the score is the attempt's own: its sum of marks
+ * rescaled to the quiz's maximum grade, as quiz_rescale_grade() does. The gradebook grade is the
+ * user's overall quiz grade after the grading method (highest, average, first or last attempt)
+ * and can come from another attempt. An attempt that still needs manual grading has no total
+ * yet, so it is sent without a score or success.
+ *
  * @param array $config The transformer config settings.
- * @param \stdClass $attempt The attempt object.
- * @param \stdClass $gradeitem The grade item object.
- * @param \stdClass $attemptgrade The attemptgrade object.
+ * @param \stdClass $attempt The quiz attempt.
+ * @param \stdClass $quiz The quiz.
+ * @param ?\stdClass $gradeitem The quiz's grade item, for the pass grade.
  * @return array
  */
-function get_attempt_result(array $config, \stdClass $attempt, \stdClass $gradeitem, \stdClass $attemptgrade) {
-    $gradesum = floatval(isset($attemptgrade->rawgrade) ? $attemptgrade->rawgrade : 0);
-
-    $minscore = floatval($gradeitem->grademin ?: 0);
-    $maxscore = floatval($gradeitem->grademax ?: 0);
-    $passscore = floatval($gradeitem->gradepass ?: 0);
-
-    $completed = isset($attempt->state) ? $attempt->state === 'finished' : false;
-    $success = $gradesum >= $passscore;
-    $duration = get_attempt_duration($attempt);
-
+function get_attempt_result(array $config, \stdClass $attempt, \stdClass $quiz, ?\stdClass $gradeitem) {
     $result = [
-        'score' => get_score($gradesum, $minscore, $maxscore),
-        'completion' => $completed,
-        'success' => $success,
+        'completion' => isset($attempt->state) && $attempt->state === 'finished',
     ];
 
+    if (isset($attempt->sumgrades)) {
+        $maxgrade = (float) ($quiz->grade ?? 0);
+        $quizsumgrades = (float) ($quiz->sumgrades ?? 0);
+        $grade = $quizsumgrades >= 0.000005 ? (float) $attempt->sumgrades * $maxgrade / $quizsumgrades : 0.0;
+
+        $result['score'] = get_score($grade, 0.0, $maxgrade);
+        $success = get_success($result['score']['raw'], $gradeitem);
+        if (!is_null($success)) {
+            $result['success'] = $success;
+        }
+    }
+
+    $duration = get_attempt_duration($attempt);
     if ($duration != null) {
         $result['duration'] = $duration;
     }

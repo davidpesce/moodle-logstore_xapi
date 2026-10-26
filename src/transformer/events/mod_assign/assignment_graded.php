@@ -55,23 +55,13 @@ function assignment_graded(array $config, \stdClass $event) {
         $gradecomment = null;
     }
 
-    $gradeitems = $repo->read_record('grade_items', [
-        'itemmodule' => 'assign',
-        'iteminstance' => $grade->assignment,
-    ]);
+    $gradeitem = utils\get_module_grade_item($config, 'assign', $grade->assignment);
 
     $scoreraw = (float) ($grade->grade ?: 0);
-    $scoremin = (float) ($gradeitems->grademin ?: 0);
-    $scoremax = (float) ($gradeitems->grademax ?: 0);
+    $scoremin = (float) ($gradeitem->grademin ?? 0);
+    $scoremax = (float) ($gradeitem->grademax ?? 0);
     $validscore = ($scoremin <= $scoreraw && $scoreraw <= $scoremax) ? true : false;
-
-    $scorepass = (float) ($gradeitems->gradepass ?: null);
-
-    $success = false;
-
-    if ($scoreraw >= $scorepass) {
-        $success = true;
-    }
+    $success = utils\get_success($scoreraw, $gradeitem);
 
     $statement = [
         'actor' => utils\get_user($config, $user),
@@ -86,9 +76,7 @@ function assignment_graded(array $config, \stdClass $event) {
             $event->contextinstanceid,
             $lang
         ),
-        'result' => [
-            'success' => $success,
-        ],
+        'result' => is_null($success) ? [] : ['success' => $success],
         'context' => [
             ...utils\get_context_base($config, $event, $lang, $course),
             'instructor' => utils\get_user($config, $instructor),
@@ -114,6 +102,11 @@ function assignment_graded(array $config, \stdClass $event) {
     // Only write a score if valid.
     if ($validscore) {
         $statement['result']['score'] = utils\get_score($scoreraw, $scoremin, $scoremax);
+    }
+
+    // An empty result would be sent as a JSON array, not an object.
+    if (empty($statement['result'])) {
+        unset($statement['result']);
     }
 
     return [$statement];
