@@ -95,7 +95,10 @@ Each test inherits `test_create_event()` from `xapi_test_case`, which:
 - Builds a config with a `TestRepository` seeded from `data.json`
 - Runs the event through the full transformer pipeline
 - Asserts the output matches `statements.json`
-- Validates each statement against the xAPI spec via `yetanalytics/statementfactory`
+- Checks responses and correct responses use the ids the definition declares (`assert_consistent_with_definition`)
+- Validates each statement against the xAPI spec via `yetanalytics/statementfactory` (skipped if the plugin's `vendor/` isn't installed)
+
+The base config has `send_response_choices` on. To cover a statement with it off, override `get_transformer_config()` with `[...parent::get_transformer_config(), 'send_response_choices' => false]`, as `mod_quiz/attempt_submitted/multichoice` does.
 
 The `tests/common/` directory holds shared base data merged into every test's data, event, and statement files.
 

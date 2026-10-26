@@ -116,7 +116,30 @@
         "name": {
           "en": "test_name"
         },
-        "type": "http://adlnet.gov/expapi/activities/cmi.interaction"
+        "type": "http://adlnet.gov/expapi/activities/cmi.interaction",
+        "correctResponsesPattern": [
+          "answer-1"
+        ],
+        "choices": [
+          {
+            "id": "answer-1",
+            "description": {
+              "en": "answer 1"
+            }
+          },
+          {
+            "id": "answer-2",
+            "description": {
+              "en": "answer 2"
+            }
+          },
+          {
+            "id": "answer-3",
+            "description": {
+              "en": "answer 3"
+            }
+          }
+        ]
       },
       "objectType": "Activity"
     },

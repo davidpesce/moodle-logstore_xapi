@@ -60,6 +60,19 @@ final class multichoice_test extends \logstore_xapi\xapi_test_case {
     }
 
     /**
+     * Turn response choices off, so this test covers the statement without choices or
+     * correct responses. The _withchoices test covers the same question with it on.
+     *
+     * @return array
+     */
+    protected function get_transformer_config() {
+        return [
+            ...parent::get_transformer_config(),
+            'send_response_choices' => false,
+        ];
+    }
+
+    /**
      * Appease auto-detecting of test cases. xapi_test_case has default test cases.
      *
      * @covers ::attempt_submitted

@@ -15,6 +15,18 @@ the authoritative record.
   you don't want them. On sites upgrading from an earlier version, the new routes are off until
   you turn them on, as the saved route list is kept.
 
+### Development
+
+- **The plugin's PHPUnit tests no longer need `composer install`.** On a git checkout without
+  the plugin's `vendor/` directory, loading the tests was a fatal error that stopped the whole
+  site's PHPUnit run. Without it, only the xAPI schema check is now skipped. Release zips don't
+  include the tests and are not affected.
+- **Seven tests that had been skipped since 2025** are replaced with tests that run: a batch the
+  LRS can't receive goes to the failed log, moving events back to the queue (failed and
+  historic), and the report filter form.
+- **The event tests run with "Send response choices" on**, so choices and correct responses are
+  checked against every response by default.
+
 ## 5.2.1 (2026-10-26)
 
 Bug-fix and privacy release. Supports Moodle 4.5 to 5.3. No database changes; one new setting.
