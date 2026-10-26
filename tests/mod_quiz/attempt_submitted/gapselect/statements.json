@@ -116,7 +116,36 @@
         "name": {
           "en": "test_name"
         },
-        "type": "http://adlnet.gov/expapi/activities/cmi.interaction"
+        "type": "http://adlnet.gov/expapi/activities/cmi.interaction",
+        "correctResponsesPattern": [
+          "spicy[,]mango[,]milkshake"
+        ],
+        "choices": [
+          {
+            "id": "spicy",
+            "description": {
+              "en": "spicy"
+            }
+          },
+          {
+            "id": "mango",
+            "description": {
+              "en": "mango"
+            }
+          },
+          {
+            "id": "milkshake",
+            "description": {
+              "en": "milkshake"
+            }
+          },
+          {
+            "id": "chocolate",
+            "description": {
+              "en": "chocolate"
+            }
+          }
+        ]
       },
       "objectType": "Activity"
     },

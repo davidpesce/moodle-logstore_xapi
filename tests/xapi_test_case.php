@@ -20,7 +20,11 @@ defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
 
-require_once($CFG->dirroot . '/admin/tool/log/store/xapi/vendor/autoload.php');
+// The statement validator is a Composer dev dependency. Without `composer install` the event
+// tests still run, and only the schema check is skipped (see test_create_event()).
+if (file_exists($CFG->dirroot . '/admin/tool/log/store/xapi/vendor/autoload.php')) {
+    require_once($CFG->dirroot . '/admin/tool/log/store/xapi/vendor/autoload.php');
+}
 require_once($CFG->dirroot . '/admin/tool/log/store/xapi/src/autoload.php');
 
 foreach (glob($CFG->dirroot . '/admin/tool/log/store/xapi/tests/utils/*.php') as $filename) {
@@ -155,6 +159,12 @@ abstract class xapi_test_case extends \advanced_testcase {
         }, []);
         $this->assert_expected_statements($statements);
         foreach ($statements as $statement) {
+            $this->assert_consistent_with_definition($statement);
+        }
+        if (!class_exists(LockerStatement::class)) {
+            $this->markTestSkipped('The xAPI statement validator is not installed; run composer install in the plugin');
+        }
+        foreach ($statements as $statement) {
             $this->assert_valid_xapi_statement($statement);
         }
     }
@@ -174,7 +184,7 @@ abstract class xapi_test_case extends \advanced_testcase {
             'send_mbox' => false,
             'send_name' => true,
             'account_homepage' => 'http://www.example.org',
-            'send_response_choices' => false,
+            'send_response_choices' => true,
             'send_short_course_id' => false,
             'send_course_and_module_idnumber' => false,
             'send_username' => false,
@@ -197,7 +207,6 @@ abstract class xapi_test_case extends \advanced_testcase {
             return (string) $error;
         }, $errors));
         $this->assertEmpty($errors, $errorsjson);
-        $this->assert_consistent_with_definition($statement);
     }
 
     /**
