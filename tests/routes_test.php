@@ -19,7 +19,7 @@ namespace logstore_xapi;
 use logstore_xapi\task\emit_task;
 
 /**
- * Unit tests for applying the routes and logguests settings to queued events.
+ * Unit tests for applying the routes and logguests settings and the anonymous flag to queued events.
  *
  * Events reach the queue from the historic report and the failed log as well as from
  * capture, so the settings must also apply when the queue is processed.
@@ -36,9 +36,10 @@ final class routes_test extends \advanced_testcase {
      * @param string $eventname The event class name.
      * @param int $userid The user who triggered the event.
      * @param int $courseid The course the event happened in.
+     * @param int $anonymous The event's anonymous flag.
      * @return int The queue row id.
      */
-    private function queue_event(string $eventname, int $userid, int $courseid): int {
+    private function queue_event(string $eventname, int $userid, int $courseid, int $anonymous = 0): int {
         global $DB;
 
         $context = \context_course::instance($courseid);
@@ -54,6 +55,7 @@ final class routes_test extends \advanced_testcase {
             'contextinstanceid' => $context->instanceid,
             'userid' => $userid,
             'courseid' => $courseid,
+            'anonymous' => $anonymous,
             'timecreated' => time(),
             'type' => XAPI_IMPORT_TYPE_LIVE,
         ]);
@@ -135,6 +137,52 @@ final class routes_test extends \advanced_testcase {
 
         $this->run_emit_task();
 
+        $this->assertEquals(0, $DB->count_records('logstore_xapi_log'));
+        $this->assertEquals(1, $DB->count_records('logstore_xapi_failed_log'));
+    }
+
+    /**
+     * Anonymous events (such as assignment events under blind marking) are skipped when the
+     * anonymousevents setting is "Don't send".
+     *
+     * @return void
+     */
+    public function test_anonymous_events_are_skipped_when_set(): void {
+        global $DB;
+        $this->resetAfterTest();
+
+        $user = $this->getDataGenerator()->create_user();
+        $course = $this->getDataGenerator()->create_course();
+        set_config('routes', '\mod_assign\event\submission_graded', 'logstore_xapi');
+        set_config('anonymousevents', XAPI_ANONYMOUS_EVENTS_SKIP, 'logstore_xapi');
+
+        $this->queue_event('\mod_assign\event\submission_graded', $user->id, $course->id, 1);
+
+        $this->run_emit_task();
+
+        $this->assertEquals(0, $DB->count_records('logstore_xapi_log'));
+        $this->assertEquals(0, $DB->count_records('logstore_xapi_failed_log'));
+        $this->assertEquals(0, $DB->count_records('logstore_xapi_sent_log'));
+    }
+
+    /**
+     * By default anonymous events are processed (and sent without the hidden user's identity).
+     *
+     * @return void
+     */
+    public function test_anonymous_events_are_processed_by_default(): void {
+        global $DB;
+        $this->resetAfterTest();
+
+        $user = $this->getDataGenerator()->create_user();
+        $course = $this->getDataGenerator()->create_course();
+        set_config('routes', '\mod_assign\event\submission_graded', 'logstore_xapi');
+
+        $this->queue_event('\mod_assign\event\submission_graded', $user->id, $course->id, 1);
+
+        $this->run_emit_task();
+
+        // The queued row has no grade behind it, so it fails to transform: it was attempted.
         $this->assertEquals(0, $DB->count_records('logstore_xapi_log'));
         $this->assertEquals(1, $DB->count_records('logstore_xapi_failed_log'));
     }

@@ -135,7 +135,9 @@ class sendfailednotifications_task extends \core\task\scheduled_task {
         // Check if we have an actual moodle user, if not we need to setup a temp user.
         if (empty($user->id)) {
             $email = $user->email;
-            $user = \core_user::get_support_user();
+            // Clone it: core caches the support user, so changing it in place would send
+            // later support mail in this cron run to this address.
+            $user = clone \core_user::get_support_user();
             $user->email = $email;
             // Unset emailstop to ensure the message is sent. This may already be the case when getting the support user.
             $user->emailstop = 0;

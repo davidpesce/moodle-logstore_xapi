@@ -47,14 +47,8 @@ function handler(array $config, \stdClass $event) {
     // FEEDBACK_ANONYMOUS_YES. Core also flags the event itself as anonymous.
     $isanon = !empty($event->anonymous) || (int) $feedbackcompleted->anonymous_response === 1;
     $actor = ($isanon)
-        ? [
-            'name' => 'Anonymous Course Participant',
-            'account' => [
-                'homePage' => $config['app_url'],
-                'name' => 'anonymous',
-            ],
-        ]
-    : utils\get_user($config, $user);
+        ? utils\get_anonymous_agent($config)
+        : utils\get_user($config, $user);
 
     return array_merge(
         response_submitted($config, $event, $actor),

@@ -105,7 +105,9 @@ function assignment_graded(array $config, \stdClass $event) {
         ],
     ];
 
-    if (!is_null($gradecomment)) {
+    // The comment is free text written to the student and may name them, so it is left out
+    // while their identity is hidden (blind marking).
+    if (!is_null($gradecomment) && empty($event->anonymous)) {
         $statement['result']['response'] = $gradecomment;
     }
 

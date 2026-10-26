@@ -29,6 +29,13 @@ defined('MOODLE_INTERNAL') || die();
 
 $string['account_homepage'] = 'Actor Account HomePage';
 $string['account_homepage_desc'] = 'Set the homePage field for actor accounts. Defaults to the app_url.';
+$string['anonymousevents'] = 'Anonymous events';
+$string['anonymousevents_anonymise'] = 'Send without the hidden user\'s identity';
+$string['anonymousevents_desc'] = 'Moodle marks some events as anonymous because a user\'s identity must stay hidden, such
+as assignment events while blind marking is on, and responses to anonymous feedback activities. By default these events are
+sent with that user replaced by an anonymous actor. Other people in the statement, such as the grader, are still identified,
+and assignment feedback comments are left out. Choose "Don\'t send" to keep these events out of the LRS entirely.';
+$string['anonymousevents_skip'] = 'Don\'t send';
 $string['autherror'] = 'The server is returning a 401 error. Please ensure the endpoint, username and auth secret/password for
     the xAPI is correct in the Logstore xAPI settings.';
 $string['backgroundmode'] = 'Send statements by scheduled task?';
