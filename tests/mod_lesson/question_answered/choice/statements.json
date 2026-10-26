@@ -37,7 +37,8 @@
           }
         ],
         "correctResponsesPattern": [
-          "option-a[,]option-b"
+          "option-a",
+          "option-b"
         ],
         "description": {
           "en": "lesson_question_page_contents"

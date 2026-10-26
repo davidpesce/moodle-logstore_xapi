@@ -51,7 +51,8 @@ function sequencing(
             $description,
             $choices,
             $lang,
-            $rightchoices
+            // There is one correct order.
+            is_null($rightchoices) ? null : [$rightchoices]
         ),
         'interactionType' => 'sequencing',
     ];

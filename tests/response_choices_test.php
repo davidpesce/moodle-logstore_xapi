@@ -50,12 +50,12 @@ final class response_choices_test extends \basic_testcase {
     private function get_definitions(bool $sendresponsechoices): array {
         $config = ['send_response_choices' => $sendresponsechoices];
         return [
-            'choice' => cmi\choice($config, 'Q', 'Pick one', ['Red', 'Blue'], 'en', ['Red']),
+            'choice' => cmi\choice($config, 'Q', 'Pick one', ['Red', 'Blue'], 'en', [['Red']]),
             'sequencing' => cmi\sequencing($config, 'Q', 'Order', ['One', 'Two'], 'en', ['One', 'Two']),
             'fill-in' => cmi\fill_in($config, 'Q', 'Capital of France', 'en', ['Paris']),
             'true-false' => cmi\true_false($config, 'Q', 'The sky is blue', 'en', true),
-            'numeric exact' => cmi\numeric($config, 'Q', '2 + 2', null, null, 'en', '4'),
-            'numeric range' => cmi\numeric($config, 'Q', 'About 3', '2.5', '3.5', 'en'),
+            'numeric exact' => cmi\numeric($config, 'Q', '2 + 2', 'en', [cmi\numeric_pattern(null, null, '4')]),
+            'numeric range' => cmi\numeric($config, 'Q', 'About 3', 'en', [cmi\numeric_pattern('2.5', '3.5')]),
             'matching' => cmi\matching($config, 'Q', 'Match', ['Cat', 'Dog'], ['Meow', 'Woof'], 'en'),
         ];
     }

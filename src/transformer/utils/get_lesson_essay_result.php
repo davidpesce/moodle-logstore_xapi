@@ -39,18 +39,9 @@ function get_lesson_essay_result(array $config, \stdClass $lesson, \stdClass $an
 
     $attemptdetail = decode_other($attempt->useranswer);
 
-    $min = floatval(0);
-    $max = floatval($answer->score);
-    $raw = cap_raw_score(floatval($attemptdetail->score ?: 0), $min, $max);
-
     $result = [
         'response' => get_string_html_removed($attemptdetail->response),
-        'score' => [
-            'min' => $min,
-            'max' => $max,
-            'raw' => $raw,
-            'scaled' => get_scaled_score($raw, $min, $max),
-        ],
+        'score' => get_score(floatval($attemptdetail->score ?: 0), 0.0, floatval($answer->score)),
     ];
     return $result;
 }

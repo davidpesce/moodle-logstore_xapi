@@ -54,7 +54,9 @@ function lesson_question_page(array $config, \stdClass $course, \stdClass $lesso
 
     switch ($page->qtype) {
         case 1: // LESSON_PAGE_SHORTANSWER.
-            $correctresponses = array_values(
+            // With qoption set the answers are regular expressions, not responses, so no correct
+            // response is sent. Otherwise each correct answer is an alternative.
+            $correctresponses = !empty($page->qoption) ? null : array_values(
                 array_map(
                     function ($answer) {
                         return utils\get_string_html_removed($answer->answer);
@@ -67,7 +69,7 @@ function lesson_question_page(array $config, \stdClass $course, \stdClass $lesso
                 $page->title,
                 utils\get_string_html_removed($page->contents),
                 $courselang,
-                $correctresponses
+                $correctresponses ?: null
             );
             break;
         case 10: // LESSON_PAGE_ESSAY.
@@ -96,13 +98,18 @@ function lesson_question_page(array $config, \stdClass $course, \stdClass $lesso
                     $correctanswers
                 )
             );
+            // A multiple-answer page (multichoice with qoption set) needs all the correct answers
+            // together; otherwise each correct answer is right on its own.
+            $multianswer = $page->qtype == 3 && !empty($page->qoption);
             $activity['definition'] = utils\get_activity\definition\cmi\choice(
                 $config,
                 $page->title,
                 utils\get_string_html_removed($page->contents),
                 $choices,
                 $courselang,
-                $correctchoices
+                $multianswer ? [$correctchoices] : array_map(function ($choice) {
+                    return [$choice];
+                }, $correctchoices)
             );
             break;
         case 5: // LESSON_PAGE_MATCHING.
@@ -124,26 +131,22 @@ function lesson_question_page(array $config, \stdClass $course, \stdClass $lesso
             );
             break;
         case 8: // LESSON_PAGE_NUMERICAL.
-            // xAPI allows one correct response pattern, so the first correct answer is used. A
-            // lesson answer is a number or a "min:max" range.
-            $cchoice = reset($correctanswers);
-            $min = $max = $exact = null;
-            if ($cchoice) {
-                $correct = trim(utils\get_string_html_removed($cchoice->answer));
+            // Each correct answer is an alternative correct response. A lesson answer is a
+            // number or a "min:max" range.
+            $patterns = array_values(array_map(function ($answer) {
+                $correct = trim(utils\get_string_html_removed($answer->answer));
                 if (strpos($correct, ':') !== false) {
                     [$min, $max] = array_map('trim', explode(':', $correct, 2));
-                } else {
-                    $exact = $correct;
+                    return utils\get_activity\definition\cmi\numeric_pattern($min, $max);
                 }
-            }
+                return utils\get_activity\definition\cmi\numeric_pattern(null, null, $correct);
+            }, $correctanswers));
             $activity['definition'] = utils\get_activity\definition\cmi\numeric(
                 $config,
                 $page->title,
                 utils\get_string_html_removed($page->contents),
-                $min,
-                $max,
                 $courselang,
-                $exact
+                $patterns
             );
             break;
     }

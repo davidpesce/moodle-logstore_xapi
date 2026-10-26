@@ -53,17 +53,11 @@ function get_lesson_result(array $config, \stdClass $lesson, int $userid) {
             $grade = reset($grades);
             $min = floatval($grade->rawgrademin ?: 0);
             $max = floatval($grade->rawgrademax ?: 0);
-            $raw = cap_raw_score(floatval($grade->rawgrade ?: 0), $min, $max);
             $pass = floatval($gradeitem->gradepass ?: 0);
 
-            $result['score'] = [
-                'min' => $min,
-                'max' => $max,
-                'raw' => $raw,
-                'scaled' => get_scaled_score($raw, $min, $max),
-            ];
+            $result['score'] = get_score(floatval($grade->rawgrade ?: 0), $min, $max);
 
-            $result['success'] = ($raw >= $pass);
+            $result['success'] = ($result['score']['raw'] >= $pass);
         }
     }
 

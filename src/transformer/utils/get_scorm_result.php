@@ -56,6 +56,10 @@ function get_scorm_result(array $scormscoestracks, float $rawscore) {
     if ($maxscore !== null && $rawscore > $maxscore) {
         $maxscore = null;
     }
+    // The spec requires max to be greater than min.
+    if ($minscore !== null && $maxscore !== null && $maxscore <= $minscore) {
+        $minscore = $maxscore = null;
+    }
 
     $score = ['raw' => $rawscore];
     if ($minscore !== null) {
