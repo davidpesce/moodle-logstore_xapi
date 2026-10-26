@@ -37,7 +37,7 @@ function get_anonymous_agent(array $config) {
     return [
         'name' => 'Anonymous Course Participant',
         'account' => [
-            'homePage' => $config['app_url'],
+            'homePage' => get_account_homepage($config),
             'name' => 'anonymous',
         ],
     ];

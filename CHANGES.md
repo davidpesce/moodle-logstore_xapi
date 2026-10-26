@@ -23,6 +23,9 @@ the authoritative record.
   always sent their correct answer (`correctResponsesPattern`), and matching questions their
   pairs, even with the setting off. Sites with the setting off no longer send them; turn it on
   if your LRS reports rely on them.
+- **Search events are off by default on new sites.** Their statements carry the user's search
+  query, which can hold names, health or other personal details. Sites upgrading keep their
+  routes; turn off `\core\event\search_results_viewed` if you don't want queries in the LRS.
 
 ### Statement fixes
 
@@ -57,6 +60,11 @@ the authoritative record.
 - **H5P content viewed outside an activity** (the content bank, or content embedded in a course,
   section or user text) is identified by its file URL, with the course as parent when there is
   one. It was transformed as a course module view, which read the wrong activity or failed.
+- **"Actor Account HomePage" applies to every actor account**, as its description says. It was
+  only used with "Send username" on; accounts identified by user id, and the anonymous actor,
+  always used the site URL. The setting must now be an absolute URL (or empty, for the site
+  URL); a saved value that isn't one is ignored, as an invalid homePage made every statement
+  fail.
 
 ### Development
 

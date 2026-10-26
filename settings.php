@@ -179,7 +179,9 @@ if ($hassiteconfig) {
         get_string('account_homepage', 'logstore_xapi'),
         get_string('account_homepage_desc', 'logstore_xapi'),
         $CFG->wwwroot,
-        PARAM_TEXT
+        // An actor account's homePage must be an IRL, so an absolute URL with a scheme (PARAM_URL
+        // also accepts "www.example.org"). Empty falls back to the site URL.
+        '/^$|^[a-zA-Z][a-zA-Z0-9+.-]*:\/\/\S+$/'
     ));
 
     $settings->add(new admin_setting_configselect(

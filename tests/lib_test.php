@@ -289,11 +289,11 @@ final class lib_test extends advanced_testcase {
     }
 
     /**
-     * New installs enable every route except private messages and notes.
+     * New installs enable every route except private messages, notes and search queries.
      *
      * @return void
      */
-    public function test_default_routes_leave_out_messages_and_notes(): void {
+    public function test_default_routes_leave_out_private_text(): void {
         $eventnames = array_keys(\src\transformer\get_event_function_map());
 
         $defaults = logstore_xapi_get_default_routes($eventnames);
@@ -304,6 +304,7 @@ final class lib_test extends advanced_testcase {
             $this->assertArrayNotHasKey($eventname, $defaults);
         }
         $this->assertCount(count($eventnames) - count(XAPI_ROUTES_OFF_BY_DEFAULT), $defaults);
+        $this->assertArrayNotHasKey('\\core\\event\\search_results_viewed', $defaults);
         $this->assertArrayHasKey('\\mod_quiz\\event\\attempt_submitted', $defaults);
     }
 
