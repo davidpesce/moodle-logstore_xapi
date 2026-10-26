@@ -6,6 +6,15 @@ the authoritative record.
 
 ## 5.3.0 (unreleased)
 
+### New events
+
+- **Game activities** (the third-party [mod_game](https://moodle.org/plugins/mod_game) plugin):
+  "Game played" and "Course module viewed" are sent. Contributed by David Herney (#890).
+  mod_game records "Game played" each time a game page loads, which is on every move, so one
+  game sends many "Played" statements. Turn off the `\mod_game\event\game_played` route if
+  you don't want them. On sites upgrading from an earlier version, the new routes are off until
+  you turn them on, as the saved route list is kept.
+
 ### Privacy
 
 - **Correct answers are only sent when "Send response choices" is on, for every question type.**
