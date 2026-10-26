@@ -54,6 +54,10 @@ function handler(array $config, array $events) {
                     $eventobj,
                     $eventfunction($eventconfig, $eventobj)
                 );
+                // Core flags an event as anonymous when a user's identity must stay hidden.
+                if (!empty($eventobj->anonymous)) {
+                    $eventstatements = utils\anonymise_statements($eventconfig, $eventobj, $eventstatements);
+                }
             } else {
                 $eventstatements = [];
             }

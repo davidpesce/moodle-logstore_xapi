@@ -6,14 +6,17 @@ the authoritative record.
 
 ## 5.2.1 (unreleased)
 
-Bug-fix and privacy release. Supports Moodle 4.5 to 5.3. No database changes.
+Bug-fix and privacy release. Supports Moodle 4.5 to 5.3. No database changes; one new setting.
 
 ### Privacy
 
-- **Anonymous events are no longer sent.** Moodle flags an event as anonymous when the user's
-  identity must stay hidden, as with assignments that use blind marking, and anonymous Feedback
-  activities. Assignment statements still named the learner under blind marking. These events
-  are now dropped. Feedback responses are still sent, with an anonymous actor as before.
+- **Anonymous events no longer identify the hidden user.** Moodle marks an event as anonymous
+  when a user's identity must stay hidden, as with assignments while blind marking is on, and
+  anonymous Feedback activities. Assignment statements still named the student under blind
+  marking. That user is now replaced by an anonymous actor wherever they appear (actor,
+  instructor, team or extensions); other people, such as the grader, are still identified, and
+  assignment feedback comments are left out. A new setting, "Anonymous events", can instead keep
+  these events out of the LRS entirely.
 - **Routes and "Log guest actions" now apply to every event that is sent**, not only when an event is
   captured. Before, the historic report (whose event list offered every supported event, not only
   the enabled ones), a resend from the error report, and `moveback_to_log.php` could send events

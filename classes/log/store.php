@@ -258,8 +258,9 @@ class store extends php_obj implements log_writer {
      * repeated here.
      *
      * Core flags an event as anonymous when the user's identity must stay hidden (assignment
-     * blind marking, anonymous feedback). Those events are skipped unless their transformer
-     * replaces the user with an anonymous actor (XAPI_ANONYMOUS_EVENTS_SENT).
+     * blind marking, anonymous feedback). By default those events are sent with the protected
+     * user replaced by an anonymous actor (see utils\anonymise_statements()); with the
+     * anonymousevents setting at "don't send", they are skipped here.
      *
      * Skipped events are returned with 'loaded' set to null: the tasks delete them from the
      * queue, but they are not recorded as sent or as failed.
@@ -272,15 +273,16 @@ class store extends php_obj implements log_writer {
 
         $enabledevents = array_flip(explode(',', $this->get_config('routes', '')));
         $allowguestlogging = $this->get_config('logguests', 1);
+        $skipanonymous = $this->get_config('anonymousevents', XAPI_ANONYMOUS_EVENTS_ANONYMISE)
+            === XAPI_ANONYMOUS_EVENTS_SKIP;
 
         $routedevents = [];
         $skippedevents = [];
         foreach ($events as $event) {
             $isrouted = isset($event->eventname) && isset($enabledevents[$event->eventname]);
             $isguest = isset($event->userid) && !empty($CFG->siteguest) && $event->userid == $CFG->siteguest;
-            $ishiddenanonymous = !empty($event->anonymous)
-                && !in_array($event->eventname, XAPI_ANONYMOUS_EVENTS_SENT, true);
-            if ($isrouted && ($allowguestlogging || !$isguest) && !$ishiddenanonymous) {
+            $isskippedanonymous = $skipanonymous && !empty($event->anonymous);
+            if ($isrouted && ($allowguestlogging || !$isguest) && !$isskippedanonymous) {
                 $routedevents[] = $event;
             } else {
                 $skippedevents[] = [

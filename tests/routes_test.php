@@ -142,17 +142,19 @@ final class routes_test extends \advanced_testcase {
     }
 
     /**
-     * Anonymous events (such as assignment events under blind marking) are skipped.
+     * Anonymous events (such as assignment events under blind marking) are skipped when the
+     * anonymousevents setting is "Don't send".
      *
      * @return void
      */
-    public function test_anonymous_events_are_skipped(): void {
+    public function test_anonymous_events_are_skipped_when_set(): void {
         global $DB;
         $this->resetAfterTest();
 
         $user = $this->getDataGenerator()->create_user();
         $course = $this->getDataGenerator()->create_course();
         set_config('routes', '\mod_assign\event\submission_graded', 'logstore_xapi');
+        set_config('anonymousevents', XAPI_ANONYMOUS_EVENTS_SKIP, 'logstore_xapi');
 
         $this->queue_event('\mod_assign\event\submission_graded', $user->id, $course->id, 1);
 
@@ -164,23 +166,23 @@ final class routes_test extends \advanced_testcase {
     }
 
     /**
-     * Anonymous events whose transformer sends an anonymous actor are still processed.
+     * By default anonymous events are processed (and sent without the hidden user's identity).
      *
      * @return void
      */
-    public function test_anonymous_events_with_anonymous_actor_are_processed(): void {
+    public function test_anonymous_events_are_processed_by_default(): void {
         global $DB;
         $this->resetAfterTest();
 
         $user = $this->getDataGenerator()->create_user();
         $course = $this->getDataGenerator()->create_course();
-        set_config('routes', '\mod_feedback\event\response_submitted', 'logstore_xapi');
+        set_config('routes', '\mod_assign\event\submission_graded', 'logstore_xapi');
 
-        $this->queue_event('\mod_feedback\event\response_submitted', $user->id, $course->id, 1);
+        $this->queue_event('\mod_assign\event\submission_graded', $user->id, $course->id, 1);
 
         $this->run_emit_task();
 
-        // The queued row has no feedback behind it, so it fails to transform: it was attempted.
+        // The queued row has no grade behind it, so it fails to transform: it was attempted.
         $this->assertEquals(0, $DB->count_records('logstore_xapi_log'));
         $this->assertEquals(1, $DB->count_records('logstore_xapi_failed_log'));
     }

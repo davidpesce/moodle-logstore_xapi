@@ -182,6 +182,17 @@ if ($hassiteconfig) {
         PARAM_TEXT
     ));
 
+    $settings->add(new admin_setting_configselect(
+        'logstore_xapi/anonymousevents',
+        get_string('anonymousevents', 'logstore_xapi'),
+        get_string('anonymousevents_desc', 'logstore_xapi'),
+        XAPI_ANONYMOUS_EVENTS_ANONYMISE,
+        [
+            XAPI_ANONYMOUS_EVENTS_ANONYMISE => get_string('anonymousevents_anonymise', 'logstore_xapi'),
+            XAPI_ANONYMOUS_EVENTS_SKIP => get_string('anonymousevents_skip', 'logstore_xapi'),
+        ]
+    ));
+
     // Statement content.
     $settings->add(new admin_setting_heading(
         'statementcontent',
