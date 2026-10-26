@@ -92,11 +92,7 @@ function anonymise_agents($value, ?array $protectedagents, array $anonymousagent
         return $value;
     }
 
-    // An agent has an inverse functional identifier and is not a group.
-    $isagent = (isset($value['account']) || isset($value['mbox']) || isset($value['mbox_sha1sum'])
-            || isset($value['openid']))
-        && ($value['objectType'] ?? 'Agent') === 'Agent';
-    if ($isagent && (is_null($protectedagents) || in_array($value, $protectedagents))) {
+    if (is_agent($value) && (is_null($protectedagents) || in_array($value, $protectedagents))) {
         return $anonymousagent;
     }
 
@@ -104,4 +100,16 @@ function anonymise_agents($value, ?array $protectedagents, array $anonymousagent
         $value[$key] = anonymise_agents($item, $protectedagents, $anonymousagent);
     }
     return $value;
+}
+
+/**
+ * Whether part of a statement is an agent: it has an inverse functional identifier and is not a group.
+ *
+ * @param array $value Part of a statement.
+ * @return bool
+ */
+function is_agent(array $value) {
+    $hasifi = isset($value['account']) || isset($value['mbox']) || isset($value['mbox_sha1sum'])
+        || isset($value['openid']);
+    return $hasifi && ($value['objectType'] ?? 'Agent') === 'Agent';
 }
