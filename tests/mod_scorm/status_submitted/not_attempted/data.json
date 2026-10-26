@@ -1,0 +1,58 @@
+{
+  "modules": [
+    {
+      "id": 1,
+      "name": "scorm"
+    }
+  ],
+  "scorm": [
+    {
+      "id": 1,
+      "name": "test_name"
+    }
+  ],
+  "scorm_attempt": [
+    {
+      "id": 7,
+      "userid": 1,
+      "scormid": 1,
+      "attempt": 1
+    }
+  ],
+  "scorm_element": [
+    {
+      "id": 1,
+      "element": "cmi.core.lesson_status"
+    },
+    {
+      "id": 2,
+      "element": "cmi.core.score.min"
+    },
+    {
+      "id": 3,
+      "element": "cmi.core.score.max"
+    },
+    {
+      "id": 4,
+      "element": "cmi.core.score.raw"
+    }
+  ],
+  "scorm_scoes_value": [
+    {
+      "id": 1,
+      "scoid": 4,
+      "attemptid": 7,
+      "elementid": 1,
+      "value": "not attempted",
+      "timemodified": 0
+    },
+    {
+      "id": 2,
+      "scoid": 5,
+      "attemptid": 7,
+      "elementid": 1,
+      "value": "failed",
+      "timemodified": 0
+    }
+  ]
+}

@@ -62,7 +62,7 @@
       },
       "extensions": {
         "http://lrs.learninglocker.net/define/extensions/info": {
-          "event_function": "\\src\\transformer\\events\\all\\course_module_viewed",
+          "event_function": "\\src\\transformer\\events\\core_h5p\\h5p_viewed",
           "event_name": "\\core_h5p\\event\\h5p_viewed",
           "http://moodle.org": "1.0.0",
           "https://github.com/xAPI-vle/moodle-logstore_xapi": "0.0.0-development"

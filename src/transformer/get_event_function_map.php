@@ -75,7 +75,7 @@ function get_event_function_map() {
         '\core\event\user_loggedout' => 'core\user_loggedout',
         '\core\event\course_module_created' => 'core\course_module_created',
         '\core\event\course_module_completion_updated' => 'core\course_module_completion_updated',
-        '\core_h5p\event\h5p_viewed' => 'all\course_module_viewed',
+        '\core_h5p\event\h5p_viewed' => 'core_h5p\h5p_viewed',
         '\core\event\search_results_viewed' => 'core\search_results_viewed',
         '\core\event\questions_imported' => 'core\questions_imported',
         '\core\event\question_created' => 'core\question_created',
