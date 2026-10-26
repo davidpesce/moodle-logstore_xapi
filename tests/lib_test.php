@@ -350,4 +350,16 @@ final class lib_test extends advanced_testcase {
             []
         ));
     }
+
+    /**
+     * Stored responses are shown as pretty-printed JSON, or as they are when not JSON.
+     *
+     * @return void
+     */
+    public function test_response_display(): void {
+        $this->assertSame("{\n    \"error\": \"x\"\n}", logstore_xapi_get_response_display('{"error":"x"}'));
+        $curlerror = 'cURL error: Could not resolve host';
+        $this->assertSame($curlerror, logstore_xapi_get_response_display($curlerror));
+        $this->assertSame('<h1>Bad Gateway</h1>', logstore_xapi_get_response_display('<h1>Bad Gateway</h1>'));
+    }
 }

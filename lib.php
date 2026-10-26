@@ -354,6 +354,23 @@ function logstore_xapi_decode_response($response) {
 }
 
 /**
+ * Text to show for a stored LRS response in the error report.
+ *
+ * JSON is pretty-printed. Anything else (cURL errors, plain-text or HTML error pages) is
+ * shown as it is. The result is not escaped: the caller must escape it.
+ *
+ * @param string $response The stored response.
+ * @return string
+ */
+function logstore_xapi_get_response_display(string $response): string {
+    $decoded = json_decode($response, true);
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        return $response;
+    }
+    return json_encode($decoded, JSON_PRETTY_PRINT | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_QUOT);
+}
+
+/**
  * Generate the string for the info column in the report
  *
  * @param object $row
