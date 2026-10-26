@@ -37,7 +37,7 @@ function discussion_subscription_created(array $config, \stdClass $event) {
     $repo = $config['repo'];
     $user = $repo->read_record_by_id('user', $event->userid);
     $course = $repo->read_record_by_id('course', $event->courseid);
-    $other = unserialize($event->other);
+    $other = utils\decode_other($event->other);
     $discussionid = $other['discussion'];
     $discussion = $repo->read_record_by_id('forum_discussions', $discussionid);
 

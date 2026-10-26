@@ -90,6 +90,9 @@ abstract class xapi_test_case extends \advanced_testcase {
     /**
      * Retrieve the expected statement from statements.json.
      *
+     * A null in statements.json means the property must be absent, so a test can drop a
+     * property that tests/common/statement.json would otherwise add.
+     *
      * @return array
      */
     protected function get_expected_statements() {
@@ -99,8 +102,25 @@ abstract class xapi_test_case extends \advanced_testcase {
         $commonstatement = json_decode(file_get_contents($CFG->dirroot . '/admin/tool/log/store/xapi/tests/common/statement.json'));
         return array_map(function ($statement) use ($commonstatement) {
             // Add common expectations for all statements.
-            return utils\deep_merge_objects($commonstatement, $statement);
+            return $this->remove_null_properties(utils\deep_merge_objects($commonstatement, $statement));
         }, json_decode(file_get_contents($this->get_test_dir() . '/statements.json')));
+    }
+
+    /**
+     * Recursively remove properties whose value is null.
+     *
+     * @param \stdClass $object The expected statement, or part of it.
+     * @return \stdClass
+     */
+    private function remove_null_properties(\stdClass $object): \stdClass {
+        foreach (get_object_vars($object) as $property => $value) {
+            if ($value === null) {
+                unset($object->$property);
+            } else if ($value instanceof \stdClass) {
+                $object->$property = $this->remove_null_properties($value);
+            }
+        }
+        return $object;
     }
 
     /**
@@ -158,7 +178,6 @@ abstract class xapi_test_case extends \advanced_testcase {
             'send_short_course_id' => false,
             'send_course_and_module_idnumber' => false,
             'send_username' => false,
-            'session_id' => 'test_session_id',
             'plugin_url' => 'https://github.com/xAPI-vle/moodle-logstore_xapi',
             'plugin_version' => '0.0.0-development',
             'repo' => new \src\transformer\repos\TestRepository($testdata),
@@ -178,6 +197,72 @@ abstract class xapi_test_case extends \advanced_testcase {
             return (string) $error;
         }, $errors));
         $this->assertEmpty($errors, $errorsjson);
+        $this->assert_consistent_with_definition($statement);
+    }
+
+    /**
+     * Assert the rules the schema validator does not check: responses and correct response
+     * patterns must use the ids the interaction defines, true-false values must be "true" or
+     * "false", and a score must fit its own bounds.
+     *
+     * @param array $statement The xAPI statement.
+     * @return void
+     */
+    private function assert_consistent_with_definition(array $statement) {
+        $definition = $statement['object']['definition'] ?? [];
+        $result = $statement['result'] ?? [];
+        $values = [];
+        if (isset($result['response'])) {
+            $values['result.response'] = $result['response'];
+        }
+        foreach ($definition['correctResponsesPattern'] ?? [] as $i => $pattern) {
+            $values["correctResponsesPattern[$i]"] = $pattern;
+        }
+
+        $ids = function ($key) use ($definition) {
+            return array_column($definition[$key] ?? [], 'id');
+        };
+        foreach ($values as $where => $value) {
+            if ($value === '') {
+                continue;
+            }
+            switch ($definition['interactionType'] ?? '') {
+                case 'true-false':
+                    $this->assertContains($value, ['true', 'false'], "$where must be true or false");
+                    break;
+                case 'choice':
+                case 'sequencing':
+                    if ($choices = $ids('choices')) {
+                        foreach (explode('[,]', $value) as $id) {
+                            $this->assertContains($id, $choices, "$where uses an id that is not a defined choice");
+                        }
+                    }
+                    break;
+                case 'matching':
+                    $source = $ids('source');
+                    $target = $ids('target');
+                    if ($source && $target) {
+                        foreach (explode('[,]', $value) as $pair) {
+                            [$s, $t] = array_pad(explode('[.]', $pair, 2), 2, null);
+                            $this->assertContains($s, $source, "$where uses an id that is not a defined source");
+                            $this->assertContains($t, $target, "$where uses an id that is not a defined target");
+                        }
+                    }
+                    break;
+            }
+        }
+
+        $score = $result['score'] ?? [];
+        if (isset($score['scaled'])) {
+            $this->assertGreaterThanOrEqual(-1, $score['scaled'], 'score.scaled must be at least -1');
+            $this->assertLessThanOrEqual(1, $score['scaled'], 'score.scaled must be at most 1');
+        }
+        if (isset($score['raw'], $score['min'])) {
+            $this->assertGreaterThanOrEqual($score['min'], $score['raw'], 'score.raw must not be below score.min');
+        }
+        if (isset($score['raw'], $score['max'])) {
+            $this->assertLessThanOrEqual($score['max'], $score['raw'], 'score.raw must not exceed score.max');
+        }
     }
 
     /**

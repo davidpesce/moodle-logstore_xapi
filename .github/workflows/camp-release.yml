@@ -1,0 +1,170 @@
+# camp release workflow — copy to .github/workflows/camp-release.yml in your
+# plugin repository. Publishing to camp then means: git tag v1.2.3 && git push --tags
+#
+# No token, no secrets, no fork. On every version tag this workflow:
+#   1. checks your repo has a listing manifest (fails with instructions if not),
+#   2. runs the same label heuristics and security lint camp CI runs, so you
+#      see findings before reviewers do (warn-only here),
+#   3. builds the canonical ZIP and computes your release record with camp
+#      tools — the identical code path camp CI verifies against,
+#   4. proves this workflow's identity to the camp publish service with a
+#      signed OIDC token from GitHub (that is what `id-token: write` grants:
+#      the ability to REQUEST an identity statement — it writes nothing to
+#      your repository), and the service opens the release PR on the index.
+#
+# Publishing authorization is your claimed listing: the service checks that
+# this repository is the listed source of your entry, by permanent repository
+# id. camp CI still independently rebuilds and verifies everything from the
+# public tag, and a human merges. Prefer holding a token yourself? The
+# personal-access-token flow remains supported: templates/author-release-pat.yml.
+
+name: Publish release to camp
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch: {}   # backfill an old release: run at the existing tag
+                          #   gh workflow run camp-release.yml --ref v1.1.0
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  CAMP_INDEX_REPO: camp-registry/camp-index  # the camp index repository
+  CAMP_PUBLISH_URL: https://publish.camp-registry.org/publish
+  # Both values below are optional overrides — with them empty
+  # (recommended), everything is read from your version.php at the tag:
+  #   COMPONENT        ← $plugin->component (your frankenstyle name)
+  #   SUPPORTED_MOODLE ← the $plugin->supported range when declared,
+  #                      else the single branch $plugin->requires maps
+  #                      to. Set it only when version.php can't say what
+  #                      you mean (e.g. a non-contiguous set "4.1,4.4").
+  COMPONENT: ""
+  SUPPORTED_MOODLE: ""
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    steps:
+      # Releases are built at immutable tags only; the publish service
+      # additionally refuses branch-minted tokens, so this guard just
+      # fails earlier with a better message (camp-tools#15).
+      # The ref name reaches the shell as a variable, never spliced into the
+      # script text: a branch name may contain shell syntax, and a spliced
+      # name would run as code under workflow_dispatch.
+      - name: Require a tag ref
+        env:
+          REF_NAME: ${{ github.ref_name }}
+          REF_TYPE: ${{ github.ref_type }}
+        run: |
+          if [ "$REF_TYPE" != "tag" ]; then
+            echo "::error::This workflow must run at a tag. From workflow_dispatch, pick the tag in the ref dropdown (or: gh workflow run camp-release.yml --ref v1.2.3). Current ref: $REF_NAME ($REF_TYPE)"
+            exit 1
+          fi
+
+      - name: Check out plugin at the tag
+        uses: actions/checkout@v7
+        with:
+          path: plugin
+          fetch-depth: 0
+
+      # Read-only: camp release computes your record against your entry's
+      # current ledger. Nothing is pushed from this job.
+      - name: Check out camp index
+        uses: actions/checkout@v7
+        with:
+          repository: ${{ env.CAMP_INDEX_REPO }}
+          path: index-repo
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Install camp tools
+        run: pip install --quiet "git+https://github.com/camp-registry/camp-tools@v0.2.90"
+
+      # Stale template copies are the recurring failure mode (they have
+      # broken releases before); this nudge compares the copy's pin
+      # against the registry's published version and never fails the run
+      # (camp-tools#35).
+      - name: Check template freshness
+        continue-on-error: true
+        run: |
+          current=$(curl -s --max-time 5 -A "camp-release" https://camp-registry.org/version.json | sed -nE 's/.*"camp-tools": *"([0-9.]+)".*/\1/p')
+          pinned=$(python -c "import camp; print(camp.__version__)" 2>/dev/null)
+          if [ -n "$current" ] && [ -n "$pinned" ] && [ "$current" != "$pinned" ]; then
+            echo "::warning::This workflow pins camp-tools v${pinned} but the current release is v${current}. Refresh your copy from templates/author-release.yml in camp-registry/camp-index."
+          fi
+
+      - name: Resolve component name
+        run: |
+          if [ -z "${COMPONENT}" ]; then
+            COMPONENT=$(sed -nE 's/.*\$plugin->component[[:space:]]*=[[:space:]]*.?([a-z][a-z0-9_]*).?[[:space:]]*;.*/\1/p' plugin/version.php | head -1)
+          fi
+          if [ -z "${COMPONENT}" ]; then
+            echo "::error::COMPONENT is empty and \$plugin->component was not found in version.php — set one of them"
+            exit 1
+          fi
+          echo "COMPONENT=${COMPONENT}" >> "$GITHUB_ENV"
+          echo "component: ${COMPONENT}"
+
+      - name: Require a listing manifest
+        run: camp scaffold plugin --check
+
+      - name: Label heuristics + security lint (warn-only preview)
+        run: |
+          camp lint-labels plugin || true
+          camp audit plugin || true
+
+      - name: Compute and append the release record
+        run: |
+          plugintype="${COMPONENT%%_*}"
+          camp release "index-repo/plugins/${plugintype}/${COMPONENT}.yml" \
+            "${GITHUB_REF_NAME}" --source ./plugin \
+            ${SUPPORTED_MOODLE:+--supported-moodle "${SUPPORTED_MOODLE}"}
+
+      - name: Publish (OIDC token exchange)
+        run: |
+          CAMP_OIDC_TOKEN=$(curl -sS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=camp-publish" \
+            | python3 -c 'import sys,json; print(json.load(sys.stdin)["value"])')
+          export CAMP_OIDC_TOKEN TAG="${GITHUB_REF_NAME}"
+          python3 <<'EOF'
+          import json, os, sys, urllib.request, yaml
+
+          component = os.environ["COMPONENT"]
+          tag = os.environ["TAG"]
+          path = f"index-repo/plugins/{component.split('_')[0]}/{component}.yml"
+          with open(path) as f:
+              record = yaml.safe_load(f)["releases"][-1]
+          assert record["tag"] == tag, "computed record is not for this tag"
+
+          body = json.dumps({
+              "token": os.environ["CAMP_OIDC_TOKEN"],
+              "component": component, "tag": tag, "record": record,
+          }).encode()
+          req = urllib.request.Request(
+              os.environ["CAMP_PUBLISH_URL"], data=body,
+              headers={"Content-Type": "application/json",
+                       "User-Agent": f"camp-release ({component})"})
+          try:
+              out = json.load(urllib.request.urlopen(req))
+          except urllib.error.HTTPError as e:
+              raw = e.read().decode(errors="replace")
+              try:
+                  out = json.loads(raw)
+                  msg = f"({out.get('code')}): {out.get('message')}"
+              except ValueError:
+                  msg = f"HTTP {e.code}: {raw[:200]}"
+              print(f"::error::camp publish refused {msg}")
+              sys.exit(1)
+          print("Release PR:", out["pr"])
+          summary = os.environ.get("GITHUB_STEP_SUMMARY")
+          if summary:
+              with open(summary, "a") as f:
+                  f.write(f"Release PR: {out['pr']}\n\n"
+                          "camp CI will independently rebuild the artifact "
+                          "from the tag and verify the recorded hashes "
+                          "before this can merge.\n")
+          EOF

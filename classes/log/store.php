@@ -165,7 +165,10 @@ class store extends php_obj implements log_writer {
             $events = $this->get_persistent_eventids($events);
             $DB->insert_records('logstore_xapi_log', $events);
         } else {
-            $this->process_events($events);
+            // Keep events that fail so they can be replayed, as the scheduled tasks do. This
+            // runs during a web request, so no mtrace() output.
+            $loadedevents = $this->process_events($events);
+            logstore_xapi_store_failed_events($loadedevents, false);
         }
     }
 
@@ -274,7 +277,6 @@ class store extends php_obj implements log_writer {
                 'send_username' => $this->get_config('send_username', false),
                 'account_homepage' => $this->get_config('account_homepage', $CFG->wwwroot),
                 'context_platform' => $this->get_config('context_platform', 'Moodle'),
-                'session_id' => sesskey(),
                 'plugin_url' => 'https://github.com/xAPI-vle/moodle-logstore_xapi',
                 'plugin_version' => $plugin->release,
                 'repo' => new \src\transformer\repos\MoodleRepository($DB),
@@ -287,24 +289,16 @@ class store extends php_obj implements log_writer {
                 'lrs_password' => $this->get_config('password', ''),
                 'lrs_max_batch_size' => $this->get_max_batch_size(),
                 'lrs_resend_failed_batches' => $this->get_config('resendfailedbatches', false),
+                'lrs_ssl_verification' => $this->get_config('sslverification', true),
+                'lrs_ssl_cabundle' => $this->get_config('sslcabundle', ''),
             ],
         ];
 
-        if (isset($CFG->totara_release)) {
-            $source = [
-                'source_url' => 'http://totaralearning.com',
-                'source_name' => 'Totara Learn',
-                'source_version' => $CFG->totara_version,
-            ];
-        } else {
-            $source = [
-                'source_url' => 'http://moodle.org',
-                'source_name' => 'Moodle',
-                'source_version' => $CFG->release,
-            ];
-        }
-
-        $handlerconfig['transformer'] = array_merge($handlerconfig['transformer'], $source);
+        $handlerconfig['transformer'] = array_merge($handlerconfig['transformer'], [
+            'source_url' => 'http://moodle.org',
+            'source_name' => 'Moodle',
+            'source_version' => $CFG->release,
+        ]);
 
         return $handlerconfig;
     }

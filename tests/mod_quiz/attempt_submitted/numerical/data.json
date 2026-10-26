@@ -71,6 +71,7 @@
       "id": 1,
       "uniqueid": 1,
       "quiz": 1,
+      "attempt": 1,
       "state": "finished",
       "sumgrades": 50,
       "timefinish": 1,

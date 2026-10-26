@@ -50,7 +50,6 @@ function numerical(
     $course = $repo->read_record_by_id('course', $event->courseid);
     $feedback = $repo->read_record_by_id('feedback', $feedbackitem->feedback);
     $lang = utils\get_course_lang($course);
-    [$min, $max] = explode('|', $feedbackitem->presentation);
 
     return [[
         'actor' => $actor,
@@ -67,8 +66,10 @@ function numerical(
                 $config,
                 $feedbackitem->name,
                 null,
-                $min,
-                $max,
+                // The item's range only limits what can be entered. Feedback is not graded, so
+                // there is no correct answer and no correctResponsesPattern is sent.
+                null,
+                null,
                 $lang
             ),
         ],

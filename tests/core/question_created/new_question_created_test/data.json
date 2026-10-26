@@ -20,5 +20,13 @@
       "fraction": 0.0,
       "question": 1
     }
+  ],
+  "question_truefalse": [
+    {
+      "id": 1,
+      "question": 1,
+      "trueanswer": 1,
+      "falseanswer": 2
+    }
   ]
 }

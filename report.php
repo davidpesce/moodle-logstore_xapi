@@ -29,7 +29,6 @@ use core\output\notification;
 require_once(__DIR__ . '/../../../../../config.php');
 require_once($CFG->dirroot . '/lib/adminlib.php');
 require_once($CFG->dirroot . '/admin/tool/log/store/xapi/lib.php');
-require_once($CFG->dirroot . '/admin/tool/log/store/xapi/classes/form/reportfilter_form.php');
 
 // Set context.
 $systemcontext = context_system::instance();
@@ -40,9 +39,23 @@ require_login(null, false);
 // Read parameters.
 $id           = optional_param('id', XAPI_REPORT_ID_ERROR, PARAM_INT); // This is the report ID.
 $run          = optional_param('run', false, PARAM_BOOL);
-$page         = optional_param('page', XAPI_REPORT_STARTING_PAGE, PARAM_INT);
+$page         = max(0, optional_param('page', XAPI_REPORT_STARTING_PAGE, PARAM_INT));
 $perpage      = optional_param('perpage', XAPI_REPORT_PERPAGE_DEFAULT, PARAM_INT);
+// A limit of 0 would fetch every row, so keep the page size within bounds.
+$perpage      = min(max(1, $perpage), XAPI_REPORT_PERPAGE_MAX);
 $onpage       = optional_param('onpage', XAPI_REPORT_ONPAGE_DEFAULT, PARAM_TEXT);
+
+// Check access before doing any work: building the filter options scans the log tables.
+switch ($id) {
+    case XAPI_REPORT_ID_ERROR:
+        require_capability('logstore/xapi:viewerrorlog', $systemcontext);
+        break;
+    case XAPI_REPORT_ID_HISTORIC:
+        require_capability('logstore/xapi:managehistoric', $systemcontext);
+        break;
+    default:
+        throw new moodle_exception('invalidreportid', 'logstore_xapi');
+}
 
 if ($id == XAPI_REPORT_ID_ERROR) {
     $run = true;
@@ -80,7 +93,7 @@ $defaults = [
 
 // Reread submitted params.
 if (!empty($onpage)) {
-    $formelements = json_decode($onpage);
+    $formelements = logstore_xapi_clean_report_filters($onpage, $eventnames);
 
     foreach (array_keys($defaults) as $element) {
         if (isset($formelements->$element) && !empty($formelements->$element)) {
@@ -106,8 +119,6 @@ switch ($id) {
         $filterparams['errortypes'] = logstore_xapi_get_distinct_options_from_failed_table('errortype');
         $filterparams['responses'] = logstore_xapi_get_distinct_options_from_failed_table('response');
 
-        require_capability('logstore/xapi:viewerrorlog', $systemcontext);
-
         if (has_capability('logstore/xapi:manageerrors', $systemcontext)) {
             $canmanage = true;
         }
@@ -122,18 +133,17 @@ switch ($id) {
         } else {
             $filterparams['eventcontexts'] = [];
         }
-
-        require_capability('logstore/xapi:managehistoric', $systemcontext);
         $canmanage = true;
 
         break;
 
     default:
-        break;
+        // Unreachable: unknown report ids are rejected by the access check at the top.
+        throw new moodle_exception('invalidreportid', 'logstore_xapi');
 }
 
 $notifications = [];
-$mform = new logstore_xapi\form\tool_logstore_xapi_reportfilter_form($url, $filterparams);
+$mform = new logstore_xapi\form\reportfilter_form($url, $filterparams);
 
 $params = [];
 $where = ['1 = 1'];
@@ -259,7 +269,8 @@ if (!empty($results)) {
     }
     $table->head[] = get_string('eventname', 'logstore_xapi');
     if ($id == XAPI_REPORT_ID_HISTORIC) {
-        $table->head[] = get_string('username', 'logstore_xapi');
+        // Core's string: the plugin's own 'username' string labels the LRS auth key setting.
+        $table->head[] = get_string('username');
         $table->head[] = get_string('eventcontext', 'logstore_xapi');
     }
     if ($id == XAPI_REPORT_ID_ERROR) {
@@ -277,7 +288,7 @@ if (!empty($results)) {
         }
         $row[] = $result->eventname;
         if ($id == XAPI_REPORT_ID_HISTORIC) {
-            $row[] = $result->username;
+            $row[] = s($result->username);
 
             if ($context = context::instance_by_id($result->contextid, IGNORE_MISSING)) {
                 $row[] = $context->get_context_name();
@@ -288,7 +299,14 @@ if (!empty($results)) {
         if ($id == XAPI_REPORT_ID_ERROR) {
             $response = '';
             if (isset($result->response)) {
-                $response = '<pre>' . json_encode(logstore_xapi_decode_response($result->response), JSON_PRETTY_PRINT) . '</pre>';
+                // The response body originates from the LRS and is untrusted.
+                // Escape both at encode time and on output before it reaches
+                // the table cell, which html_writer::table() emits verbatim.
+                $decoded = json_encode(
+                    logstore_xapi_decode_response($result->response),
+                    JSON_PRETTY_PRINT | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_QUOT
+                );
+                $response = \html_writer::tag('pre', s($decoded));
             } else {
                 $response = '-';
             }

@@ -87,7 +87,7 @@
         "max": 100,
         "min": 0,
         "raw": 50,
-        "scaled": 0.0
+        "scaled": 0.5
       },
       "success": true
     }
@@ -222,8 +222,8 @@
       "completion": true,
       "extensions": {
         "http://learninglocker.net/xapi/cmi/matching/response": {
-          "Example short answer question": "orange",
-          "Testing testing": "Purple"
+          "example-short-answer-question": "orange",
+          "testing-testing": "Purple"
         }
       },
       "response": "example-short-answer-question[.]orange[,]testing-testing[.]purple",

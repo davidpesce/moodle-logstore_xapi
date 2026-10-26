@@ -46,7 +46,30 @@ function gapselect(array $config, \stdClass $event, \stdClass $questionattempt, 
     $quiz = $repo->read_record_by_id('quiz', $attempt->quiz);
     $coursemodule = $repo->read_record_by_id('course_modules', $event->contextinstanceid);
     $lang = utils\get_course_lang($course);
-    $selections = explode('} {', rtrim(ltrim($questionattempt->responsesummary, '{'), '}'));
+
+    $result = [
+        'response' => '',
+        'completion' => false,
+        'success' => false,
+    ];
+
+    if (!is_null($questionattempt->responsesummary) && $questionattempt->responsesummary !== '') {
+        $selections = explode('} {', rtrim(ltrim($questionattempt->responsesummary, '{'), '}'));
+
+        $result = [
+            'response' => implode('[,]', array_map(
+                function ($selection) {
+                    return utils\slugify($selection);
+                },
+                $selections
+            )),
+            'completion' => true,
+            'success' => $questionattempt->rightanswer === $questionattempt->responsesummary,
+            'extensions' => [
+                'http://learninglocker.net/xapi/cmi/sequencing/response' => $selections,
+            ],
+        ];
+    }
 
     return [[
         'actor' => utils\get_user($config, $user),
@@ -67,19 +90,7 @@ function gapselect(array $config, \stdClass $event, \stdClass $questionattempt, 
                 $questionattempt->rightanswer,
             ),
         ],
-        'result' => [
-            'response' => implode('[,]', array_map(
-                function ($selection) {
-                    return utils\slugify($selection);
-                },
-                $selections
-            )),
-            'completion' => $questionattempt->responsesummary !== null,
-            'success' => $questionattempt->rightanswer === $questionattempt->responsesummary,
-            'extensions' => [
-                'http://learninglocker.net/xapi/cmi/sequencing/response' => $selections,
-            ],
-        ],
+        'result' => $result,
         'context' => [
             ...utils\get_context_base($config, $event, $lang, $course),
             'contextActivities' => [

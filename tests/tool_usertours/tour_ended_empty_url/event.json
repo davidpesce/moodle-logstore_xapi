@@ -1,0 +1,10 @@
+{
+  "contextinstanceid": 1,
+  "courseid": 2,
+  "id": 1,
+  "userid": 1,
+  "eventname": "\\tool_usertours\\event\\tour_ended",
+  "other": "a:3:{s:7:\"pageurl\";s:0:\"\";s:6:\"stepid\";i:7;s:9:\"stepindex\";i:2;}",
+  "timecreated": 1433946701,
+  "objectid": 3
+}

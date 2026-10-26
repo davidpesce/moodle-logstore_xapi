@@ -27,6 +27,29 @@ namespace src\transformer\events\tool_usertours;
 use src\transformer\utils;
 
 /**
+ * Build an absolute IRI for the page the tour ended on.
+ *
+ * The page URL comes from the user's browser through the complete_tour web service, which
+ * cleans it only as PARAM_LOCALURL, so it can be relative or empty. xAPI requires an absolute
+ * IRI, and an LRS rejecting one statement rejects its whole batch, so relative paths are made
+ * absolute and anything still invalid falls back to the tour itself.
+ *
+ * @param array $config The transformer config settings.
+ * @param \stdClass $event The event to be transformed.
+ * @return string
+ */
+function get_tour_page_iri(array $config, \stdClass $event): string {
+    $pageurl = (string) (utils\decode_other($event->other)['pageurl'] ?? '');
+    if ($pageurl !== '' && !preg_match('#^[a-z][a-z0-9+.-]*://#i', $pageurl)) {
+        $pageurl = $config['app_url'] . '/' . ltrim($pageurl, '/');
+    }
+    if (filter_var($pageurl, FILTER_VALIDATE_URL)) {
+        return $pageurl;
+    }
+    return $config['app_url'] . '/admin/tool/usertours/configure.php?action=viewtour&id=' . ($event->objectid ?? 0);
+}
+
+/**
  * Transformer for tour ended event.
  *
  * @param array $config The transformer config settings.
@@ -47,7 +70,7 @@ function tour_ended(array $config, \stdClass $event) {
             ],
         ],
         'object' => [
-            'id' => unserialize($event->other)['pageurl'],
+            'id' => get_tour_page_iri($config, $event),
             'objectType' => 'Activity',
         ],
         'context' => [

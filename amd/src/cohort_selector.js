@@ -19,7 +19,7 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-define(['core/config', 'jquery'], function(mdlcfg, $) {
+define(['core/config', 'core/str', 'jquery'], function(mdlcfg, Str, $) {
 
     /**
      * Debounce a function call.
@@ -85,11 +85,17 @@ define(['core/config', 'jquery'], function(mdlcfg, $) {
              */
             var addTag = function(id, name) {
                 var escapedName = $('<span>').text(name).html();
-                var tag = $('<span class="cohort-tag badge badge-info mr-1" data-id="' + id + '">'
+                var tag = $('<span class="cohort-tag badge badge-info bg-info mr-1 me-1" data-id="' + id + '">'
                     + escapedName
-                    + ' <a href="#" class="cohort-remove ml-1" data-id="' + id + '" aria-label="Remove">&times;</a>'
+                    + ' <a href="#" class="cohort-remove ml-1 ms-1" data-id="' + id + '">&times;</a>'
                     + '</span>');
                 selected.append(tag);
+                Str.get_string('removecohort', 'logstore_xapi', name).then(function(label) {
+                    tag.find('.cohort-remove').attr('aria-label', label);
+                    return label;
+                }).catch(function() {
+                    // The label is only for screen readers, so the tag still works without it.
+                });
             };
 
             /**

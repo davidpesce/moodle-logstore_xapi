@@ -33,6 +33,7 @@
       "uniqueid": 1,
       "userid": 2,
       "quiz": 1,
+      "attempt": 1,
       "state": "finished",
       "sumgrades": 50,
       "timefinish": 1,

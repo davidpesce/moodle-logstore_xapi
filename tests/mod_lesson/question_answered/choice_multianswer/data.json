@@ -1,0 +1,58 @@
+{
+  "lesson": [
+    {
+      "id": 1,
+      "name": "test_lesson",
+      "intro": "test_lesson_intro"
+    }
+  ],
+  "lesson_answers": [
+    {
+      "id": 1,
+      "pageid": 1,
+      "answer": "Option A",
+      "response": "Feedback: Option A",
+      "score": 1
+    },
+    {
+      "id": 2,
+      "pageid": 1,
+      "answer": "Option B",
+      "response": "Feedback: Option B",
+      "score": 1
+    },
+    {
+      "id": 3,
+      "pageid": 1,
+      "answer": "Option C",
+      "response": "Feedback: Option C",
+      "score": 0
+    }
+  ],
+  "lesson_attempts": [
+    {
+      "lessonid": 1,
+      "pageid": 1,
+      "userid": 1,
+      "correct": 1,
+      "timeseen": "1731972680",
+      "useranswer": "1,2"
+    }
+  ],
+  "lesson_pages": [
+    {
+      "id": 1,
+      "lessonid": 1,
+      "contents": "lesson_question_page_contents",
+      "qtype": 3,
+      "title": "lesson_question_page_title",
+      "qoption": 1
+    }
+  ],
+  "modules": [
+    {
+      "id": 1,
+      "name": "lesson"
+    }
+  ]
+}

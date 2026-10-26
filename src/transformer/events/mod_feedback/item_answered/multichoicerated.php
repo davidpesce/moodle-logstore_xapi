@@ -50,18 +50,19 @@ function multichoicerated(
     $course = $repo->read_record_by_id('course', $event->courseid);
     $feedback = $repo->read_record_by_id('feedback', $feedbackitem->feedback);
     $lang = utils\get_course_lang($course);
-    $presentedchoices = explode("|", substr($feedbackitem->presentation, 6));
-    $choices = array_map(function ($presentation, $id) {
-        $split = explode('####', $presentation);
-        $rating = $split[0];
-        $name = $split[1];
+    // Parsed like a plain multichoice item (subtype, layout suffix, "|" separators); each option
+    // is then "rating####name".
+    $options = get_multichoice_choices($feedbackitem->presentation);
+    $choices = array_map(function ($option, $id) {
+        $split = explode('####', $option, 2);
         return (object) [
-            'rating' => intval($rating),
-            'name' => $name,
+            'rating' => intval($split[0]),
+            'name' => trim($split[1] ?? $split[0]),
             'id' => $id,
         ];
-    }, $presentedchoices, array_keys($presentedchoices));
-    $selectedchoice = $choices[intval($feedbackvalue->value) - 1];
+    }, $options, array_keys($options));
+    // An index outside the list gives no selection rather than an error.
+    $selectedchoice = $choices[intval($feedbackvalue->value) - 1] ?? null;
 
     return [[
         'actor' => $actor,
@@ -88,11 +89,15 @@ function multichoicerated(
             ),
         ],
         'result' => [
-            'response' => $selectedchoice->name,
+            // The response is the selected choice's id, as xAPI defines for choice interactions;
+            // the readable text goes in the extension.
+            'response' => $selectedchoice ? utils\slugify($selectedchoice->name) : '',
             'completion' => $feedbackvalue->value !== '',
-            'extensions' => [
+            'extensions' => $selectedchoice ? [
                 'http://learninglocker.net/xapi/moodle/feedback_item_rating' => $selectedchoice->rating,
                 'http://learninglocker.net/xapi/cmi/choice/response' => $selectedchoice->name,
+            ] : [
+                'http://learninglocker.net/xapi/cmi/choice/response' => '',
             ],
         ],
         'context' => [

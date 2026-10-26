@@ -48,7 +48,7 @@ function quiz_attempt(array $config, int $attemptid, string $cmid) {
         'definition' => [
             'type' => 'http://adlnet.gov/expapi/activities/attempt',
             'name' => [
-                $lang => $quiz->name . ' Attempt ' . $attemptid,
+                $lang => $quiz->name . ' Attempt ' . $attempt->attempt,
             ],
         ],
     ];

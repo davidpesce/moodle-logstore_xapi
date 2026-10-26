@@ -27,24 +27,26 @@ defined('MOODLE_INTERNAL') || die();
 
 $capabilities = [
     'logstore/xapi:viewerrorlog' => [
-        'riskbitmask'  => RISK_CONFIG,
+        'riskbitmask'  => RISK_CONFIG | RISK_PERSONAL,
         'captype'      => 'read',
         'contextlevel' => CONTEXT_SYSTEM,
         'archetypes'   => [
             'manager' => CAP_ALLOW,
         ],
     ],
+    // Permits requeueing failed events for resending, so it is a write action.
     'logstore/xapi:manageerrors' => [
-        'riskbitmask'  => RISK_CONFIG,
-        'captype'      => 'read',
+        'riskbitmask'  => RISK_CONFIG | RISK_PERSONAL,
+        'captype'      => 'write',
         'contextlevel' => CONTEXT_SYSTEM,
         'archetypes'   => [
             'manager' => CAP_ALLOW,
         ],
     ],
+    // Permits moving historic events into the processing queue, so it is a write action.
     'logstore/xapi:managehistoric' => [
-        'riskbitmask'  => RISK_CONFIG,
-        'captype'      => 'read',
+        'riskbitmask'  => RISK_CONFIG | RISK_PERSONAL,
+        'captype'      => 'write',
         'contextlevel' => CONTEXT_SYSTEM,
         'archetypes'   => [
             'manager' => CAP_ALLOW,

@@ -20,13 +20,13 @@
           {
             "id": "true",
             "description": {
-              "en": "true"
+              "en": "True"
             }
           },
           {
             "id": "false",
             "description": {
-              "en": "false"
+              "en": "False"
             }
           }
         ],

@@ -8,13 +8,17 @@
   ],
   "lesson_answers": [
     {
+      "id": 1,
       "pageid": 1,
-      "response": "true",
+      "answer": "True",
+      "response": "Feedback: True",
       "score": 1
     },
     {
+      "id": 2,
       "pageid": 1,
-      "response": "false",
+      "answer": "False",
+      "response": "Feedback: False",
       "score": 0
     }
   ],
@@ -25,7 +29,7 @@
       "userid": 1,
       "correct": 1,
       "timeseen": "1731972680",
-      "useranswer": "true"
+      "useranswer": "True"
     }
   ],
   "lesson_pages": [

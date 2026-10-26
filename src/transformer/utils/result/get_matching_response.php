@@ -38,17 +38,10 @@ function get_matching_response(
     \stdClass $questionattempt,
     string $lang
 ) {
-    $selmap = array_reduce(
-        explode('; ', $questionattempt->responsesummary),
-        function ($reduction, $selection) {
-            $split = explode("\n -> ", $selection);
-            $selectionkey = $split[0];
-            $selectionvalue = $split[1];
-            $reduction[$selectionkey] = $selectionvalue;
-            return $reduction;
-        },
-        []
-    );
+    if (is_null($questionattempt->responsesummary) || $questionattempt->responsesummary === '') {
+        return '';
+    }
+
     return implode(
         '[,]',
         array_map(

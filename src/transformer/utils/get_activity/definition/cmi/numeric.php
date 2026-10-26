@@ -36,6 +36,7 @@ use src\transformer\utils;
  * @param ?string $max The maximum numeric value.
  * @param string $lang The language.
  * @param ?string $exact Override for a single correct numeric answer
+ * @return array
  */
 function numeric(
     array $config,
@@ -46,11 +47,16 @@ function numeric(
     string $lang,
     ?string $exact = null
 ) {
+    // With no exact value and no bound there is no correct answer to state, so the optional
+    // correctResponsesPattern is left out rather than sent as a meaningless "[:]".
+    $hascorrect = !is_null($exact) || !is_null($min) || !is_null($max);
     return [
         ...common($config, $name, $description, $lang),
         'interactionType' => 'numeric',
-        'correctResponsesPattern' => [
-            !is_null($exact) ? $exact : $min . '[:]' . $max,
-        ],
+        ...($hascorrect ? [
+            'correctResponsesPattern' => [
+                !is_null($exact) ? $exact : $min . '[:]' . $max,
+            ],
+        ] : []),
     ];
 }

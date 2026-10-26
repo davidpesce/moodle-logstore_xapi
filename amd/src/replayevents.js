@@ -19,8 +19,8 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-define(['core/str', 'core/config', 'core/notification', 'core/templates', 'jquery', 'jqueryui'],
-    function(str, mdlcfg, notification, templates, $) {
+define(['core/str', 'core/config', 'core/notification', 'jquery'],
+    function(str, mdlcfg, notification, $) {
 
         /**
          * Store a sum.
@@ -87,13 +87,15 @@ define(['core/str', 'core/config', 'core/notification', 'core/templates', 'jquer
             FORM: '#xapierrorlog_form .mform',
             PAGE_LINKS: '.pagination .page-item .page-link',
             REPLAY_EVENTS: '#xapierrorlog_data .reply-event',
-            SELECTS: '#xapierrorlog_form .custom-select',
+            // Match select elements, not .custom-select (Bootstrap 4) or .form-select (Bootstrap 5),
+            // so the resend safeguard works on Moodle 4.5 and 5.x.
+            SELECTS: '#xapierrorlog_form select',
             SELECT_CONTEXT: '#xapierrorlog_form #id_eventcontext',
             SELECT_ERRORTYPE: '#xapierrorlog_form #id_errortype',
             SELECT_EVENTNAME: '#xapierrorlog_form #id_eventnames',
             SELECT_RESPONSE: '#xapierrorlog_form #id_response',
-            SELECT_DATAFROM: '#xapierrorlog_form #id_datefrom .custom-select',
-            SELECT_DATATO: '#xapierrorlog_form #id_dateto .custom-select',
+            SELECT_DATAFROM: '#xapierrorlog_form #id_datefrom select',
+            SELECT_DATATO: '#xapierrorlog_form #id_dateto select',
             SEND_BUTTON: '#xapierrorlog_form #id_resendselected',
             SEND_CAN_DO: '#xapierrorlog_form input[name^="resend"]',
             SEND_ID: '#xapierrorlog_form input[name^="id"]',
@@ -210,8 +212,9 @@ define(['core/str', 'core/config', 'core/notification', 'core/templates', 'jquer
                         self.enableFormControls();
                         self.enablePagination();
                     },
-                    fail: function(ex) {
-                        notification.exception(ex);
+                    // The option is error, not fail. jQuery ignored fail, so a failed replay left the spinner showing.
+                    error: function(jqxhr, textstatus, errorthrown) {
+                        notification.exception({message: errorthrown || textstatus});
 
                         element.empty();
                         element.append(failedHTML);
@@ -339,7 +342,7 @@ define(['core/str', 'core/config', 'core/notification', 'core/templates', 'jquer
                 var elements = $(SELECTORS.PAGE_LINKS);
 
                 this.disableElements(elements);
-                elements.bind('click', function(e) {
+                elements.on('click', function(e) {
                     e.preventDefault();
                 });
             },
@@ -354,7 +357,7 @@ define(['core/str', 'core/config', 'core/notification', 'core/templates', 'jquer
                 var elements = $(SELECTORS.PAGE_LINKS);
 
                 this.enableElements(elements);
-                elements.unbind('click');
+                elements.off('click');
             },
 
             /**
@@ -473,7 +476,7 @@ define(['core/str', 'core/config', 'core/notification', 'core/templates', 'jquer
                     loadHTML = '<span aria-hidden="true"' +
                         ' class="fa fa-spinner fa-spin fa-pulse"' +
                         ' title="' + loadStr + '"></span>' +
-                        '<span class="sr-only">' + loadStr + '</span>';
+                        '<span class="sr-only visually-hidden">' + loadStr + '</span>';
                 });
             },
 
@@ -490,7 +493,7 @@ define(['core/str', 'core/config', 'core/notification', 'core/templates', 'jquer
                     doneHTML = '<span aria-hidden="true"' +
                         ' class="fa fa-check"' +
                         ' title="' + doneStr + '"></span>' +
-                        '<span class="sr-only">' + doneStr + '</span>';
+                        '<span class="sr-only visually-hidden">' + doneStr + '</span>';
                 });
             },
 
@@ -507,7 +510,7 @@ define(['core/str', 'core/config', 'core/notification', 'core/templates', 'jquer
                     failedHTML = '<span aria-hidden="true"' +
                         ' class="fa fa-remove"' +
                         ' title="' + failedStr + '"></span>' +
-                        '<span class="sr-only">' + failedStr + '</span>';
+                        '<span class="sr-only visually-hidden">' + failedStr + '</span>';
                 });
             },
 
@@ -524,7 +527,7 @@ define(['core/str', 'core/config', 'core/notification', 'core/templates', 'jquer
                     replayHTML = '<span aria-hidden="true"' +
                         ' class="fa fa-repeat"' +
                         ' title="' + replayStr + '"></span>' +
-                        '<span class="sr-only">' + replayStr + ' </span>';
+                        '<span class="sr-only visually-hidden">' + replayStr + ' </span>';
                     $(SELECTORS.REPLAY_EVENTS).append(replayHTML);
                 });
             },

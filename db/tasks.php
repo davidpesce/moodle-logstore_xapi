@@ -57,7 +57,8 @@ $tasks = [
     [
         'classname' => '\logstore_xapi\task\sendfailednotifications_task',
         'blocking' => 0,
-        'minute' => '*',
+        // Once every two hours, on the hour.
+        'minute' => '0',
         'hour' => '*/2',
         'day' => '*',
         'dayofweek' => '*',

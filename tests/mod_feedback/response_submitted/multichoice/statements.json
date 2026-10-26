@@ -108,9 +108,6 @@
             }
           }
         ],
-        "correctResponsesPattern": [
-          "test-choice-1[,]test-choice-2[,]test-choice-3"
-        ],
         "interactionType": "choice",
         "name": {
           "en": "test_feedback_item"
@@ -181,7 +178,7 @@
       "extensions": {
         "http://learninglocker.net/xapi/cmi/choice/response": "test_choice_2"
       },
-      "response": "test_choice_2"
+      "response": "test-choice-2"
     }
   }
 ]

@@ -37,7 +37,7 @@ namespace src\transformer\utils;
  */
 function get_lesson_essay_result(array $config, \stdClass $lesson, \stdClass $answer, \stdClass $attempt) {
 
-    $attemptdetail = unserialize($attempt->useranswer);
+    $attemptdetail = decode_other($attempt->useranswer);
 
     $min = floatval(0);
     $max = floatval($answer->score);

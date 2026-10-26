@@ -93,7 +93,7 @@
         "max": 2.0,
         "min": 0.0,
         "raw": 1.0,
-        "scaled": 0.0
+        "scaled": 0.5
       },
       "success": true
     }

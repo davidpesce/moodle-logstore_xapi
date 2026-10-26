@@ -34,10 +34,11 @@ namespace src\transformer\utils;
  */
 function apply_statement_defaults(array $config, \stdClass $event, array $statements) {
     return array_map(function ($statement) use ($config, $event) {
+        // No context.registration: Moodle has no session-wide registration, and one derived
+        // from the session key grouped statements that do not belong to the same attempt.
         $defaultstatement = [
             'context' => [
                 'platform' => $config['context_platform'] ?? 'Moodle',
-                'registration' => stringToUuidV5($config['session_id']),
             ],
             'timestamp' => get_event_timestamp($event),
         ];

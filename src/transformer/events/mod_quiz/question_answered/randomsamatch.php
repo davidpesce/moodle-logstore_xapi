@@ -46,17 +46,31 @@ function randomsamatch(array $config, \stdClass $event, \stdClass $questionattem
     $quiz = $repo->read_record_by_id('quiz', $attempt->quiz);
     $coursemodule = $repo->read_record_by_id('course_modules', $event->contextinstanceid);
     $lang = utils\get_course_lang($course);
-    $selections = array_reduce(
-        explode('; ', $questionattempt->responsesummary),
-        function ($reduction, $selection) {
-            $split = explode("\n -> ", $selection);
-            $selectionkey = $split[0];
-            $selectionvalue = $split[1];
-            $reduction[$selectionkey] = $selectionvalue;
-            return $reduction;
-        },
-        []
-    );
+
+    $result = [
+        'response' => '',
+        'completion' => false,
+        'success' => false,
+    ];
+
+    if (!is_null($questionattempt->responsesummary) && $questionattempt->responsesummary !== '') {
+        $result = [
+            'response' => utils\result\get_matching_response(
+                $config,
+                $questionattempt,
+                $lang
+            ),
+            'completion' => true,
+            'success' => $questionattempt->rightanswer === $questionattempt->responsesummary,
+            'extensions' => [
+                'http://learninglocker.net/xapi/cmi/matching/response' => utils\result\get_matching_extension_response(
+                    $config,
+                    $questionattempt,
+                    $lang
+                ),
+            ],
+        ];
+    }
 
     return [[
         'actor' => utils\get_user($config, $user),
@@ -71,18 +85,7 @@ function randomsamatch(array $config, \stdClass $event, \stdClass $questionattem
             'id' => utils\get_quiz_question_id($config, $coursemodule->id, $question->id),
             'definition' => question\get_match_definition($config, $question, $lang),
         ],
-        'result' => [
-            'response' => utils\result\get_matching_response(
-                $config,
-                $questionattempt,
-                $lang
-            ),
-            'completion' => $questionattempt->responsesummary !== '',
-            'success' => $questionattempt->rightanswer === $questionattempt->responsesummary,
-            'extensions' => [
-                'http://learninglocker.net/xapi/cmi/matching/response' => $selections,
-            ],
-        ],
+        'result' => $result,
         'context' => [
             ...utils\get_context_base($config, $event, $lang, $course),
             'contextActivities' => [

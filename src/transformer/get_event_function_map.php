@@ -86,7 +86,7 @@ function get_event_function_map() {
         '\mod_assign\event\submission_unlocked' => 'mod_assign\submission_locked',
         '\mod_assign\event\submission_viewed' => 'mod_assign\submission_viewed',
         '\mod_assign\event\course_module_viewed' => 'all\course_module_viewed',
-        '\mod_bigbluebuttonbn\event\activity_viewed' => 'mod_bigbluebuttonbn\activity_viewed',
+        '\mod_bigbluebuttonbn\event\course_module_viewed' => 'all\course_module_viewed',
         '\mod_bigbluebuttonbn\event\activity_management_viewed' => 'mod_bigbluebuttonbn\activity_management_viewed',
         '\mod_bigbluebuttonbn\event\live_session_event' => 'mod_bigbluebuttonbn\live_session',
         '\mod_bigbluebuttonbn\event\meeting_created' => 'mod_bigbluebuttonbn\meeting_created',
@@ -173,18 +173,15 @@ function get_event_function_map() {
         '\mod_wiki\event\comments_viewed' => 'mod_wiki\comments_viewed',
         '\mod_wiki\event\page_viewed' => 'mod_wiki\page_viewed',
         '\mod_workshop\event\course_module_viewed' => 'all\course_module_viewed',
-        '\totara_program\event\program_assigned' => 'totara_program\program_assigned',
         '\tool_certificate\event\certificate_issued' => 'tool_certificate\certificate_issued',
         '\tool_certificate\event\certificate_verified' => 'tool_certificate\certificate_verified',
         '\tool_certificate\event\certificate_revoked' => 'tool_certificate\certificate_revoked',
         '\tool_usertours\event\tour_ended' => 'tool_usertours\tour_ended',
     ];
 
-    $environmentevents = class_exists("report_eventlist_list_generator") ?
-        array_keys(\report_eventlist_list_generator::get_all_events_list(false)) : array_keys($availableevents);
-
-    $map = array_filter($availableevents, function ($k) use ($environmentevents) {
-        return in_array($k, $environmentevents);
+    // Keep only the events whose class exists on this site. Checking each mapped class is much
+    // cheaper than listing every event of every installed component, which this used to do.
+    return array_filter($availableevents, function ($eventname) {
+        return class_exists($eventname);
     }, ARRAY_FILTER_USE_KEY);
-    return $map;
 }

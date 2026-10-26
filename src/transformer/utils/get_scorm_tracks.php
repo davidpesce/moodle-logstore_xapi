@@ -30,21 +30,41 @@ namespace src\transformer\utils;
  * Returns objects with 'element' and 'value' properties, matching the shape
  * expected by get_scorm_verb() and get_scorm_result().
  *
+ * The scoreraw_submitted and status_submitted events carry the scorm_attempt row id and the
+ * CMI element and value that were just saved, but not the SCO. scorm_insert_track() saves the
+ * value before triggering the event, so the SCO is the one whose stored value for that element
+ * in this attempt matches the event.
+ *
  * @param array $config The transformer config settings.
- * @param int $userid The user ID.
- * @param int $scormid The SCORM activity ID.
- * @param int $scoid The SCO ID.
- * @param int $attempt The attempt number.
+ * @param int $attemptid The scorm_attempt id, from the event's other['attemptid'].
+ * @param string $cmielement The CMI element from the event, e.g. cmi.core.score.raw.
+ * @param mixed $cmivalue The CMI value from the event.
  * @return array
  */
-function get_scorm_tracks(array $config, int $userid, int $scormid, int $scoid, int $attempt) {
+function get_scorm_tracks(array $config, int $attemptid, string $cmielement, $cmivalue) {
     $repo = $config['repo'];
 
-    $attemptrecord = $repo->read_record('scorm_attempt', [
-        'userid' => $userid,
-        'scormid' => $scormid,
-        'attempt' => $attempt,
+    // Throws if the attempt does not exist, so the event is reported as a transform failure.
+    $attemptrecord = $repo->read_record_by_id('scorm_attempt', $attemptid);
+    $elementrecord = $repo->read_record('scorm_element', ['element' => $cmielement]);
+
+    $candidates = $repo->read_records('scorm_scoes_value', [
+        'attemptid' => $attemptrecord->id,
+        'elementid' => $elementrecord->id,
     ]);
+    $matching = array_filter($candidates, function ($candidate) use ($cmivalue) {
+        return (string) $candidate->value === (string) $cmivalue;
+    });
+    // The value may have changed again before the event was processed; fall back to any SCO
+    // that has this element in the attempt, preferring the most recently modified.
+    $pool = $matching ?: $candidates;
+    if (!$pool) {
+        throw new \Exception("scorm_scoes_value not found for attempt $attemptid and $cmielement.");
+    }
+    usort($pool, function ($a, $b) {
+        return ($b->timemodified ?? 0) <=> ($a->timemodified ?? 0);
+    });
+    $scoid = reset($pool)->scoid;
 
     $values = $repo->read_records('scorm_scoes_value', [
         'attemptid' => $attemptrecord->id,

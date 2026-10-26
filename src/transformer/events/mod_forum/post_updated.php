@@ -38,7 +38,7 @@ function post_updated(array $config, \stdClass $event) {
     $user = $repo->read_record_by_id('user', $event->userid);
     $course = $repo->read_record_by_id('course', $event->courseid);
     $post = $repo->read_record_by_id('forum_posts', $event->objectid);
-    $other = unserialize($event->other);
+    $other = utils\decode_other($event->other);
     $discussionid = $other['discussionid'];
     $discussion = $repo->read_record_by_id('forum_discussions', $discussionid);
 
