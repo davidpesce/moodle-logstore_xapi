@@ -56,7 +56,9 @@ function choice(
                     ],
                 ];
             },
-            $choices
+            // Callers often pass records from get_records(), which are keyed by id. Renumber them
+            // so that choices is a JSON array, not an object.
+            array_values($choices)
         )
         : null;
 
