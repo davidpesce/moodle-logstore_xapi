@@ -4,6 +4,17 @@ A summary of each release. The full notes, including upgrade instructions, are o
 [GitHub releases page](https://github.com/davidpesce/moodle-logstore_xapi/releases), which is
 the authoritative record.
 
+## 5.3.0 (unreleased)
+
+### New events
+
+- **Game activities** (the third-party [mod_game](https://moodle.org/plugins/mod_game) plugin):
+  "Game played" and "Course module viewed" are sent. Contributed by David Herney (#890).
+  mod_game records "Game played" each time a game page loads, which is on every move, so one
+  game sends many "Played" statements. Turn off the `\mod_game\event\game_played` route if
+  you don't want them. On sites upgrading from an earlier version, the new routes are off until
+  you turn them on, as the saved route list is kept.
+
 ## 5.2.1 (2026-10-26)
 
 Bug-fix and privacy release. Supports Moodle 4.5 to 5.3. No database changes; one new setting.
