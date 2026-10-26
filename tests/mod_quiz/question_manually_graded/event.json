@@ -7,6 +7,6 @@
   "userid": 1,
   "eventname": "\\mod_quiz\\event\\question_manually_graded",
   "objecttable": "quiz",
-  "other": "a:3:{s:6:\"quizid\";s:1:\"1\";s:9:\"attemptid\";s:1:\"1\";s:4:\"slot\";i:1;}",
+  "other": "a:3:{s:6:\"quizid\";s:1:\"1\";s:9:\"attemptid\";s:1:\"1\";s:4:\"slot\";i:2;}",
   "timecreated": 1433946701
 }

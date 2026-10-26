@@ -14,10 +14,10 @@
       }
     },
     "object": {
-      "id": "http://www.example.org/review.php?attempt=1&slot=1",
+      "id": "http://www.example.org/review.php?attempt=1&slot=2",
       "definition": {
         "name": {
-          "en": "test_quiz_name Review Slot 1"
+          "en": "test_quiz_name Review Slot 2"
         },
         "type": "http://activitystrea.ms/schema/1.0/review#slot"
       },

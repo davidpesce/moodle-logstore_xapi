@@ -48,7 +48,10 @@ function question_manually_graded(array $config, \stdClass $event) {
     $user = $repo->read_record_by_id('user', $attempt->userid);
     $questionattempts = $repo->read_records(
         'question_attempts',
-        ['questionusageid' => (int) $attempt->uniqueid],
+        [
+            'questionusageid' => (int) $attempt->uniqueid,
+            'slot' => (int) $slot,
+        ],
     );
     if (empty($questionattempts)) {
         return [];
