@@ -89,4 +89,30 @@ final class sendfailednotifications_task_test extends advanced_testcase {
         (new task\sendfailednotifications_task())->execute();
         $this->assertSame(0, $sink->count());
     }
+
+    /**
+     * Emailing an extra address doesn't change core's cached support user.
+     *
+     * @return void
+     */
+    public function test_support_user_is_not_changed(): void {
+        $this->resetAfterTest();
+
+        // With no support user or support email, core caches the admin as the support user.
+        set_config('supportuserid', '');
+        set_config('supportemail', '');
+        \core_user::reset_internal_users();
+        $supportemail = \core_user::get_support_user()->email;
+
+        set_config('enablesendingnotifications', 1, 'logstore_xapi');
+        set_config('errornotificationtrigger', 1, 'logstore_xapi');
+        set_config('send_additional_email_addresses', 'one@example.com', 'logstore_xapi');
+        $this->add_failed_event();
+
+        $this->redirectEmails();
+        $this->expectOutputRegex('/./');
+        (new task\sendfailednotifications_task())->execute();
+
+        $this->assertSame($supportemail, \core_user::get_support_user()->email);
+    }
 }
