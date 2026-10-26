@@ -81,6 +81,22 @@ the authoritative record.
   URL); a saved value that isn't one is ignored, as an invalid homePage made every statement
   fail.
 
+### Error report
+
+- **The response filter scales.** It listed every distinct response, read from the TEXT column on
+  every page load, and transform errors included the event id, so each failure was its own option.
+  The filter now lists the 100 most frequent responses, grouped by a hash of the response stored
+  in a new indexed column, and transform errors leave out the event id (it has its own column).
+  After upgrading, an ad-hoc task indexes existing failures in batches when cron runs; until it
+  finishes, the filter doesn't list them, and the report says so.
+- **The error type is indexed**, and both reports list events in a fixed order, so rows no longer
+  move between pages.
+
+### Removed
+
+- **Oracle is no longer supported.** Moodle 5.0 dropped it, and the plugin isn't tested on it.
+  The error report compared the TEXT response column directly, which fails on Oracle (#916).
+
 ### Development
 
 - **The plugin's PHPUnit tests no longer need `composer install`.** On a git checkout without

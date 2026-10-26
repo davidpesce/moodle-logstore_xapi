@@ -1,6 +1,7 @@
 # [Moodle Logstore xAPI](https://moodle.org/plugins/view/logstore_xapi)
 > Emits [xAPI](https://github.com/adlnet/xAPI-Spec/blob/master/xAPI.md) statements using the [Moodle](https://moodle.org/) Logstore.
 
+- Runs on Moodle 4.5 to 5.3, and is tested on PostgreSQL and MariaDB. Oracle isn't supported.
 - Install the plugin using [our zip installation guide](/docs/install-with-zip.md).
 - Process events before the plugin was installed using [our historical events guide](/docs/historical-events.md).
 - Ask questions via the [Github issue tracker](https://github.com/xAPI-vle/moodle-logstore_xapi/issues).

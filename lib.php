@@ -39,8 +39,14 @@ define('XAPI_REPORT_SOURCE_HISTORICAL', 'logstore_standard_log');
 
 // Columns of the failed log that the error report may build filter options
 // from. Used as an allow-list, since a column name cannot be bound as a query
-// parameter and has to be interpolated into the SQL.
-define('XAPI_REPORT_FILTER_COLUMNS', ['errortype', 'response']);
+// parameter and has to be interpolated into the SQL. Responses are offered by
+// hash instead (logstore_xapi_get_response_options()).
+define('XAPI_REPORT_FILTER_COLUMNS', ['errortype']);
+
+// The most responses the error report's response filter lists. Each distinct LRS
+// error is one option, so a site with many kinds of failure would otherwise get an
+// unusable list; the most frequent ones are offered.
+define('XAPI_REPORT_RESPONSE_OPTIONS_MAX', 100);
 
 // Error types.
 define('XAPI_REPORT_ERRORTYPE_NETWORK', 101);
@@ -238,8 +244,8 @@ function logstore_xapi_get_distinct_options_from_failed_table($column) {
     $results = $DB->get_fieldset_select('logstore_xapi_failed_log', "DISTINCT $column", '');
     if ($results) {
         foreach ($results as $result) {
-            // The response column holds raw LRS error bodies, and core's select template prints
-            // option labels unescaped, so escape (and shorten) the label. The value stays raw.
+            // Core's select template prints option labels unescaped, so escape (and shorten) the
+            // label. The value stays raw.
             $label = (string) $result;
             if (core_text::strlen($label) > 100) {
                 $label = core_text::substr($label, 0, 100) . '…';
@@ -248,6 +254,64 @@ function logstore_xapi_get_distinct_options_from_failed_table($column) {
         }
     }
     return $options;
+}
+
+/**
+ * The hash the failed log stores with each response, which the error report filters and groups on.
+ *
+ * @param ?string $response The response.
+ * @return ?string The SHA-1 of the response, or null when there is none.
+ */
+function logstore_xapi_hash_response(?string $response): ?string {
+    return is_null($response) ? null : sha1($response);
+}
+
+/**
+ * The error report's response filter options: the most frequent responses in the failed log.
+ *
+ * Options are keyed by response hash, so the report compares a short indexed column instead of
+ * the TEXT response. Rows whose hash the upgrade has not backfilled yet are not listed (see
+ * \logstore_xapi\task\hash_failed_responses).
+ *
+ * @return array Hash => escaped, shortened response text, after an "Any" option keyed 0.
+ */
+function logstore_xapi_get_response_options(): array {
+    global $DB;
+
+    $options = [0 => get_string('any')];
+    $sql = "SELECT responsehash, MIN(id) AS sampleid, COUNT(1) AS failures
+              FROM {logstore_xapi_failed_log}
+             WHERE responsehash IS NOT NULL
+          GROUP BY responsehash
+          ORDER BY COUNT(1) DESC, MIN(id) ASC";
+    $hashes = $DB->get_records_sql($sql, [], 0, XAPI_REPORT_RESPONSE_OPTIONS_MAX);
+    if (empty($hashes)) {
+        return $options;
+    }
+
+    [$insql, $params] = $DB->get_in_or_equal(array_column($hashes, 'sampleid'));
+    $responses = $DB->get_records_select_menu('logstore_xapi_failed_log', "id $insql", $params, '', 'id, response');
+    foreach ($hashes as $hash) {
+        // The response column holds raw LRS error bodies, and core's select template prints
+        // option labels unescaped, so escape (and shorten) the label.
+        $label = (string) ($responses[$hash->sampleid] ?? '');
+        if (core_text::strlen($label) > 100) {
+            $label = core_text::substr($label, 0, 100) . '…';
+        }
+        $options[$hash->responsehash] = s($label);
+    }
+    return $options;
+}
+
+/**
+ * Whether some failed events still have no response hash, so the error report's response
+ * filter does not list them yet.
+ *
+ * @return bool
+ */
+function logstore_xapi_has_unhashed_responses(): bool {
+    global $DB;
+    return $DB->record_exists_select('logstore_xapi_failed_log', 'responsehash IS NULL AND response IS NOT NULL');
 }
 
 /**
@@ -315,10 +379,12 @@ function logstore_xapi_clean_report_filters(string $onpage, array $eventnames) {
         return $filters;
     }
 
-    foreach (['userfullname', 'response'] as $name) {
-        if (isset($decoded[$name]) && is_string($decoded[$name])) {
-            $filters->$name = $decoded[$name];
-        }
+    if (isset($decoded['userfullname']) && is_string($decoded['userfullname'])) {
+        $filters->userfullname = $decoded['userfullname'];
+    }
+    // The response filter's value is a response hash.
+    if (isset($decoded['response']) && is_string($decoded['response']) && preg_match('/^[0-9a-f]{40}$/', $decoded['response'])) {
+        $filters->response = $decoded['response'];
     }
 
     foreach (['errortype', 'eventcontext', 'datefrom', 'dateto'] as $name) {
@@ -538,6 +604,7 @@ function logstore_xapi_store_failed_events($events, $trace = true) {
 
     $failedevents = logstore_xapi_get_failed_events($events);
     foreach ($failedevents as $failedevent) {
+        $failedevent->responsehash = logstore_xapi_hash_response($failedevent->response ?? null);
         $DB->insert_record('logstore_xapi_failed_log', $failedevent);
     }
     if ($trace) {
