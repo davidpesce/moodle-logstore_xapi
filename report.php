@@ -79,6 +79,11 @@ $PAGE->set_url($url);
 
 // Set filter params and defaults.
 $eventnames = logstore_xapi_get_event_names_array();
+if ($id == XAPI_REPORT_ID_HISTORIC) {
+    // Offer only the events the admin has chosen to send.
+    $routes = array_flip(explode(',', get_config('logstore_xapi', 'routes') ?: ''));
+    $eventnames = array_intersect_key($eventnames, $routes);
+}
 
 $defaults = [
     'datefrom' => XAPI_REPORT_DATEFROM_DEFAULT,
@@ -197,7 +202,8 @@ if (isset($formelements)) {
 }
 
 if ($run) {
-    [$insql, $inparams] = $DB->get_in_or_equal($eventnames, SQL_PARAMS_NAMED, 'evt');
+    // With no events to offer (no routes enabled), match nothing rather than throw.
+    [$insql, $inparams] = $DB->get_in_or_equal($eventnames, SQL_PARAMS_NAMED, 'evt', true, '');
     $where[] = "x.eventname $insql";
     $params = array_merge($params, $inparams);
 
