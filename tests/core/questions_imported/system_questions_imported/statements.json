@@ -1,0 +1,51 @@
+[
+  {
+    "actor": {
+      "account": {
+        "homePage": "http://www.example.org",
+        "name": "1"
+      },
+      "name": "test_fullname"
+    },
+    "verb": {
+      "id": "http://adlnet.gov/expapi/verbs/imported",
+      "display": {
+        "en": "Imported"
+      }
+    },
+    "object": {
+      "id": "http://www.example.org/question/bank/importquestions/import.php",
+      "definition": {
+        "name": {
+          "en": "Questions in xml format"
+        },
+        "type": "http://adlnet.gov/expapi/activities/file"
+      },
+      "objectType": "Activity"
+    },
+    "context": {
+      "contextActivities": {
+        "category": [
+          {
+            "id": "http://www.example.org",
+            "definition": {
+              "name": {
+                "en": "test_site_fullname"
+              },
+              "type": "http://id.tincanapi.com/activitytype/lms"
+            },
+            "objectType": "Activity"
+          }
+        ]
+      },
+      "extensions": {
+        "http://lrs.learninglocker.net/define/extensions/info": {
+          "event_function": "\\src\\transformer\\events\\core\\questions_imported",
+          "event_name": "\\core\\event\\questions_imported",
+          "http://moodle.org": "1.0.0",
+          "https://github.com/xAPI-vle/moodle-logstore_xapi": "0.0.0-development"
+        }
+      }
+    }
+  }
+]

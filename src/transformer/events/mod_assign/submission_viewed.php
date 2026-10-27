@@ -37,9 +37,19 @@ use src\transformer\utils;
 function submission_viewed(array $config, \stdClass $event) {
     $repo = $config['repo'];
     $instructor = $repo->read_record_by_id('user', $event->userid);
-    $learner = $repo->read_record_by_id('user', $event->relateduserid);
     $course = $repo->read_record_by_id('course', $event->courseid);
     $lang = utils\get_course_lang($course);
+
+    // A group submission belongs to a group, not a user: relateduserid is 0. Submissions from
+    // users in no group belong to the default group, groupid 0, and have no "for" at all.
+    if (!empty($event->relateduserid)) {
+        $for = utils\get_user($config, $repo->read_record_by_id('user', $event->relateduserid));
+    } else {
+        $submission = $repo->read_record_by_id('assign_submission', $event->objectid);
+        $for = empty($submission->groupid)
+            ? null
+            : utils\get_group($config, $repo->read_record_by_id('groups', $submission->groupid));
+    }
 
     return [[
         'actor' => utils\get_user($config, $instructor),
@@ -57,8 +67,9 @@ function submission_viewed(array $config, \stdClass $event) {
         'context' => [
             ...utils\get_context_base($config, $event, $lang, $course),
             'extensions' => [
-                'https://yetanalytics.com/profiles/prepositions/concepts/context-extensions/for' =>
-                    utils\get_user($config, $learner),
+                ...(is_null($for) ? [] : [
+                    'https://yetanalytics.com/profiles/prepositions/concepts/context-extensions/for' => $for,
+                ]),
                 ...utils\extensions\base($config, $event, $course),
             ],
             'contextActivities' => [

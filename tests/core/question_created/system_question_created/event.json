@@ -1,0 +1,12 @@
+{
+  "courseid": 0,
+  "id": 1,
+  "objectid": 1,
+  "userid": 1,
+  "eventname": "\\core\\event\\question_created",
+  "objecttable": "question",
+  "timecreated": 1433946701,
+  "contextinstanceid": 0,
+  "contextlevel": 10,
+  "other": "{\"categoryid\":1}"
+}

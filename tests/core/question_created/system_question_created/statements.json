@@ -1,0 +1,61 @@
+[
+  {
+    "actor": {
+      "account": {
+        "homePage": "http://www.example.org",
+        "name": "1"
+      },
+      "name": "test_fullname"
+    },
+    "verb": {
+      "id": "http://activitystrea.ms/create",
+      "display": {
+        "en": "Created"
+      }
+    },
+    "object": {
+      "id": "http://www.example.org/question?id=1",
+      "definition": {
+        "correctResponsesPattern": [
+          "true"
+        ],
+        "description": {
+          "en": "Is the sky blue?"
+        },
+        "extensions": {
+          "https://xapi.edlm/profiles/edlm-lms/concepts/activity-extensions/moodle-question-type": "truefalse"
+        },
+        "interactionType": "true-false",
+        "name": {
+          "en": "True or False?"
+        },
+        "type": "http://adlnet.gov/expapi/activities/cmi.interaction"
+      },
+      "objectType": "Activity"
+    },
+    "context": {
+      "contextActivities": {
+        "category": [
+          {
+            "id": "http://www.example.org",
+            "definition": {
+              "name": {
+                "en": "test_site_fullname"
+              },
+              "type": "http://id.tincanapi.com/activitytype/lms"
+            },
+            "objectType": "Activity"
+          }
+        ]
+      },
+      "extensions": {
+        "http://lrs.learninglocker.net/define/extensions/info": {
+          "event_function": "\\src\\transformer\\events\\core\\question_created",
+          "event_name": "\\core\\event\\question_created",
+          "http://moodle.org": "1.0.0",
+          "https://github.com/xAPI-vle/moodle-logstore_xapi": "0.0.0-development"
+        }
+      }
+    }
+  }
+]
