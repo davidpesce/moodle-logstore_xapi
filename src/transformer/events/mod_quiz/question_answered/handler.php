@@ -47,11 +47,10 @@ function handler(array $config, \stdClass $event, \stdClass $questionattempt) {
             return gapselect($config, $event, $questionattempt, $question);
         case 'truefalse':
             return truefalse($config, $event, $questionattempt, $question);
-        case 'randomsamatch':
-            return randomsamatch($config, $event, $questionattempt, $question);
         case 'shortanswer':
             return shortanswer($config, $event, $questionattempt, $question);
         case 'match':
+        case 'randomsamatch':
             return matching($config, $event, $questionattempt, $question);
         case 'multichoice':
         case 'multichoiceset':

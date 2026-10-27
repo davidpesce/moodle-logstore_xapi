@@ -82,6 +82,15 @@ the authoritative record.
   like `[.]purple`; distractors are targets only. A choice shared by several stems is listed
   once, so target ids are unique. Lesson matching pages no longer send their correct and wrong
   answer feedback as sources.
+- **Matching responses are read from the attempt, not its text summary.** Quiz matching and random
+  short-answer matching responses were split out of Moodle's "stem -> choice; …" summary, which
+  went wrong when a stem or choice contained "; " or " -> ". They are now read from the attempt's
+  step data, as the question engine stores them. Targets are listed in the order the attempt
+  showed them.
+- **Random short-answer matching (randomsamatch) questions are defined by their attempt.** Their
+  stems are short-answer questions drawn for each attempt, but the definition was read from match
+  question tables that randomsamatch never uses, so in production it had no stems or choices and a
+  correct response of `""`. It now lists the stems and choices the attempt showed.
 - **Lesson correct answers follow the lesson's scoring mode.** With custom scoring, an answer is
   correct when it scores more than 0, as before. Without it, an answer is correct when it moves
   the learner forward (to the next page, a later page or the end of the lesson), as in core.

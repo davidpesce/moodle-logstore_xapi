@@ -52,6 +52,46 @@
       "questiontext": "test_question"
     }
   ],
+  "question_attempt_step_data": [
+    {
+      "id": 1,
+      "attemptstepid": 1,
+      "name": "_stemorder",
+      "value": "1,2,3"
+    },
+    {
+      "id": 2,
+      "attemptstepid": 1,
+      "name": "_choiceorder",
+      "value": "3,1,2"
+    },
+    {
+      "id": 3,
+      "attemptstepid": 3,
+      "name": "-finish",
+      "value": "1"
+    }
+  ],
+  "question_attempt_steps": [
+    {
+      "id": 1,
+      "questionattemptid": 1,
+      "sequencenumber": 0,
+      "state": "todo",
+      "fraction": null,
+      "userid": 1,
+      "timecreated": 1433946000
+    },
+    {
+      "id": 3,
+      "questionattemptid": 1,
+      "sequencenumber": 1,
+      "state": "gaveup",
+      "fraction": null,
+      "userid": 1,
+      "timecreated": 1433946200
+    }
+  ],
   "question_attempts": [
     {
       "id": 1,

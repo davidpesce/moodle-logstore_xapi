@@ -90,28 +90,30 @@ function get_multichoice_definition(
 
 
 /**
- * Transformer util for creating match definitions
+ * Transformer util for creating matching (match and randomsamatch) definitions.
+ *
+ * With an attempt, the stems and choices are the ones it showed, in the order it showed them;
+ * randomsamatch draws its stems per attempt, so only the attempt has them. Without one (a
+ * question created in the question bank), match questions use their subquestions and
+ * randomsamatch questions have no stems to list.
  *
  * @param array $config The transformer config settings.
  * @param \stdClass $question The question object.
  * @param string $lang The language.
+ * @param ?array $attempt The attempt, from quiz_question\get_matching_attempt(), if there is one.
+ * @return array
  */
-function get_match_definition(array $config, \stdClass $question, string $lang) {
-    $repo = $config['repo'];
-    $subqs = $repo->read_records('qtype_match_subquestions', [
-        'questionid' => $question->id,
-    ]);
+function get_match_definition(array $config, \stdClass $question, string $lang, ?array $attempt = null) {
+    if (is_null($attempt)) {
+        $attempt = $question->qtype === 'randomsamatch'
+            ? ['stems' => [], 'choices' => [], 'right' => []]
+            : utils\quiz_question\get_match_subquestions($config, $question);
+    }
 
-    // A subquestion with no stem is a distractor: its answer is offered but matches nothing.
-    $source = [];
-    $target = [];
     $pairs = [];
-    foreach ($subqs as $subq) {
-        $stem = utils\get_string_html_removed($subq->questiontext);
-        $target[] = $subq->answertext;
-        if ($stem !== '') {
-            $source[] = $stem;
-            $pairs[] = [$stem, $subq->answertext];
+    foreach ($attempt['right'] as $stemkey => $choicekey) {
+        if (isset($attempt['stems'][$stemkey], $attempt['choices'][$choicekey])) {
+            $pairs[] = [$attempt['stems'][$stemkey], $attempt['choices'][$choicekey]];
         }
     }
 
@@ -119,8 +121,8 @@ function get_match_definition(array $config, \stdClass $question, string $lang) 
         $config,
         $question->name,
         utils\get_string_html_removed($question->questiontext),
-        $source,
-        $target,
+        array_values($attempt['stems']),
+        array_values($attempt['choices']),
         $pairs,
         $lang
     );
