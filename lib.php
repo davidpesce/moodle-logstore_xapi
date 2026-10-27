@@ -64,7 +64,8 @@ define('XAPI_REPORT_STARTING_PAGE', 0);
 define('XAPI_REPORT_PERPAGE_DEFAULT', 40);
 define('XAPI_REPORT_PERPAGE_MAX', 500);
 define('XAPI_REPORT_ONPAGE_DEFAULT', '');
-define('XAPI_REPORT_EVENTCONTEXT_DEFAULT', '');
+define('XAPI_REPORT_COURSEID_DEFAULT', 0);
+define('XAPI_REPORT_ACTIVITY_DEFAULT', 0);
 define('XAPI_REPORT_EVENTNAMES_DEFAULT', []);
 define('XAPI_REPORT_ERROTYPE_DEFAULT', '0');
 define('XAPI_REPORT_RESPONSE_DEFAULT', '0');
@@ -315,29 +316,25 @@ function logstore_xapi_has_unhashed_responses(): bool {
 }
 
 /**
- * Get the available context's from the logstore standard log table
+ * The historic report's activity filter options: the activities of one course.
  *
- * @return array
- * @throws dml_exception
+ * The filter lists a course's activities once a course is chosen, rather than every context in
+ * the standard log, which on a large site meant scanning the whole table.
+ *
+ * @param int $courseid The course id.
+ * @return array Activity context id => escaped "Type: name" label.
  */
-function logstore_xapi_get_logstore_standard_context_options() {
+function logstore_xapi_get_course_activity_options(int $courseid): array {
     global $DB;
 
-    $options = [0 => get_string('any')];
-
-    $sql = 'SELECT DISTINCT(contextid)
-              FROM {logstore_standard_log} lssl
-             WHERE EXISTS (SELECT 1
-                             FROM {context} c
-                            WHERE c.id = lssl.contextid)';
-    $contextids = array_keys($DB->get_records_sql($sql));
-
-    foreach ($contextids as $contextid) {
-        $context = context::instance_by_id($contextid);
-        $options[$context->id] = $context->get_context_name();
+    if (empty($courseid) || !$DB->record_exists('course', ['id' => $courseid])) {
+        return [];
     }
-    asort($options);
-
+    $options = [];
+    foreach (get_fast_modinfo($courseid)->get_cms() as $cm) {
+        // Core's select template prints option labels unescaped, so escape them.
+        $options[$cm->context->id] = s($cm->get_module_type_name() . ': ' . $cm->get_formatted_name());
+    }
     return $options;
 }
 
@@ -387,7 +384,7 @@ function logstore_xapi_clean_report_filters(string $onpage, array $eventnames) {
         $filters->response = $decoded['response'];
     }
 
-    foreach (['errortype', 'eventcontext', 'datefrom', 'dateto'] as $name) {
+    foreach (['errortype', 'courseid', 'activity', 'datefrom', 'dateto'] as $name) {
         if (isset($decoded[$name]) && is_numeric($decoded[$name]) && (int) $decoded[$name] >= 0) {
             $filters->$name = (int) $decoded[$name];
         }

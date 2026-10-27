@@ -47,7 +47,8 @@ final class reportfilter_form_test extends \advanced_testcase {
         return [
             'datefrom' => XAPI_REPORT_DATEFROM_DEFAULT,
             'dateto' => XAPI_REPORT_DATETO_DEFAULT,
-            'eventcontext' => XAPI_REPORT_EVENTCONTEXT_DEFAULT,
+            'courseid' => XAPI_REPORT_COURSEID_DEFAULT,
+            'activity' => XAPI_REPORT_ACTIVITY_DEFAULT,
             'eventnames' => XAPI_REPORT_EVENTNAMES_DEFAULT,
             'errortype' => XAPI_REPORT_ERROTYPE_DEFAULT,
             'resend' => XAPI_REPORT_RESEND_FALSE,
@@ -72,16 +73,17 @@ final class reportfilter_form_test extends \advanced_testcase {
     }
 
     /**
-     * Build the historic report's form, with contexts read from the standard log.
+     * Build the historic report's form, with the activities of the chosen course.
      *
+     * @param int $courseid The chosen course, or 0.
      * @return reportfilter_form
      */
-    private function get_historic_form(): reportfilter_form {
+    private function get_historic_form(int $courseid = 0): reportfilter_form {
         return new reportfilter_form(null, [
             'defaults' => $this->get_defaults(),
             'reportid' => XAPI_REPORT_ID_HISTORIC,
             'eventnames' => logstore_xapi_get_event_names_array(),
-            'eventcontexts' => logstore_xapi_get_logstore_standard_context_options(),
+            'activities' => logstore_xapi_get_course_activity_options($courseid),
         ]);
     }
 
@@ -182,30 +184,80 @@ final class reportfilter_form_test extends \advanced_testcase {
         $this->setAdminUser();
 
         $course = $this->getDataGenerator()->create_course();
-        $context = \context_course::instance($course->id);
-        $this->add_event('logstore_standard_log', $context, ['courseid' => $course->id]);
+        $quiz = $this->getDataGenerator()->create_module('quiz', ['course' => $course->id, 'name' => 'Final <b>quiz</b>']);
+        $quizcontext = \context_module::instance($quiz->cmid);
 
         reportfilter_form::mock_submit([
             'run' => 1,
             'resend' => XAPI_REPORT_RESEND_FALSE,
             'eventnames' => ['\\core\\event\\course_viewed'],
             'userfullname' => 'Admin User',
-            'eventcontext' => $context->id,
+            'courseid' => $course->id,
+            'activity' => $quizcontext->id,
+            'datefrom' => $this->date(2026, 10, 1),
+            'submitbutton' => 'Search',
+        ]);
+        $form = $this->get_historic_form($course->id);
+
+        $this->assertTrue($form->is_validated());
+        $data = $form->get_data();
+        $this->assertEquals($course->id, $data->courseid);
+        $this->assertEquals($quizcontext->id, $data->activity);
+        $this->assertSame('Admin User', $data->userfullname);
+        $this->assertSame(['\\core\\event\\course_viewed'], $data->eventnames);
+        $this->assertEquals(make_timestamp(2026, 10, 1), $data->datefrom);
+
+        $filters = logstore_xapi_clean_report_filters(json_encode($data), logstore_xapi_get_event_names_array());
+        $this->assertEquals($course->id, $filters->courseid);
+        $this->assertEquals($quizcontext->id, $filters->activity);
+        $this->assertSame('Admin User', $filters->userfullname);
+    }
+
+    /**
+     * The activity filter lists the chosen course's activities, keyed by context and escaped.
+     *
+     * @return void
+     */
+    public function test_activity_options(): void {
+        $this->resetAfterTest();
+
+        $course = $this->getDataGenerator()->create_course();
+        $quiz = $this->getDataGenerator()->create_module('quiz', ['course' => $course->id, 'name' => 'Final <b>quiz</b>']);
+        $other = $this->getDataGenerator()->create_course();
+        $this->getDataGenerator()->create_module('forum', ['course' => $other->id]);
+
+        $options = logstore_xapi_get_course_activity_options($course->id);
+
+        $quizcontext = \context_module::instance($quiz->cmid);
+        $this->assertSame([$quizcontext->id], array_keys($options));
+        $this->assertStringNotContainsString('<b>', $options[$quizcontext->id]);
+        $this->assertSame([], logstore_xapi_get_course_activity_options(0));
+        $this->assertSame([], logstore_xapi_get_course_activity_options(-5));
+    }
+
+    /**
+     * The historic report needs a start date; it starts with the last 30 days.
+     *
+     * @return void
+     */
+    public function test_historic_report_needs_start_date(): void {
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        reportfilter_form::mock_submit([
+            'run' => 1,
+            'resend' => XAPI_REPORT_RESEND_FALSE,
+            'eventnames' => ['\\core\\event\\course_viewed'],
             'submitbutton' => 'Search',
         ]);
         $form = $this->get_historic_form();
 
-        $this->assertTrue($form->is_validated());
-        $data = $form->get_data();
-        $this->assertEquals($context->id, $data->eventcontext);
-        $this->assertSame('Admin User', $data->userfullname);
-        $this->assertSame(['\\core\\event\\course_viewed'], $data->eventnames);
-        $this->assertEmpty($data->datefrom);
-        $this->assertEmpty($data->dateto);
+        $this->assertTrue($form->is_submitted());
+        $this->assertFalse($form->is_validated());
 
-        $filters = logstore_xapi_clean_report_filters(json_encode($data), logstore_xapi_get_event_names_array());
-        $this->assertEquals($context->id, $filters->eventcontext);
-        $this->assertSame('Admin User', $filters->userfullname);
+        // The error report has no such requirement.
+        reportfilter_form::mock_submit(['run' => 1, 'resend' => XAPI_REPORT_RESEND_FALSE, 'submitbutton' => 'Search']);
+        $this->assertTrue($this->get_error_form()->is_validated());
     }
 
     /**

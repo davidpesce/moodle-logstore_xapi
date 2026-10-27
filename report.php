@@ -88,7 +88,8 @@ if ($id == XAPI_REPORT_ID_HISTORIC) {
 $defaults = [
     'datefrom' => XAPI_REPORT_DATEFROM_DEFAULT,
     'dateto' => XAPI_REPORT_DATETO_DEFAULT,
-    'eventcontext' => XAPI_REPORT_EVENTCONTEXT_DEFAULT,
+    'courseid' => XAPI_REPORT_COURSEID_DEFAULT,
+    'activity' => XAPI_REPORT_ACTIVITY_DEFAULT,
     'eventnames' => XAPI_REPORT_EVENTNAMES_DEFAULT,
     'errortype' => XAPI_REPORT_ERROTYPE_DEFAULT,
     'resend' => XAPI_REPORT_RESEND_FALSE,
@@ -131,13 +132,12 @@ switch ($id) {
 
     case XAPI_REPORT_ID_HISTORIC:
         $basetable = XAPI_REPORT_SOURCE_HISTORICAL;
-        $extraselect = 'u.username, x.contextid';
+        $extraselect = 'u.username, x.contextid, ' . context_helper::get_preload_record_columns_sql('ctx');
         $pagename = 'logstorexapihistoriclog';
-        if ($run) {
-            $filterparams['eventcontexts'] = logstore_xapi_get_logstore_standard_context_options();
-        } else {
-            $filterparams['eventcontexts'] = [];
-        }
+        // The activity filter lists the chosen course's activities: the course just submitted
+        // (also with "Show activities"), or the one carried in onpage when paging.
+        $courseid = optional_param('courseid', $defaults['courseid'], PARAM_INT);
+        $filterparams['activities'] = logstore_xapi_get_course_activity_options($courseid);
         $canmanage = true;
 
         break;
@@ -178,9 +178,15 @@ if (isset($formelements)) {
         $params['errortype'] = $formelements->errortype;
     }
 
-    if (!empty($formelements->eventcontext)) {
-        $where[] = 'x.contextid = :eventcontext';
-        $params['eventcontext'] = $formelements->eventcontext;
+    if (!empty($formelements->courseid)) {
+        // Course-wide: events in the course and its activities (indexed in core by courseid).
+        $where[] = 'x.courseid = :courseid';
+        $params['courseid'] = $formelements->courseid;
+    }
+
+    if (!empty($formelements->activity)) {
+        $where[] = 'x.contextid = :activity';
+        $params['activity'] = $formelements->activity;
     }
 
     if (!empty($formelements->eventnames)) {
@@ -204,6 +210,12 @@ if (isset($formelements)) {
     }
 }
 
+// The form requires a start date for the historic report; onpage can be edited, so check here too.
+if ($run && $id == XAPI_REPORT_ID_HISTORIC && empty($formelements->datefrom ?? null)) {
+    $run = false;
+    $notifications[] = new notification(get_string('datefromrequired', 'logstore_xapi'), notification::NOTIFY_WARNING);
+}
+
 if ($run) {
     // With no events to offer (no routes enabled), match nothing rather than throw.
     [$insql, $inparams] = $DB->get_in_or_equal($eventnames, SQL_PARAMS_NAMED, 'evt', true, '');
@@ -216,10 +228,13 @@ if ($run) {
 
     $where = implode(' AND ', $where);
 
+    // The historic report shows each event's context; join them so they load with the page.
+    $contextjoin = $id == XAPI_REPORT_ID_HISTORIC ? 'LEFT JOIN {context} ctx ON ctx.id = x.contextid' : '';
     $sql = "SELECT x.id, x.eventname, u.firstname, u.lastname, x.contextid, x.timecreated, $extraselect
               FROM {{$basetable}} x
          LEFT JOIN {user} u
                 ON u.id = x.userid
+                   $contextjoin
              WHERE $where
           ORDER BY x.id";
 
@@ -300,6 +315,9 @@ if (!empty($results)) {
         if ($id == XAPI_REPORT_ID_HISTORIC) {
             $row[] = s($result->username);
 
+            if (!empty($result->ctxid)) {
+                context_helper::preload_from_record($result);
+            }
             if ($context = context::instance_by_id($result->contextid, IGNORE_MISSING)) {
                 // Escape the unescaped name ourselves: user context names are never escaped by
                 // core, and html_writer::table() emits cell text verbatim.

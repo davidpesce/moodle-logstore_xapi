@@ -55,7 +55,7 @@ class reportfilter_form extends \moodleform {
                 break;
 
             case XAPI_REPORT_ID_HISTORIC:
-                $eventcontexts = $this->_customdata['eventcontexts'];
+                $activities = $this->_customdata['activities'] ?? [];
 
                 if (has_capability('logstore/xapi:managehistoric', $systemcontext)) {
                     $canmanage = true;
@@ -97,17 +97,7 @@ class reportfilter_form extends \moodleform {
                 break;
 
             case XAPI_REPORT_ID_HISTORIC:
-                $mform->addElement('text', 'userfullname', get_string('user', 'logstore_xapi'));
-                $mform->setType('userfullname', PARAM_RAW);
-                $mform->addHelpButton('userfullname', 'user', 'logstore_xapi');
-                if (!empty($this->_customdata['defaults']['userfullname'])) {
-                    $mform->setDefault('userfullname', $this->_customdata['defaults']['userfullname']);
-                }
-
-                $mform->addElement('select', 'eventcontext', get_string('eventcontext', 'logstore_xapi'), $eventcontexts);
-                if (!empty($this->_customdata['defaults']['eventcontext'])) {
-                    $mform->setDefault('eventcontext', $this->_customdata['defaults']['eventcontext']);
-                }
+                $this->add_historic_filters($mform, $activities);
                 break;
 
             default:
@@ -117,6 +107,9 @@ class reportfilter_form extends \moodleform {
         $mform->addElement('date_selector', 'datefrom', get_string('fromdate'), ['optional' => true]);
         if (!empty($this->_customdata['defaults']['datefrom'])) {
             $mform->setDefault('datefrom', $this->_customdata['defaults']['datefrom']);
+        } else if ($reportid == XAPI_REPORT_ID_HISTORIC) {
+            // The historic report needs a start date (see validation()); start with the last 30 days.
+            $mform->setDefault('datefrom', usergetmidnight(time() - 30 * DAYSECS));
         }
         $mform->addElement('date_selector', 'dateto', get_string('todate'), ['optional' => true]);
         if (!empty($this->_customdata['defaults']['dateto'])) {
@@ -131,6 +124,36 @@ class reportfilter_form extends \moodleform {
     }
 
     /**
+     * Add the historic report's user, course and activity filters.
+     *
+     * @param \MoodleQuickForm $mform The form.
+     * @param array $activities The chosen course's activities, context id => label.
+     * @return void
+     */
+    private function add_historic_filters(\MoodleQuickForm $mform, array $activities): void {
+        $mform->addElement('text', 'userfullname', get_string('user', 'logstore_xapi'));
+        $mform->setType('userfullname', PARAM_RAW);
+        $mform->addHelpButton('userfullname', 'user', 'logstore_xapi');
+        if (!empty($this->_customdata['defaults']['userfullname'])) {
+            $mform->setDefault('userfullname', $this->_customdata['defaults']['userfullname']);
+        }
+
+        // A course matches every event in it, including its activities'. Its activities are
+        // listed once a course is chosen, so nothing is loaded for the whole site.
+        $mform->addElement('course', 'courseid', get_string('course'), ['includefrontpage' => true]);
+        if (!empty($this->_customdata['defaults']['courseid'])) {
+            $mform->setDefault('courseid', $this->_customdata['defaults']['courseid']);
+        }
+        $mform->registerNoSubmitButton('updateactivities');
+        $mform->addElement('submit', 'updateactivities', get_string('updateactivities', 'logstore_xapi'));
+
+        $mform->addElement('select', 'activity', get_string('activity'), [0 => get_string('any')] + $activities);
+        if (!empty($this->_customdata['defaults']['activity'])) {
+            $mform->setDefault('activity', $this->_customdata['defaults']['activity']);
+        }
+    }
+
+    /**
      * Form validation
      *
      * @param array $data data from the form.
@@ -140,6 +163,12 @@ class reportfilter_form extends \moodleform {
      */
     public function validation($data, $files) {
         $errors = parent::validation($data, $files);
+
+        // Without a start date the historic report scans the whole standard log, which on a
+        // large site can take longer than a page request is allowed.
+        if ($this->_customdata['reportid'] == XAPI_REPORT_ID_HISTORIC && empty($data['datefrom'])) {
+            $errors['datefrom'] = get_string('datefromrequired', 'logstore_xapi');
+        }
 
         if (!empty($data['datefrom']) && !empty($data['dateto'])) {
             if ($data['datefrom'] > $data['dateto']) {
