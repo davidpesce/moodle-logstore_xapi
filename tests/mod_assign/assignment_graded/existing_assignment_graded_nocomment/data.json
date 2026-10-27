@@ -5,15 +5,16 @@
       "name": "test_name"
     }
   ],
-  "assignfeedback_comments": [],
-  "grade": [
+  "assign_grades": [
     {
       "id": 1,
       "userid": 2,
       "assignment": 1,
-      "grade": 1
+      "grade": 1,
+      "attemptnumber": 0
     }
   ],
+  "assignfeedback_comments": [],
   "grade_items": [
     {
       "id": 1,

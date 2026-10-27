@@ -95,7 +95,8 @@
         },
         "name": "test_instructor_fullname"
       },
-      "language": "en"
+      "language": "en",
+      "registration": "89fdb5f6-c98d-54d1-8a37-bb602c90a9ef"
     }
   }
 ]

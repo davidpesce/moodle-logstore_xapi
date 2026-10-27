@@ -33,12 +33,17 @@ namespace src\transformer\utils;
  * @return array
  */
 function apply_statement_defaults(array $config, \stdClass $event, array $statements) {
-    return array_map(function ($statement) use ($config, $event) {
-        // No context.registration: Moodle has no session-wide registration, and one derived
-        // from the session key grouped statements that do not belong to the same attempt.
+    if (empty($statements)) {
+        return [];
+    }
+    // A registration only for events about an attempt (see get_registration()). Moodle has no
+    // session-wide registration.
+    $registration = get_registration($config, $event);
+    return array_map(function ($statement) use ($config, $event, $registration) {
         $defaultstatement = [
             'context' => [
                 'platform' => $config['context_platform'] ?? 'Moodle',
+                ...(is_null($registration) ? [] : ['registration' => $registration]),
             ],
             'timestamp' => get_event_timestamp($event),
         ];
