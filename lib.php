@@ -484,25 +484,6 @@ function logstore_xapi_get_successful_events($events) {
 }
 
 /**
- * Take event data and add to the sent log if it doesn't exist already.
- *
- * @param stdObj $event raw event data
- * @return void
- */
-function logstore_xapi_add_event_to_sent_log($event) {
-    global $DB;
-
-    $row = $DB->get_record('logstore_xapi_sent_log', ['logstorestandardlogid' => $event->logstorestandardlogid]);
-    if (empty($row)) {
-        $newrow = new stdClass();
-        $newrow->logstorestandardlogid = $event->logstorestandardlogid;
-        $newrow->type = $event->type;
-        $newrow->timecreated = time();
-        $DB->insert_record('logstore_xapi_sent_log', $newrow);
-    }
-}
-
-/**
  * Extract events from logstore_xapi_log or logstore_xapi_failed_log.
  *
  * @param int $limitnum limit number
@@ -557,15 +538,43 @@ function logstore_xapi_record_successful_events($events) {
 }
 
 /**
- * Take successful events and save each using logstore_xapi_add_event_to_sent_log.
+ * Record the standard log rows of successfully sent events in logstore_xapi_sent_log.
  *
- * @param array $events raw events data
+ * The historic report uses this to leave out events that have been sent. One query finds the
+ * rows already recorded, and the rest are inserted together. Events that matched no standard
+ * log row (id 0) are not recorded.
+ *
+ * @param array $events Loaded events, as returned by store::process_events().
  * @return void
  */
 function logstore_xapi_save_sent_events(array $events) {
-    $successfulevents = logstore_xapi_get_successful_events($events);
-    foreach ($successfulevents as $event) {
-        logstore_xapi_add_event_to_sent_log($event);
+    global $DB;
+
+    $types = [];
+    foreach (logstore_xapi_get_successful_events($events) as $event) {
+        if (!empty($event->logstorestandardlogid)) {
+            $types[$event->logstorestandardlogid] = $event->type;
+        }
+    }
+    if (empty($types)) {
+        return;
+    }
+
+    [$insql, $params] = $DB->get_in_or_equal(array_keys($types));
+    $recorded = $DB->get_fieldset_select(
+        'logstore_xapi_sent_log',
+        'logstorestandardlogid',
+        "logstorestandardlogid $insql",
+        $params
+    );
+
+    $now = time();
+    $rows = [];
+    foreach (array_diff_key($types, array_flip($recorded)) as $id => $type) {
+        $rows[] = (object) ['logstorestandardlogid' => $id, 'type' => $type, 'timecreated' => $now];
+    }
+    if (!empty($rows)) {
+        $DB->insert_records('logstore_xapi_sent_log', $rows);
     }
 }
 

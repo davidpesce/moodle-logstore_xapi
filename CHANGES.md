@@ -116,6 +116,10 @@ the authoritative record.
 - **Fewer database reads per batch** (#934). Each batch keeps the records it has read, so the
   course, course module, activity, user and other records an event needs are read once, not
   again for every statement. A 50-question quiz attempt went from about 820 reads to about 110.
+- **No standard log lookup in the user's request** (#933). In background mode, each event
+  looked up its `logstore_standard_log` row when it was logged, and again when it was sent. It
+  is now looked up once, when it is sent, using the standard log's user and module index. Each
+  sent event is recorded once per batch, not twice per event.
 
 ### Error report
 
@@ -138,6 +142,10 @@ the authoritative record.
 - **A start date is required**, and the report starts with the last 30 days. Without one, the
   report searched the whole standard log, which on a large site can take longer than a page
   request is allowed.
+- **Sent events are no longer listed as unsent** (#933). When a historic event was sent, it was
+  matched to the standard log again and could take the id of an identical event in the same
+  second, so the report went on listing the other one. Historic events now keep their id, and
+  identical live events in the same second are matched to different rows.
 
 ### Removed
 
