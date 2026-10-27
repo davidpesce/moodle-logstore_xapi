@@ -136,15 +136,15 @@
         ],
         "target": [
           {
-            "id": "orange",
-            "description": {
-              "en": "orange"
-            }
-          },
-          {
             "id": "purple",
             "description": {
               "en": "Purple"
+            }
+          },
+          {
+            "id": "orange",
+            "description": {
+              "en": "orange"
             }
           }
         ],

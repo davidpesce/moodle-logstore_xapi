@@ -142,6 +142,12 @@
         ],
         "target": [
           {
+            "id": "white",
+            "description": {
+              "en": "White"
+            }
+          },
+          {
             "id": "green",
             "description": {
               "en": "Green"
@@ -151,12 +157,6 @@
             "id": "orange",
             "description": {
               "en": "Orange"
-            }
-          },
-          {
-            "id": "white",
-            "description": {
-              "en": "White"
             }
           }
         ],

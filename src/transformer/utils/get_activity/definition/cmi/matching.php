@@ -69,11 +69,13 @@ function matching(
         }
     }
 
+    $sourceitems = get_matching_items($source, $lang);
+    $targetitems = get_matching_items($target, $lang);
     return [
         ...$definition,
         ...(!empty($pairs) ? ['correctResponsesPattern' => [implode('[,]', $pairs)]] : []),
-        'source' => get_matching_items($source, $lang),
-        'target' => get_matching_items($target, $lang),
+        ...(!empty($sourceitems) ? ['source' => $sourceitems] : []),
+        ...(!empty($targetitems) ? ['target' => $targetitems] : []),
     ];
 }
 
