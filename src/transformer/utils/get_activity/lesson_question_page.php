@@ -48,8 +48,8 @@ function lesson_question_page(array $config, \stdClass $course, \stdClass $lesso
     ];
 
     $answers = $repo->read_records('lesson_answers', ['pageid' => $page->id]);
-    $correctanswers = array_filter($answers, function ($a) {
-        return ($a->score > 0);
+    $correctanswers = array_filter($answers, function ($a) use ($config, $lesson, $page) {
+        return utils\is_lesson_answer_correct($config, $lesson, $page, $a);
     });
 
     switch ($page->qtype) {
@@ -113,20 +113,23 @@ function lesson_question_page(array $config, \stdClass $course, \stdClass $lesso
             );
             break;
         case 5: // LESSON_PAGE_MATCHING.
-            $source = [];
-            $target = [];
+            // A pair is an answer and its matching response. The page's correct and wrong answer
+            // feedback is also stored as answers, with no response, so it is left out.
+            $pairs = [];
             foreach ($answers as $a) {
-                if (!empty($a->answer)) {
-                    $source[] = utils\get_string_html_removed($a->answer);
-                    $target[] = utils\get_string_html_removed($a->response);
+                $answertext = utils\get_string_html_removed($a->answer);
+                $responsetext = utils\get_string_html_removed($a->response);
+                if ($answertext !== '' && $responsetext !== '') {
+                    $pairs[] = [$answertext, $responsetext];
                 }
             }
             $activity['definition'] = utils\get_activity\definition\cmi\matching(
                 $config,
                 $page->title,
                 utils\get_string_html_removed($page->contents),
-                $source,
-                $target,
+                array_column($pairs, 0),
+                array_column($pairs, 1),
+                $pairs,
                 $courselang
             );
             break;

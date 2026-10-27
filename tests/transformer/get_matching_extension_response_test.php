@@ -96,6 +96,7 @@ final class get_matching_extension_response_test extends advanced_testcase {
             null,
             $stems,
             ['Green', 'Orange'],
+            [['Red...', 'Green'], ['Blue.sky', 'Orange']],
             'en'
         );
         $selections = $this->build("Red...\n -> Green; Blue.sky\n -> Orange");

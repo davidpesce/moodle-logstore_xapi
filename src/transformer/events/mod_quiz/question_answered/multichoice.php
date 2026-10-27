@@ -64,7 +64,6 @@ function multichoice(array $config, \stdClass $event, \stdClass $questionattempt
                 $config,
                 $question,
                 $lang,
-                'choice',
                 $questionattempt->rightanswer,
             ),
         ],

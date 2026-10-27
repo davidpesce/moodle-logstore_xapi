@@ -52,7 +52,6 @@ function get_essay_definition(array $config, \stdClass $question, string $lang) 
  * @param array $config The transformer config settings.
  * @param \stdClass $question The question object.
  * @param string $lang The language.
- * @param ?string $interactiontype The type of interaction.
  * @param ?string $rightanswer The correct answer, not always available.
  * @return array
  */
@@ -60,7 +59,6 @@ function get_multichoice_definition(
     array $config,
     \stdClass $question,
     string $lang,
-    ?string $interactiontype = 'choice',
     ?string $rightanswer = null
 ) {
     $repo = $config['repo'];
@@ -77,30 +75,17 @@ function get_multichoice_definition(
         )
     );
 
-    if ($interactiontype === 'sequencing') {
-        return cmi\sequencing(
-            $config,
-            $question->name,
-            utils\get_string_html_removed($question->questiontext),
-            $choices,
-            $lang,
-            (!is_null($rightanswer))
-                ? explode('} {', trim($rightanswer, '{}'))
-                : null
-        );
-    } else {
-        return cmi\choice(
-            $config,
-            $question->name,
-            utils\get_string_html_removed($question->questiontext),
-            $choices,
-            $lang,
-            // The right answer lists every option that must be chosen, together.
-            (!is_null($rightanswer))
-                ? [explode('; ', utils\get_string_html_removed($rightanswer))]
-                : null
-        );
-    }
+    return cmi\choice(
+        $config,
+        $question->name,
+        utils\get_string_html_removed($question->questiontext),
+        $choices,
+        $lang,
+        // The right answer lists every option that must be chosen, together.
+        (!is_null($rightanswer))
+            ? [explode('; ', utils\get_string_html_removed($rightanswer))]
+            : null
+    );
 }
 
 
@@ -117,12 +102,17 @@ function get_match_definition(array $config, \stdClass $question, string $lang) 
         'questionid' => $question->id,
     ]);
 
+    // A subquestion with no stem is a distractor: its answer is offered but matches nothing.
     $source = [];
     $target = [];
-
+    $pairs = [];
     foreach ($subqs as $subq) {
-        $source[] = utils\get_string_html_removed($subq->questiontext);
+        $stem = utils\get_string_html_removed($subq->questiontext);
         $target[] = $subq->answertext;
+        if ($stem !== '') {
+            $source[] = $stem;
+            $pairs[] = [$stem, $subq->answertext];
+        }
     }
 
     return cmi\matching(
@@ -131,8 +121,59 @@ function get_match_definition(array $config, \stdClass $question, string $lang) 
         utils\get_string_html_removed($question->questiontext),
         $source,
         $target,
+        $pairs,
         $lang
     );
+}
+
+/**
+ * Transformer util for creating select missing words (gapselect) definitions.
+ *
+ * Each gap is a source and each choice a target. A choice can be right for several gaps and a
+ * group can have distractors, so this is a matching interaction rather than a sequence. In the
+ * question text, [[n]] is a gap whose right answer is the question's nth answer.
+ *
+ * @param array $config The transformer config settings.
+ * @param \stdClass $question The question object.
+ * @param string $lang The language.
+ * @return array
+ */
+function get_gapselect_definition(array $config, \stdClass $question, string $lang) {
+    $answers = array_values($config['repo']->read_records('question_answers', [
+        'question' => $question->id,
+    ], 'id ASC'));
+    $choices = array_map(function ($answer) {
+        return utils\get_string_html_removed($answer->answer);
+    }, $answers);
+
+    preg_match_all('/\[\[(\d+)\]\]/', $question->questiontext, $matches);
+    $gaps = [];
+    $pairs = [];
+    foreach ($matches[1] as $i => $choicenumber) {
+        $gap = get_gap_name($i + 1);
+        $gaps[] = $gap;
+        $pairs[] = [$gap, $choices[$choicenumber - 1] ?? ''];
+    }
+
+    return cmi\matching(
+        $config,
+        $question->name,
+        utils\get_string_html_removed($question->questiontext),
+        $gaps,
+        $choices,
+        $pairs,
+        $lang
+    );
+}
+
+/**
+ * The name of a gap in a select missing words question, which is also its source id.
+ *
+ * @param int $number The gap's position in the question text, from 1.
+ * @return string
+ */
+function get_gap_name(int $number): string {
+    return 'Gap ' . $number;
 }
 
 /**
@@ -238,12 +279,7 @@ function get_definition(array $config, \stdClass $question, string $lang) {
         case 'essay':
             return get_essay_definition($config, $question, $lang);
         case 'gapselect':
-            return get_multichoice_definition(
-                $config,
-                $question,
-                $lang,
-                'sequencing'
-            );
+            return get_gapselect_definition($config, $question, $lang);
         case 'truefalse':
             return get_true_false_definition($config, $question, $lang);
         case 'randomsamatch':
@@ -253,12 +289,7 @@ function get_definition(array $config, \stdClass $question, string $lang) {
             return get_shortanswer_definition($config, $question, $lang);
         case 'multichoice':
         case 'multichoiceset':
-            return get_multichoice_definition(
-                $config,
-                $question,
-                $lang,
-                'choice'
-            );
+            return get_multichoice_definition($config, $question, $lang);
         case 'numerical':
             return get_numerical_definition($config, $question, $lang);
         default:

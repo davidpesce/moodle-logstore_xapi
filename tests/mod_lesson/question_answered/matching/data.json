@@ -3,10 +3,25 @@
     {
       "id": 1,
       "name": "test_lesson",
-      "intro": "test_lesson_intro"
+      "intro": "test_lesson_intro",
+      "custom": 1
     }
   ],
   "lesson_answers": [
+    {
+      "id": 10,
+      "pageid": 1,
+      "answer": "Well done",
+      "response": null,
+      "score": 1
+    },
+    {
+      "id": 11,
+      "pageid": 1,
+      "answer": "Try again",
+      "response": null,
+      "score": 0
+    },
     {
       "id": 1,
       "pageid": 1,
