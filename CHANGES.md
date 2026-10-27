@@ -104,6 +104,17 @@ the authoritative record.
 - **The error type is indexed**, and both reports list events in a fixed order, so rows no longer
   move between pages.
 
+### Historic report
+
+- **Filter by course and activity, instead of by context.** The context filter listed every
+  context in the standard log, which meant scanning the whole table each time the report opened,
+  and it matched one context exactly, so choosing a course left out its activities' events. Now
+  you choose a course (searched by name), which matches every event in it, and optionally one of
+  its activities.
+- **A start date is required**, and the report starts with the last 30 days. Without one, the
+  report searched the whole standard log, which on a large site can take longer than a page
+  request is allowed.
+
 ### Removed
 
 - **Oracle is no longer supported.** Moodle 5.0 dropped it, and the plugin isn't tested on it.
