@@ -28,6 +28,7 @@ use logstore_xapi\task\emit_task;
  * @copyright 2026 David Pesce <david.pesce@exputo.com>
  * @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @covers    \logstore_xapi\log\store::process_events
+ * @covers    \logstore_xapi\log\store::is_event_ignored
  */
 final class routes_test extends \advanced_testcase {
     /**
@@ -37,9 +38,16 @@ final class routes_test extends \advanced_testcase {
      * @param int $userid The user who triggered the event.
      * @param int $courseid The course the event happened in.
      * @param int $anonymous The event's anonymous flag.
+     * @param string $origin Where the event came from: web, cli, ws...
      * @return int The queue row id.
      */
-    private function queue_event(string $eventname, int $userid, int $courseid, int $anonymous = 0): int {
+    private function queue_event(
+        string $eventname,
+        int $userid,
+        int $courseid,
+        int $anonymous = 0,
+        string $origin = 'web'
+    ): int {
         global $DB;
 
         $context = \context_course::instance($courseid);
@@ -56,6 +64,7 @@ final class routes_test extends \advanced_testcase {
             'userid' => $userid,
             'courseid' => $courseid,
             'anonymous' => $anonymous,
+            'origin' => $origin,
             'timecreated' => time(),
             'type' => XAPI_IMPORT_TYPE_LIVE,
         ]);
@@ -139,6 +148,89 @@ final class routes_test extends \advanced_testcase {
 
         $this->assertEquals(0, $DB->count_records('logstore_xapi_log'));
         $this->assertEquals(1, $DB->count_records('logstore_xapi_failed_log'));
+    }
+
+    /**
+     * Events from someone who isn't logged in (user id 0) are skipped when logguests is off, as
+     * guest events are, except those logged by CLI scripts.
+     *
+     * @return void
+     */
+    public function test_logged_out_events_are_skipped_without_logguests(): void {
+        global $DB;
+        $this->resetAfterTest();
+
+        set_config('routes', '\core\event\course_viewed', 'logstore_xapi');
+        set_config('logguests', 0, 'logstore_xapi');
+
+        $this->queue_event('\core\event\course_viewed', 0, SITEID);
+        $this->queue_event('\core\event\course_viewed', 0, SITEID, 0, 'cli');
+
+        $this->run_emit_task();
+
+        $this->assertEquals(0, $DB->count_records('logstore_xapi_log'));
+        // No LRS is configured, so the CLI event fails to load; the web one is never attempted.
+        $failed = $DB->get_records('logstore_xapi_failed_log');
+        $this->assertCount(1, $failed);
+        $this->assertEquals('cli', reset($failed)->origin);
+    }
+
+    /**
+     * Events from someone who isn't logged in are transformed when logguests is on, and fail
+     * only to load.
+     *
+     * @return void
+     */
+    public function test_logged_out_events_are_processed_with_logguests(): void {
+        global $DB;
+        $this->resetAfterTest();
+
+        set_config('routes', '\core\event\course_viewed', 'logstore_xapi');
+        set_config('logguests', 1, 'logstore_xapi');
+
+        $this->queue_event('\core\event\course_viewed', 0, SITEID);
+
+        $this->run_emit_task();
+
+        $failed = $DB->get_records('logstore_xapi_failed_log');
+        $this->assertCount(1, $failed);
+        $this->assertNotEquals(XAPI_REPORT_ERRORTYPE_TRANSFORM, reset($failed)->errortype);
+    }
+
+    /**
+     * Events triggered by a guest, or by someone who isn't logged in, aren't captured when
+     * logguests is off.
+     *
+     * @return void
+     */
+    public function test_logged_out_events_are_not_captured_without_logguests(): void {
+        $this->resetAfterTest();
+
+        set_config('routes', '\core\event\course_viewed', 'logstore_xapi');
+        $store = new class (get_log_manager()) extends \logstore_xapi\log\store {
+            /**
+             * Whether the store ignores an event.
+             *
+             * @param \core\event\base $event The event.
+             * @return bool
+             */
+            public function ignores(\core\event\base $event): bool {
+                return $this->is_event_ignored($event);
+            }
+        };
+        $context = \context_course::instance(SITEID);
+        $user = $this->getDataGenerator()->create_user();
+
+        foreach ([0 => true, 1 => false] as $logguests => $ignored) {
+            set_config('logguests', $logguests, 'logstore_xapi');
+
+            $this->setUser(0);
+            $this->assertSame($ignored, $store->ignores(\core\event\course_viewed::create(['context' => $context])));
+            $this->setGuestUser();
+            $this->assertSame($ignored, $store->ignores(\core\event\course_viewed::create(['context' => $context])));
+            $this->setUser($user);
+            $this->assertFalse($store->ignores(\core\event\course_viewed::create(['context' => $context])));
+        }
     }
 
     /**

@@ -98,6 +98,12 @@ abstract class Repository extends PhpObj {
      * @throws \Exception
      */
     public function read_record_by_id($type, $id) {
+        // Core logs the events of someone who isn't logged in (a logged-out visitor, or a CLI
+        // script that sets no user) with user id 0. No user has that id, so a placeholder stands
+        // in for them, and utils\get_user() sends it as the "not logged in" agent.
+        if ($type === 'user' && (string) $id === '0') {
+            return (object) ['id' => '0', 'username' => '', 'firstname' => '', 'lastname' => '', 'email' => ''];
+        }
         return $this->read_record($type, ['id' => $id]);
     }
 }

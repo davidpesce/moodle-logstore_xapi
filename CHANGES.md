@@ -110,6 +110,12 @@ the authoritative record.
     is sent without an instructor.
   - Question created and questions imported in a system or course category question bank
     (Moodle 4.5) are sent without a course.
+- **Events from users who aren't logged in no longer fail every time** (#972). Moodle logs them
+  with user id 0: mostly visits to the site home when users don't have to log in, and CLI
+  scripts that set no user. "Log guest actions" now covers them, as it does in the standard log:
+  with it off (the default), they are not sent, except from CLI scripts. With it on, they are
+  sent with a "Not logged in" actor (account name `0`). Before, they were queued whatever the
+  setting, and each one went to the failed log with "user not found".
 
 ### Performance
 
