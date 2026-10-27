@@ -122,7 +122,7 @@ $canmanage = false;
 switch ($id) {
     case XAPI_REPORT_ID_ERROR:
         $filterparams['errortypes'] = logstore_xapi_get_distinct_options_from_failed_table('errortype');
-        $filterparams['responses'] = logstore_xapi_get_distinct_options_from_failed_table('response');
+        $filterparams['responses'] = logstore_xapi_get_response_options();
 
         if (has_capability('logstore/xapi:manageerrors', $systemcontext)) {
             $canmanage = true;
@@ -148,6 +148,9 @@ switch ($id) {
 }
 
 $notifications = [];
+if ($id == XAPI_REPORT_ID_ERROR && logstore_xapi_has_unhashed_responses()) {
+    $notifications[] = new notification(get_string('responsesindexing', 'logstore_xapi'), notification::NOTIFY_INFO);
+}
 $mform = new logstore_xapi\form\reportfilter_form($url, $filterparams);
 
 $params = [];
@@ -185,7 +188,7 @@ if (isset($formelements)) {
     }
 
     if (!empty($formelements->response)) {
-        $where[] = 'x.response = :response';
+        $where[] = 'x.responsehash = :response';
         $params['response'] = $formelements->response;
     }
 
@@ -217,7 +220,8 @@ if ($run) {
               FROM {{$basetable}} x
          LEFT JOIN {user} u
                 ON u.id = x.userid
-             WHERE $where";
+             WHERE $where
+          ORDER BY x.id";
 
     // Resend elements.
     $canresenderrors = !empty($fromform->resend) && $fromform->resend == XAPI_REPORT_RESEND_TRUE && $canmanage;

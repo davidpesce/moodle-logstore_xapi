@@ -317,7 +317,7 @@ final class lib_test extends advanced_testcase {
         $eventnames = ['\\core\\event\\course_viewed' => '\\core\\event\\course_viewed'];
         $onpage = json_encode([
             'userfullname' => 'Ann',
-            'response' => '{"error":"x"}',
+            'response' => sha1('{"error":"x"}'),
             'errortype' => '400',
             'eventcontext' => 12,
             'datefrom' => 1700000000,
@@ -330,7 +330,7 @@ final class lib_test extends advanced_testcase {
 
         $this->assertEquals((object) [
             'userfullname' => 'Ann',
-            'response' => '{"error":"x"}',
+            'response' => sha1('{"error":"x"}'),
             'errortype' => 400,
             'eventcontext' => 12,
             'datefrom' => 1700000000,
@@ -347,7 +347,7 @@ final class lib_test extends advanced_testcase {
         $this->assertEquals(new \stdClass(), logstore_xapi_clean_report_filters('not json', []));
         $this->assertEquals(new \stdClass(), logstore_xapi_clean_report_filters('"a string"', []));
         $this->assertEquals(new \stdClass(), logstore_xapi_clean_report_filters(
-            json_encode(['userfullname' => ['x'], 'errortype' => -1, 'eventnames' => 'core']),
+            json_encode(['userfullname' => ['x'], 'errortype' => -1, 'eventnames' => 'core', 'response' => '{"error":"x"}']),
             []
         ));
     }

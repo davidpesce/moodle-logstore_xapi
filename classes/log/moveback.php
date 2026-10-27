@@ -141,7 +141,7 @@ class moveback {
                 $skipinsert = true;
             }
         } else {
-            unset($event->errortype, $event->response);
+            unset($event->errortype, $event->response, $event->responsehash);
 
             $params = [
                 'id' => $event->id,

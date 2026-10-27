@@ -28,15 +28,17 @@ require_once($CFG->dirroot . '/admin/tool/log/store/xapi/lib.php');
  * @copyright 2026 David Pesce <david.pesce@exputo.com>
  * @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @covers    ::logstore_xapi_get_distinct_options_from_failed_table
+ * @covers    ::logstore_xapi_get_response_options
  */
 final class report_filter_options_test extends \advanced_testcase {
     /**
      * Store a failed event with the given LRS response.
      *
      * @param string $response The raw LRS response body.
+     * @param bool $hashed Whether the response hash is stored, as it is for failures since 5.3.0.
      * @return void
      */
-    private function add_failed_event(string $response): void {
+    private function add_failed_event(string $response, bool $hashed = true): void {
         global $DB;
         $DB->insert_record('logstore_xapi_failed_log', (object) [
             'eventname' => '\\core\\event\\course_viewed',
@@ -55,12 +57,13 @@ final class report_filter_options_test extends \advanced_testcase {
             'type' => 2,
             'errortype' => 400,
             'response' => $response,
+            'responsehash' => $hashed ? sha1($response) : null,
         ]);
     }
 
     /**
      * LRS responses are untrusted. Core's select template prints option labels unescaped, so
-     * the labels must be escaped, while the values stay raw so the filter still matches.
+     * the labels must be escaped. Options are keyed by response hash.
      *
      * @return void
      */
@@ -69,11 +72,11 @@ final class report_filter_options_test extends \advanced_testcase {
         $payload = '</select><img src=x onerror=alert(1)>';
         $this->add_failed_event($payload);
 
-        $options = logstore_xapi_get_distinct_options_from_failed_table('response');
+        $options = logstore_xapi_get_response_options();
 
-        $this->assertArrayHasKey($payload, $options);
-        $this->assertStringNotContainsString('<img', $options[$payload]);
-        $this->assertSame(s($payload), $options[$payload]);
+        $this->assertArrayHasKey(sha1($payload), $options);
+        $this->assertStringNotContainsString('<img', $options[sha1($payload)]);
+        $this->assertSame(s($payload), $options[sha1($payload)]);
     }
 
     /**
@@ -86,9 +89,40 @@ final class report_filter_options_test extends \advanced_testcase {
         $long = str_repeat('x', 300);
         $this->add_failed_event($long);
 
-        $options = logstore_xapi_get_distinct_options_from_failed_table('response');
+        $options = logstore_xapi_get_response_options();
 
-        $this->assertArrayHasKey($long, $options);
-        $this->assertSame(str_repeat('x', 100) . '…', $options[$long]);
+        $this->assertSame(str_repeat('x', 100) . '…', $options[sha1($long)]);
+    }
+
+    /**
+     * Each response is listed once, the most frequent first, and responses with no hash yet are
+     * left out.
+     *
+     * @return void
+     */
+    public function test_responses_grouped_by_frequency(): void {
+        $this->resetAfterTest();
+        $this->add_failed_event('rare');
+        $this->add_failed_event('common');
+        $this->add_failed_event('common');
+        $this->add_failed_event('not hashed yet', false);
+
+        $options = logstore_xapi_get_response_options();
+
+        $this->assertSame([0, sha1('common'), sha1('rare')], array_keys($options));
+    }
+
+    /**
+     * Error type options come from the column itself.
+     *
+     * @return void
+     */
+    public function test_errortype_options(): void {
+        $this->resetAfterTest();
+        $this->add_failed_event('x');
+
+        $this->assertArrayHasKey(400, logstore_xapi_get_distinct_options_from_failed_table('errortype'));
+        $this->expectException(\coding_exception::class);
+        logstore_xapi_get_distinct_options_from_failed_table('response');
     }
 }

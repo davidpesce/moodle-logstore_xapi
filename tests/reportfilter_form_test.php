@@ -67,7 +67,7 @@ final class reportfilter_form_test extends \advanced_testcase {
             'reportid' => XAPI_REPORT_ID_ERROR,
             'eventnames' => logstore_xapi_get_event_names_array(),
             'errortypes' => logstore_xapi_get_distinct_options_from_failed_table('errortype'),
-            'responses' => logstore_xapi_get_distinct_options_from_failed_table('response'),
+            'responses' => logstore_xapi_get_response_options(),
         ]);
     }
 
@@ -139,6 +139,7 @@ final class reportfilter_form_test extends \advanced_testcase {
             'type' => XAPI_IMPORT_TYPE_LIVE,
             'errortype' => XAPI_REPORT_ERRORTYPE_RECIPE,
             'response' => self::RESPONSE,
+            'responsehash' => sha1(self::RESPONSE),
         ]);
 
         reportfilter_form::mock_submit([
@@ -146,7 +147,7 @@ final class reportfilter_form_test extends \advanced_testcase {
             'resend' => XAPI_REPORT_RESEND_FALSE,
             'errortype' => XAPI_REPORT_ERRORTYPE_RECIPE,
             'eventnames' => ['\\core\\event\\course_viewed'],
-            'response' => self::RESPONSE,
+            'response' => sha1(self::RESPONSE),
             'datefrom' => $this->date(2026, 10, 1),
             'dateto' => $this->date(2026, 10, 20),
             'submitbutton' => 'Search',
@@ -157,7 +158,7 @@ final class reportfilter_form_test extends \advanced_testcase {
         $this->assertTrue($form->is_validated());
         $data = $form->get_data();
         $this->assertEquals(XAPI_REPORT_ERRORTYPE_RECIPE, $data->errortype);
-        $this->assertSame(self::RESPONSE, $data->response);
+        $this->assertSame(sha1(self::RESPONSE), $data->response);
         $this->assertSame(['\\core\\event\\course_viewed'], $data->eventnames);
         $this->assertEquals(make_timestamp(2026, 10, 1), $data->datefrom);
         $this->assertEquals(make_timestamp(2026, 10, 20), $data->dateto);
@@ -165,7 +166,7 @@ final class reportfilter_form_test extends \advanced_testcase {
         // The report passes the filters to the next page as JSON in onpage.
         $filters = logstore_xapi_clean_report_filters(json_encode($data), logstore_xapi_get_event_names_array());
         $this->assertEquals(XAPI_REPORT_ERRORTYPE_RECIPE, $filters->errortype);
-        $this->assertSame(self::RESPONSE, $filters->response);
+        $this->assertSame(sha1(self::RESPONSE), $filters->response);
         $this->assertSame(['\\core\\event\\course_viewed'], $filters->eventnames);
         $this->assertEquals($data->datefrom, $filters->datefrom);
         $this->assertEquals($data->dateto, $filters->dateto);

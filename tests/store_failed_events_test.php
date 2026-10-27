@@ -77,6 +77,7 @@ final class store_failed_events_test extends \advanced_testcase {
 
         $this->assertEquals(2, $DB->count_records('logstore_xapi_failed_log'));
         $this->assertEquals(1, $DB->count_records('logstore_xapi_failed_log', ['errortype' => 400]));
+        $this->assertEquals(1, $DB->count_records('logstore_xapi_failed_log', ['responsehash' => sha1('Bad Request')]));
     }
 
     /**

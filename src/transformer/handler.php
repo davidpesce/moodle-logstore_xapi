@@ -77,7 +77,9 @@ function handler(array $config, array $events) {
             $errormessage = "Failed transform for event id #" . $id . ": " . $e->getMessage();
             $logerror($errormessage);
             $loginfo($e->getTraceAsString());
-            $eventobj->response = json_encode(['transfromerror' => $errormessage]);
+            // The stored response leaves out the event id (it has its own column), so the same
+            // error in many events is one option in the error report's response filter.
+            $eventobj->response = json_encode(['transfromerror' => 'Failed transform: ' . $e->getMessage()]);
 
             // Returns unsuccessfully transformed event without statements.
             $transformedevent = [

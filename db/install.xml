@@ -66,6 +66,7 @@
         <FIELD NAME="realuserid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="real user id when logged-in-as"/>
         <FIELD NAME="errortype" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="The type of error (Statement send failure, Failure to authenticate with LDH, Network error, Malformed statement etc.)"/>
         <FIELD NAME="response" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="The response or response code received from the LDH"/>
+        <FIELD NAME="responsehash" TYPE="char" LENGTH="40" NOTNULL="false" SEQUENCE="false" COMMENT="SHA-1 of response, which the error report filters and groups on instead of the text column"/>
         <FIELD NAME="logstorestandardlogid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Reference to the id of standard log."/>
         <FIELD NAME="type" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="xAPI message type."/>
       </FIELDS>
@@ -78,6 +79,8 @@
         <INDEX NAME="user-module" UNIQUE="false" FIELDS="userid, contextlevel, contextinstanceid, crud, edulevel, timecreated"/>
         <INDEX NAME="logstorestandardlogid" UNIQUE="false" FIELDS="logstorestandardlogid"/>
         <INDEX NAME="type" UNIQUE="false" FIELDS="type"/>
+        <INDEX NAME="errortype" UNIQUE="false" FIELDS="errortype"/>
+        <INDEX NAME="responsehash" UNIQUE="false" FIELDS="responsehash"/>
       </INDEXES>
     </TABLE>
     <TABLE NAME="logstore_xapi_notif_sent_log" COMMENT="xAPI holding table for sent notifications">

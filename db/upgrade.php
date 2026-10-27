@@ -260,5 +260,28 @@ function xmldb_logstore_xapi_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026102301, 'logstore', 'xapi');
     }
 
+    if ($oldversion < 2026102601) {
+        // The error report filters and groups failed events by a hash of the response, as the
+        // response is a TEXT column (slow to compare and group, and not comparable at all on
+        // some databases), and indexes errortype, which it filters on.
+        $table = new xmldb_table('logstore_xapi_failed_log');
+        $field = new xmldb_field('responsehash', XMLDB_TYPE_CHAR, '40', null, null, null, null, 'response');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+        foreach (['errortype', 'responsehash'] as $column) {
+            $index = new xmldb_index($column, XMLDB_INDEX_NOTUNIQUE, [$column]);
+            if (!$dbman->index_exists($table, $index)) {
+                $dbman->add_index($table, $index);
+            }
+        }
+
+        // Hashing existing rows is one update per row, which could hold up the upgrade of a site
+        // with a large failed log, so an ad-hoc task does it in batches.
+        \core\task\manager::queue_adhoc_task(new \logstore_xapi\task\hash_failed_responses(), true);
+
+        upgrade_plugin_savepoint(true, 2026102601, 'logstore', 'xapi');
+    }
+
     return true;
 }
