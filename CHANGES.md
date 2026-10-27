@@ -111,6 +111,12 @@ the authoritative record.
   - Question created and questions imported in a system or course category question bank
     (Moodle 4.5) are sent without a course.
 
+### Performance
+
+- **Fewer database reads per batch** (#934). Each batch keeps the records it has read, so the
+  course, course module, activity, user and other records an event needs are read once, not
+  again for every statement. A 50-question quiz attempt went from about 820 reads to about 110.
+
 ### Error report
 
 - **The response filter scales.** It listed every distinct response, read from the TEXT column on

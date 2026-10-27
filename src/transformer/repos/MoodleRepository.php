@@ -54,14 +54,14 @@ class MoodleRepository extends Repository {
     }
 
     /**
-     * Reads an object from the store with the given type and query.
+     * Reads an object from the store with the given type and query, without the cache.
      *
      * @param string $type The name of the table to retrieve from.
      * @param array $query Any additional conditions to add to the query.
      * @throws \Exception if the record was not found
      * @return PhpObj
      */
-    public function read_record(string $type, array $query) {
+    protected function fetch_record(string $type, array $query) {
         $record = $this->store->get_record($type, $query);
         if ($record === false) {
             throw new \Exception("$type not found.");
