@@ -52,7 +52,6 @@ class emit_task extends \core\task\scheduled_task {
 
         logstore_xapi_store_failed_events($loadedevents);
         logstore_xapi_record_successful_events($loadedevents);
-        logstore_xapi_save_sent_events($loadedevents);
         logstore_xapi_delete_processed_events($loadedevents);
     }
 }

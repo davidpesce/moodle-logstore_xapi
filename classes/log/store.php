@@ -69,85 +69,40 @@ class store extends php_obj implements log_writer {
     }
 
     /**
-     * Get the eventid from logstore_standard_log.
-     * Return the persistent logstore_standard_log id from the database.
-     * Return value 0 means not found.
+     * Find the logstore_standard_log row an event was logged as.
      *
-     * @param event_base $event
-     * @return int
+     * The event is matched on every column the two logs share, except the TEXT column "other",
+     * which cannot be compared in SQL on every database. These include the columns of the
+     * standard log's user-module index, so the lookup can use it. Identical events in the same
+     * second match several rows: the latest is returned, or the latest before $below.
      *
+     * @param \stdClass $event The event, as stored in logstore_xapi_log.
+     * @param int|null $below Only consider rows with a lower id than this.
+     * @return int The row id, or 0 when no row matches.
      */
-    protected function get_event_id($event) {
+    protected function get_event_id($event, ?int $below = null) {
         global $DB;
 
-        $sqlparams = [];
-        $where = ['1 = 1'];
-
-        if (!empty($event->eventname)) {
-            $sqlparams['eventname'] = $event->eventname;
-            $where[] = 'eventname = :eventname';
+        $fields = ['eventname', 'component', 'action', 'target', 'objecttable', 'objectid', 'crud', 'edulevel',
+            'contextid', 'contextlevel', 'contextinstanceid', 'userid', 'courseid', 'relateduserid', 'anonymous',
+            'timecreated'];
+        $where = [];
+        $params = [];
+        foreach ($fields as $field) {
+            if (isset($event->$field)) {
+                $where[] = "$field = :$field";
+                $params[$field] = $event->$field;
+            } else {
+                $where[] = "$field IS NULL";
+            }
+        }
+        if (!is_null($below)) {
+            $where[] = 'id < :below';
+            $params['below'] = $below;
         }
 
-        if (!empty($event->component)) {
-            $sqlparams['component'] = $event->component;
-            $where[] = 'component = :component';
-        }
-
-        if (!empty($event->action)) {
-            $sqlparams['action'] = $event->action;
-            $where[] = 'action = :action';
-        }
-
-        if (!empty($event->target)) {
-            $sqlparams['target'] = $event->target;
-            $where[] = 'target = :target';
-        }
-
-        if (!empty($event->objecttable)) {
-            $sqlparams['objecttable'] = $event->objecttable;
-            $where[] = 'objecttable = :objecttable';
-        } else {
-            $where[] = 'objecttable IS NULL';
-        }
-
-        if (!empty($event->objectid)) {
-            $sqlparams['objectid'] = $event->objectid;
-            $where[] = 'objectid = :objectid';
-        } else {
-            $where[] = 'objectid IS NULL';
-        }
-
-        if (isset($event->timecreated) && $event->timecreated !== null) {
-            $sqlparams['timecreated'] = $event->timecreated;
-            $where[] = 'timecreated = :timecreated';
-        }
-
-        if (isset($event->userid) && $event->userid !== null) {
-            $sqlparams['userid'] = $event->userid;
-            $where[] = 'userid = :userid';
-        }
-
-        if (isset($event->anonymous) && $event->anonymous !== null) {
-            $sqlparams['anonymous'] = $event->anonymous;
-            $where[] = 'anonymous = :anonymous';
-        }
-
-        // Perhaps we need more rule here.
-        if (empty($sqlparams)) {
-            return 0;
-        }
-
-        $sqlwhere = implode(' AND ', $where);
-
-        $sql = "SELECT MAX(id) AS id
-                  FROM {logstore_standard_log}
-                 WHERE " . $sqlwhere;
-
-        $row = $DB->get_record_sql($sql, $sqlparams);
-        if (empty($row) || empty($row->id)) {
-            return 0;
-        }
-        return $row->id;
+        $sql = 'SELECT MAX(id) FROM {logstore_standard_log} WHERE ' . implode(' AND ', $where);
+        return (int) $DB->get_field_sql($sql, $params);
     }
 
     /**
@@ -161,8 +116,14 @@ class store extends php_obj implements log_writer {
 
         // If in background mode, just save them in the database.
         if ($this->get_config('backgroundmode', false)) {
+            // The standard log id is looked up when the event is sent, not here in the user's
+            // request. The standard store buffers its events too, so its row may not exist yet:
+            // it is written after this store's when the standard store comes later in the list
+            // of enabled stores.
             $events = $this->convert_array_to_objects($events);
-            $events = $this->get_persistent_eventids($events);
+            foreach ($events as $event) {
+                $event->type = XAPI_IMPORT_TYPE_LIVE;
+            }
             $DB->insert_records('logstore_xapi_log', $events);
         } else {
             // Keep events that fail so they can be replayed, as the scheduled tasks do. This
@@ -200,32 +161,30 @@ class store extends php_obj implements log_writer {
     }
 
     /**
-     * Take rows from logstore_standard_log for the emit_task or failed_task
-     * and add in the logstorestandardlogid and set the type.
+     * Set the events' type, and look up the logstore_standard_log id of those that have none.
+     *
+     * Events from the historic report and the failed log already have their id, so they keep it.
+     * Identical events in the same second match the same rows, so each event in the batch is
+     * given a row no other event in the batch has.
      *
      * @param array $events raw event data
      * @param int $eventtype event type
      * @return array
      */
     private function get_persistent_eventids(array $events, $eventtype = XAPI_IMPORT_TYPE_LIVE) {
+        $assigned = [];
         foreach ($events as $event) {
-            $event->logstorestandardlogid = $this->get_event_id($event);
             $event->type = $eventtype;
+            if (empty($event->logstorestandardlogid)) {
+                $id = $this->get_event_id($event);
+                while ($id && isset($assigned[$id])) {
+                    $id = $this->get_event_id($event, $id);
+                }
+                $event->logstorestandardlogid = $id;
+            }
+            $assigned[$event->logstorestandardlogid] = true;
         }
         return $events;
-    }
-
-    /**
-     * Take successful events and save each using logstore_xapi_add_event_to_sent_log.
-     *
-     * @param array $events raw events data
-     * @return void
-     */
-    private function save_sent_events(array $events) {
-        $successfulevents = logstore_xapi_get_successful_events($events);
-        foreach ($successfulevents as $event) {
-            logstore_xapi_add_event_to_sent_log($event);
-        }
     }
 
     /**
@@ -243,7 +202,7 @@ class store extends php_obj implements log_writer {
 
         $config = $this->get_handler_config();
         $loadedevents = \src\handler($config, $events);
-        $this->save_sent_events($loadedevents);
+        logstore_xapi_save_sent_events($loadedevents);
 
         return array_merge($loadedevents, $skippedevents);
     }
