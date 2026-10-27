@@ -28,7 +28,7 @@ defined('MOODLE_INTERNAL') || die();
 
 
 $string['account_homepage'] = 'Actor Account HomePage';
-$string['account_homepage_desc'] = 'Set the homePage field for actor accounts. Defaults to the app_url.';
+$string['account_homepage_desc'] = 'The homePage of every actor account: an absolute URL, such as https://moodle.example.com. Leave empty to use the site URL.';
 $string['anonymousevents'] = 'Anonymous events';
 $string['anonymousevents_anonymise'] = 'Send without the hidden user\'s identity';
 $string['anonymousevents_desc'] = 'Moodle marks some events as anonymous because a user\'s identity must stay hidden, such
@@ -149,7 +149,7 @@ $string['response'] = 'Response';
 $string['routegroupcore'] = 'Core';
 $string['routegrouph5p'] = 'H5P';
 $string['routes'] = 'Include actions with these routes';
-$string['routes_desc'] = 'Private message and note events are off by default on new sites, because their statements include the text of the message or note.';
+$string['routes_desc'] = 'Private message, note and search events are off by default on new sites, because their statements include the text of the message or note, or the search query.';
 $string['send_additional_email_addresses'] = 'Additional email addresses';
 $string['send_additional_email_addresses_desc'] = 'Send notifications to list of email addresses. Comma separated values.';
 $string['send_name'] = 'Set the actor name field';

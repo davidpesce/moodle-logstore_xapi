@@ -51,12 +51,7 @@ function get_user(array $config, \stdClass $user) {
     }
 
     // Account.
-
-    if (array_key_exists('account_homepage', $config) && !empty($config['account_homepage'])) {
-        $homepage = $config['account_homepage'];
-    } else {
-        $homepage = $config['app_url'];
-    }
+    $homepage = get_account_homepage($config);
 
     if (array_key_exists('send_username', $config) && $config['send_username'] == true) {
         $actor['account'] = [
@@ -68,7 +63,7 @@ function get_user(array $config, \stdClass $user) {
 
     // Default.
     $actor['account'] = [
-        'homePage' => $config['app_url'],
+        'homePage' => $homepage,
         'name' => strval($user->id),
     ];
     return $actor;

@@ -66,9 +66,10 @@ define('XAPI_REPORT_USERNAME_DEFAULT', '');
 define('XAPI_REPORT_DATEFROM_DEFAULT', 0);
 define('XAPI_REPORT_DATETO_DEFAULT', 0);
 
-// Events whose statements carry the text of private messages or of notes about
-// a user. They are left out of the default routes so that a new install does
-// not copy that text to the LRS unless an administrator chooses to.
+// Events whose statements carry the text of private messages, of notes about a
+// user, or of a user's search queries (which can hold names, health or other
+// personal details). They are left out of the default routes so that a new
+// install does not copy that text to the LRS unless an administrator chooses to.
 define('XAPI_ROUTES_OFF_BY_DEFAULT', [
     '\\core\\event\\group_message_sent',
     '\\core\\event\\message_sent',
@@ -76,6 +77,7 @@ define('XAPI_ROUTES_OFF_BY_DEFAULT', [
     '\\core\\event\\note_created',
     '\\core\\event\\note_updated',
     '\\core\\event\\notes_viewed',
+    '\\core\\event\\search_results_viewed',
 ]);
 
 // What to do with events core flags as anonymous (the user's identity must stay hidden, for
