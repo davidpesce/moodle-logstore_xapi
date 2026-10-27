@@ -1,0 +1,13 @@
+{
+  "contextid": 2,
+  "contextinstanceid": 1,
+  "contextlevel": 50,
+  "courseid": 1,
+  "id": 1,
+  "objectid": null,
+  "objecttable": null,
+  "origin": "web",
+  "userid": 0,
+  "eventname": "\\core\\event\\course_viewed",
+  "timecreated": 1433946701
+}

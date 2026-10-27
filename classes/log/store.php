@@ -58,8 +58,9 @@ class store extends php_obj implements log_writer {
      */
     protected function is_event_ignored(event_base $event) {
         $allowguestlogging = $this->get_config('logguests', 1);
-        if ((!CLI_SCRIPT || PHPUNIT_TEST) && !$allowguestlogging && isguestuser()) {
-            // Always log inside CLI scripts because we do not login there.
+        if ((!CLI_SCRIPT || PHPUNIT_TEST) && !$allowguestlogging && (!isloggedin() || isguestuser())) {
+            // Always log inside CLI scripts because we do not login there. As in logstore_standard,
+            // a user who isn't logged in counts as a guest.
             return true;
         }
 
@@ -228,8 +229,6 @@ class store extends php_obj implements log_writer {
      * @return array The events to send, and the skipped events in the loaded-event format.
      */
     private function split_skipped_events(array $events) {
-        global $CFG;
-
         $enabledevents = array_flip(explode(',', $this->get_config('routes', '')));
         $allowguestlogging = $this->get_config('logguests', 1);
         $skipanonymous = $this->get_config('anonymousevents', XAPI_ANONYMOUS_EVENTS_ANONYMISE)
@@ -239,7 +238,7 @@ class store extends php_obj implements log_writer {
         $skippedevents = [];
         foreach ($events as $event) {
             $isrouted = isset($event->eventname) && isset($enabledevents[$event->eventname]);
-            $isguest = isset($event->userid) && !empty($CFG->siteguest) && $event->userid == $CFG->siteguest;
+            $isguest = $this->is_guest_event($event);
             $isskippedanonymous = $skipanonymous && !empty($event->anonymous);
             if ($isrouted && ($allowguestlogging || !$isguest) && !$isskippedanonymous) {
                 $routedevents[] = $event;
@@ -253,6 +252,27 @@ class store extends php_obj implements log_writer {
             }
         }
         return [$routedevents, $skippedevents];
+    }
+
+    /**
+     * Was the event triggered by a guest, or by a user who isn't logged in (user id 0)?
+     *
+     * This is the "Log guest actions" rule of is_event_ignored(), for events that have been
+     * queued. Like it, it leaves out events logged by CLI scripts, which have no logged-in user.
+     *
+     * @param \stdClass $event The event.
+     * @return bool
+     */
+    private function is_guest_event(\stdClass $event): bool {
+        global $CFG;
+
+        if (!isset($event->userid)) {
+            return false;
+        }
+        if ((string) $event->userid === '0') {
+            return ($event->origin ?? '') !== 'cli';
+        }
+        return !empty($CFG->siteguest) && $event->userid == $CFG->siteguest;
     }
 
     /**
