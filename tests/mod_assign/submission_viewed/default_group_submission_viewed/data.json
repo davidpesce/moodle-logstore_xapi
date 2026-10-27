@@ -1,0 +1,31 @@
+{
+  "assign": [
+    {
+      "id": 1,
+      "name": "test_name"
+    }
+  ],
+  "modules": [
+    {
+      "id": 1,
+      "name": "assign"
+    }
+  ],
+  "assign_submission": [
+    {
+      "id": 1,
+      "assignment": 1,
+      "userid": 0,
+      "groupid": 0,
+      "status": "submitted",
+      "attemptnumber": 0
+    }
+  ],
+  "user": [
+    {
+      "id": 1,
+      "firstname": "test_fullname1",
+      "email": "test1@test.com"
+    }
+  ]
+}

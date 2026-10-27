@@ -101,6 +101,15 @@ the authoritative record.
   always used the site URL. The setting must now be an absolute URL (or empty, for the site
   URL); a saved value that isn't one is ignored, as an invalid homePage made every statement
   fail.
+- **Five events that failed every time are sent** (#938). Each went to the failed log, and a
+  resend failed again:
+  - Notes viewed for a whole course or the site is sent without a note subject.
+  - Submission viewed for a group submission is "for" the group, or has no "for" when the
+    submission is in the default group.
+  - Feedback viewed for a grade with no grader in the assignment (one entered in the gradebook)
+    is sent without an instructor.
+  - Question created and questions imported in a system or course category question bank
+    (Moodle 4.5) are sent without a course.
 
 ### Error report
 

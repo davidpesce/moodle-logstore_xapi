@@ -45,8 +45,11 @@ function feedback_viewed(array $config, \stdClass $event) {
     $instance = $repo->read_record_by_id($module->name, $coursemodule->instance);
     $instancename = property_exists($instance, 'name') ? $instance->name : $module->name;
 
+    // A grade that was not given in the assignment, such as one entered in the gradebook, has
+    // grader -1. Core then shows the user who last changed the gradebook grade, if they can
+    // grade, but that is a capability check the transformer cannot make, so no instructor is sent.
     $grade = $repo->read_record_by_id('assign_grades', $event->objectid);
-    $grader = $repo->read_record_by_id('user', $grade->grader);
+    $grader = $grade->grader > 0 ? $repo->read_record_by_id('user', $grade->grader) : null;
 
     return [[
         'actor' => utils\get_user($config, $user),
@@ -71,7 +74,7 @@ function feedback_viewed(array $config, \stdClass $event) {
         ],
         'context' => [
             ...utils\get_context_base($config, $event, $lang, $course),
-            'instructor' => utils\get_user($config, $grader),
+            ...(is_null($grader) ? [] : ['instructor' => utils\get_user($config, $grader)]),
             'contextActivities' => [
                 'parent' => utils\context_activities\get_parent(
                     $config,

@@ -1,0 +1,12 @@
+{
+  "contextinstanceid": 2,
+  "contextlevel": 50,
+  "courseid": 2,
+  "id": 1,
+  "objectid": null,
+  "objecttable": null,
+  "relateduserid": 0,
+  "userid": 1,
+  "eventname": "\\core\\event\\notes_viewed",
+  "timecreated": 1433946701
+}

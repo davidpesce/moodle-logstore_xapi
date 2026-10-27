@@ -1,0 +1,13 @@
+{
+  "contextinstanceid": 1,
+  "contextlevel": 70,
+  "courseid": 2,
+  "id": 1,
+  "objectid": 1,
+  "objecttable": "assign_grades",
+  "relateduserid": 1,
+  "userid": 1,
+  "eventname": "\\mod_assign\\event\\feedback_viewed",
+  "other": "{\"assignid\":1}",
+  "timecreated": 1433946701
+}

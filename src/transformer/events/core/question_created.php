@@ -38,9 +38,10 @@ use src\transformer\utils\get_activity\definition\question as qdef;
 function question_created(array $config, \stdClass $event) {
     $repo = $config['repo'];
     $user = $repo->read_record_by_id('user', $event->userid);
-    $course = $repo->read_record_by_id('course', $event->courseid);
+    // On Moodle 4.5, question banks in the system or a course category context have no course.
+    $course = empty($event->courseid) ? null : $repo->read_record_by_id('course', $event->courseid);
     $question = $repo->read_record_by_id('question', $event->objectid);
-    $lang = utils\get_course_lang($course);
+    $lang = is_null($course) ? $config['source_lang'] : utils\get_course_lang($course);
 
     $definition = qdef\get_definition($config, $question, $lang);
 
@@ -63,9 +64,11 @@ function question_created(array $config, \stdClass $event) {
         'context' => [
             ...utils\get_context_base($config, $event, $lang, null),
             'contextActivities' => [
-                'parent' => [
-                    utils\get_activity\course($config, $course),
-                ],
+                ...(is_null($course) ? [] : [
+                    'parent' => [
+                        utils\get_activity\course($config, $course),
+                    ],
+                ]),
                 'category' => [
                     utils\get_activity\site($config),
                 ],

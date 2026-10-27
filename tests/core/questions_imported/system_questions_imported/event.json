@@ -1,0 +1,12 @@
+{
+  "courseid": 0,
+  "id": 1,
+  "objectid": null,
+  "userid": 1,
+  "eventname": "\\core\\event\\questions_imported",
+  "objecttable": null,
+  "other": "{\"format\":\"xml\",\"categoryid\":1}",
+  "timecreated": 1433946701,
+  "contextinstanceid": 0,
+  "contextlevel": 10
+}

@@ -38,9 +38,11 @@ use src\transformer\utils\get_activity as activity;
 function notes_viewed(array $config, \stdClass $event) {
     $repo = $config['repo'];
 
-    // All three here may not exist.
     $user = $repo->read_record_by_id('user', $event->userid);
-    $subject = $repo->read_record_by_id('user', $event->relateduserid);
+    // Viewing every note in a course or on the site has no subject: relateduserid is 0.
+    $subject = empty($event->relateduserid)
+        ? null
+        : $repo->read_record_by_id('user', $event->relateduserid);
     $course = (isset($event->courseid) && $event->courseid != 0)
         ? $repo->read_record_by_id('course', $event->courseid)
         : null;
@@ -64,10 +66,6 @@ function notes_viewed(array $config, \stdClass $event) {
                     $lang => 'Notes',
                 ],
                 'type' => 'https://w3id.org/xapi/acrossx/activities/webpage',
-                'extensions' => [
-                    'https://xapi.edlm/profiles/edlm-lms/concepts/activity-extensions/note-subject' =>
-                        utils\get_user($config, $subject),
-                ],
             ],
         ],
         'context' => [
@@ -77,15 +75,18 @@ function notes_viewed(array $config, \stdClass $event) {
                     activity\site($config),
                 ],
             ],
-            'extensions' => array_merge(
-                utils\extensions\base($config, $event, $course),
-                [
-                    'https://xapi.edlm/profiles/edlm-lms/concepts/context-extensions/note-subject-scope' =>
-                        utils\get_user($config, $subject),
-                ],
-            ),
+            'extensions' => utils\extensions\base($config, $event, $course),
         ],
     ];
+
+    if ($subject) {
+        $statement['object']['definition']['extensions'] = [
+            'https://xapi.edlm/profiles/edlm-lms/concepts/activity-extensions/note-subject' =>
+                utils\get_user($config, $subject),
+        ];
+        $statement['context']['extensions']['https://xapi.edlm/profiles/edlm-lms/concepts/context-extensions/note-subject-scope'] =
+            utils\get_user($config, $subject);
+    }
 
     if ($course) {
         $statement = utils\add_parent($config, $statement, $course);
