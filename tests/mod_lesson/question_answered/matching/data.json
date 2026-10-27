@@ -44,9 +44,11 @@
       "userid": 1,
       "correct": 1,
       "timeseen": "1731972680",
-      "useranswer": "Apple,Banana"
+      "useranswer": "Apple,Banana",
+      "retry": 0
     }
   ],
+  "lesson_grades": [],
   "lesson_pages": [
     {
       "id": 1,

@@ -78,7 +78,8 @@
           "https://github.com/xAPI-vle/moodle-logstore_xapi": "0.0.0-development"
         }
       },
-      "language": "en"
+      "language": "en",
+      "registration": "89fdb5f6-c98d-54d1-8a37-bb602c90a9ef"
     },
     "result": {
       "completion": true,
@@ -228,7 +229,8 @@
           "https://github.com/xAPI-vle/moodle-logstore_xapi": "0.0.0-development"
         }
       },
-      "language": "en"
+      "language": "en",
+      "registration": "89fdb5f6-c98d-54d1-8a37-bb602c90a9ef"
     },
     "result": {
       "completion": false,

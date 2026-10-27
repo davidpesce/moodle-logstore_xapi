@@ -37,9 +37,11 @@
       "userid": 1,
       "correct": 1,
       "timeseen": "1731972680",
-      "useranswer": "1,2"
+      "useranswer": "1,2",
+      "retry": 0
     }
   ],
+  "lesson_grades": [],
   "lesson_pages": [
     {
       "id": 1,

@@ -8,7 +8,10 @@
   "assign_submission": [
     {
       "id": 1,
-      "assignment": 1
+      "assignment": 1,
+      "userid": 1,
+      "status": "submitted",
+      "attemptnumber": 0
     }
   ],
   "modules": [

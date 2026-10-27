@@ -5,19 +5,20 @@
       "name": "test_name"
     }
   ],
+  "assign_grades": [
+    {
+      "id": 1,
+      "userid": 2,
+      "assignment": 1,
+      "grade": 1,
+      "attemptnumber": 0
+    }
+  ],
   "assignfeedback_comments": [
     {
       "id": 1,
       "assignment": 1,
       "commenttext": "test_comment_text",
-      "grade": 1
-    }
-  ],
-  "grade": [
-    {
-      "id": 1,
-      "userid": 2,
-      "assignment": 1,
       "grade": 1
     }
   ],

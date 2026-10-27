@@ -5,7 +5,7 @@
   "objectid": 1,
   "userid": 1,
   "eventname": "\\mod_assign\\event\\submission_graded",
-  "objecttable": "grade",
+  "objecttable": "assign_grades",
   "timecreated": 1433946701,
   "relateduserid": 2,
   "anonymous": 1

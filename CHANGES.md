@@ -27,6 +27,18 @@ the authoritative record.
   query, which can hold names, health or other personal details. Sites upgrading keep their
   routes; turn off `\core\event\search_results_viewed` if you don't want queries in the LRS.
 
+### Registration per attempt
+
+- **Statements about an attempt carry a `context.registration` again**, one per attempt: quiz
+  attempts (including each question answered and manually graded questions), SCORM attempts
+  (status and score), lesson retakes (pages, start, resume, restart, end and essay grading) and
+  assignment attempts (submitted and graded; a reopened submission is a new attempt). Every
+  statement with the same registration is about the same attempt. It is a version 5 UUID of a
+  site-specific name for the attempt, so the historic report and retries give the same value.
+  5.2.0 removed the old registration, which came from the session key and linked unrelated
+  statements. Other statements, and anonymous events, have none. LRS reports that group by
+  registration will start grouping these activities by attempt.
+
 ### Statement fixes
 
 - **Lesson questions with several right answers** send each one as its own correct response.
