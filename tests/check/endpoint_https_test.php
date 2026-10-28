@@ -29,15 +29,15 @@ use core\check\result;
  */
 final class endpoint_https_test extends advanced_testcase {
     /**
-     * The check's status for an endpoint, with the store enabled or not.
+     * The check's status for an endpoint, with the given log stores enabled.
      *
      * @param string $endpoint The LRS endpoint.
-     * @param bool $enabled Whether the xAPI logstore is enabled.
+     * @param string $stores The enabled log stores.
      * @return string
      */
-    private function get_status(string $endpoint, bool $enabled = true): string {
+    private function get_status(string $endpoint, string $stores = 'logstore_standard,logstore_xapi'): string {
         $this->resetAfterTest();
-        set_config('enabled_stores', $enabled ? 'logstore_standard,logstore_xapi' : 'logstore_standard', 'tool_log');
+        set_config('enabled_stores', $stores, 'tool_log');
         set_config('endpoint', $endpoint, 'logstore_xapi');
         return (new endpoint_https())->get_result()->get_status();
     }
@@ -59,7 +59,7 @@ final class endpoint_https_test extends advanced_testcase {
      * @return void
      */
     public function test_disabled_store_is_na(): void {
-        $this->assertSame(result::NA, $this->get_status('http://lrs.example.org/xapi/', false));
+        $this->assertSame(result::NA, $this->get_status('http://lrs.example.org/xapi/', 'logstore_standard'));
     }
 
     /**

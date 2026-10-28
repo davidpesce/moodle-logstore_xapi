@@ -89,18 +89,18 @@ final class lrs_sender_test extends \advanced_testcase {
     }
 
     /**
-     * Transformed events with one statement each, or none.
+     * Transformed events, each with the same number of statements.
      *
      * @param int $count The number of events.
-     * @param bool $withstatements Whether the events have a statement.
+     * @param int $statements The number of statements of each event.
      * @return array
      */
-    private function events(int $count, bool $withstatements = true): array {
+    private function events(int $count, int $statements = 1): array {
         $events = [];
         for ($i = 1; $i <= $count; $i++) {
             $events[] = [
                 'event' => (object) ['id' => $i],
-                'statements' => $withstatements ? [['verb' => ['id' => 'http://example.org/verb/' . $i]]] : [],
+                'statements' => array_fill(0, $statements, ['verb' => ['id' => 'http://example.org/verb/' . $i]]),
                 'transformed' => true,
             ];
         }
@@ -226,7 +226,7 @@ final class lrs_sender_test extends \advanced_testcase {
      * @return void
      */
     public function test_empty_batch_is_not_sent(): void {
-        $loaded = $this->send($this->events(2, false));
+        $loaded = $this->send($this->events(2, 0));
 
         $this->assertCount(0, $this->requests);
         $this->assertSame([true, true], array_column($loaded, 'loaded'));
