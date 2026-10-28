@@ -16,7 +16,10 @@
 
 namespace logstore_xapi;
 
+use GuzzleHttp\Promise\Create;
+use GuzzleHttp\Psr7\Response;
 use logstore_xapi\log\moveback;
+use logstore_xapi\log\store;
 use logstore_xapi\task\emit_task;
 use logstore_xapi\task\failed_task;
 
@@ -34,10 +37,12 @@ require_once($CFG->dirroot . '/admin/tool/log/store/xapi/lib.php');
  * @covers    \logstore_xapi\task\emit_task
  * @covers    \logstore_xapi\task\failed_task
  * @covers    \logstore_xapi\log\moveback
+ * @covers    ::logstore_xapi_record_retry_events
  */
 final class failed_events_test extends \advanced_testcase {
     /**
-     * Point the plugin at an LRS that refuses connections, and route course_viewed.
+     * Point the plugin at an LRS that rejects every batch as bad data (400), and route
+     * course_viewed.
      *
      * @return void
      */
@@ -45,11 +50,35 @@ final class failed_events_test extends \advanced_testcase {
         parent::setUp();
         $this->resetAfterTest();
 
-        // Nothing listens on port 1, so every send fails at once with a cURL error.
-        set_config('endpoint', 'http://127.0.0.1:1', 'logstore_xapi');
+        set_config('endpoint', 'https://lrs.example.org/xapi/', 'logstore_xapi');
         set_config('username', 'user', 'logstore_xapi');
         set_config('password', 'pass', 'logstore_xapi');
         set_config('routes', '\\core\\event\\course_viewed', 'logstore_xapi');
+        $this->lrs_answers(400, 'Invalid statement');
+    }
+
+    /**
+     * Stop standing in for the LRS.
+     *
+     * @return void
+     */
+    protected function tearDown(): void {
+        store::$mocklrs = null;
+        \cache::make('logstore_xapi', 'senderror')->purge();
+        parent::tearDown();
+    }
+
+    /**
+     * Make the LRS answer every request with this status.
+     *
+     * @param int $status The HTTP status.
+     * @param string $body The response body.
+     * @return void
+     */
+    private function lrs_answers(int $status, string $body = ''): void {
+        store::$mocklrs = function () use ($status, $body) {
+            return Create::promiseFor(new Response($status, [], $body));
+        };
     }
 
     /**
@@ -147,9 +176,64 @@ final class failed_events_test extends \advanced_testcase {
         $this->assertEquals($standardids, array_values(array_column($failed, 'logstorestandardlogid')));
         foreach ($failed as $event) {
             $this->assertEquals(XAPI_IMPORT_TYPE_LIVE, $event->type);
-            $this->assertNotEmpty($event->errortype);
-            $this->assertStringStartsWith('cURL error: ', $event->response);
+            $this->assertEquals(400, $event->errortype);
+            $this->assertSame('Invalid statement', $event->response);
         }
+    }
+
+    /**
+     * An LRS that can't be reached leaves the batch in the queue, with nothing in the failed log.
+     *
+     * @return void
+     */
+    public function test_unreachable_lrs_keeps_the_queue(): void {
+        global $DB;
+        store::$mocklrs = null;
+        // Nothing listens on port 1, so the connection is refused at once.
+        set_config('endpoint', 'http://127.0.0.1:1', 'logstore_xapi');
+        $this->queue_events($this->add_course_views(3));
+
+        ob_start();
+        (new emit_task())->execute();
+        $output = ob_get_clean();
+        $this->resetDebugging();
+
+        $this->assertEquals(3, $DB->count_records('logstore_xapi_log'));
+        $this->assertEquals(0, $DB->count_records('logstore_xapi_failed_log'));
+        $this->assertStringContainsString('3 event(s) left in the queue to send later: cURL error: ', $output);
+    }
+
+    /**
+     * While the LRS is down (5xx), refuses the credentials or isn't at the endpoint, the batch
+     * stays in the queue, and the last error is kept for the status report. Once the LRS works
+     * again, the batch is sent and the error cleared.
+     *
+     * @return void
+     */
+    public function test_unavailable_lrs_keeps_the_queue_until_it_works(): void {
+        global $DB;
+        $this->queue_events($this->add_course_views(3));
+        $cache = \cache::make('logstore_xapi', 'senderror');
+
+        foreach ([503 => 'Service Unavailable', 401 => 'Unauthorized', 404 => 'Not Found'] as $status => $body) {
+            $this->lrs_answers($status, $body);
+            $this->run_task(new emit_task());
+
+            $this->assertEquals(3, $DB->count_records('logstore_xapi_log'));
+            $this->assertEquals(0, $DB->count_records('logstore_xapi_failed_log'));
+            $this->assertSame($status, $cache->get('last')->code);
+            $this->assertSame($body, $cache->get('last')->message);
+        }
+
+        $this->lrs_answers(200, '[]');
+        ob_start();
+        (new emit_task())->execute();
+        ob_end_clean();
+
+        $this->assertEquals(0, $DB->count_records('logstore_xapi_log'));
+        $this->assertEquals(0, $DB->count_records('logstore_xapi_failed_log'));
+        $this->assertEquals(3, $DB->count_records('logstore_xapi_sent_log'));
+        $this->assertFalse($cache->get('last'));
     }
 
     /**

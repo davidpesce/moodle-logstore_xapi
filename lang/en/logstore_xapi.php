@@ -47,11 +47,17 @@ $string['backgroundmode_desc'] = 'This will force Moodle to send the statements 
         via a cron task to avoid blocking page responses. This will make the process less close to real time, but will help to prevent unpredictable
         Moodle performance linked to the performance of the LRS.';
 $string['cachedef_oauth2token'] = 'OAuth2 access tokens for the LRS';
+$string['cachedef_senderror'] = 'The last error from the LRS';
 $string['check_endpointhttps_details'] = 'The xAPI logstore sends learner data and its LRS credentials to the LRS endpoint. Over plain HTTP they are not encrypted, so anyone able to intercept the connection between this server and the LRS can read them. Use an https:// endpoint, unless the LRS is on a private network you trust.';
 $string['check_endpointhttps_name'] = 'xAPI LRS endpoint encryption';
 $string['check_endpointhttps_ok'] = 'The LRS endpoint uses HTTPS.';
 $string['check_endpointhttps_warning'] = 'The LRS endpoint uses plain HTTP.';
 $string['check_endpointhttps_warning_token'] = 'The OAuth2 token endpoint uses plain HTTP.';
+$string['check_sending_details'] = 'When the LRS can\'t be reached, refuses the credentials or fails, events wait in the queue and are sent once it works again. They don\'t appear in the error report while they wait.';
+$string['check_sending_lasterror'] = 'Last error from the LRS ({$a->time}): {$a->error}';
+$string['check_sending_name'] = 'xAPI statements sent to the LRS';
+$string['check_sending_ok'] = 'No event has been waiting more than an hour to be sent to the LRS.';
+$string['check_sending_warning'] = '{$a->count} events are waiting to be sent to the LRS, the oldest for {$a->age}.';
 $string['check_sslverification_details'] = 'The xAPI logstore sends learner data and its LRS credentials over this connection. With certificate verification disabled, anyone able to intercept the connection between this server and the LRS can read that data, capture the credentials, and alter the LRS response.';
 $string['check_sslverification_na'] = 'The xAPI logstore is not enabled, so no data is sent to an LRS.';
 $string['check_sslverification_name'] = 'xAPI LRS certificate verification';
@@ -163,6 +169,7 @@ $string['resendfailedbatches'] = 'Resend failed batches';
 $string['resendfailedbatches_desc'] = 'When processing events in batches, try re-sending events in smaller batches if a batch fails. If not selected, the whole batch will not be sent in the event of a failed event.';
 $string['response'] = 'Response';
 $string['responsesindexing'] = 'Failed events from before the last upgrade are still being indexed, so the response filter doesn\'t list all of them yet. Indexing runs with cron.';
+$string['retry_events'] = '{$a->count} event(s) left in the queue to send later: {$a->error}';
 $string['routegroupcore'] = 'Core';
 $string['routegrouph5p'] = 'H5P';
 $string['routes'] = 'Include actions with these routes';

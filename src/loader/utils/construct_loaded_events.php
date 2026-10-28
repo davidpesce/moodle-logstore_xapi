@@ -30,10 +30,11 @@ namespace src\loader\utils;
  * Builds the loaded event.
  *
  * @param array $transformedevents An array of transformed events.
- * @param bool $loaded True if event was successfully loaded. False if not.
+ * @param bool|string $loaded True if the events were loaded, false if they failed, or
+ *     XAPI_LOADED_RETRY if they are left in the queue for a later run.
  * @return array
  */
-function construct_loaded_events(array $transformedevents, bool $loaded) {
+function construct_loaded_events(array $transformedevents, $loaded) {
     $loadedevents = array_map(function ($transformedevent) use ($loaded) {
         return [
             'event' => $transformedevent['event'],

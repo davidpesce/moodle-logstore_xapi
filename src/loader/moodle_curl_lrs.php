@@ -108,7 +108,7 @@ function get_proxy(string $url): ?string {
  * @param string $url The URL.
  * @param array $options Guzzle request options.
  * @return \Psr\Http\Message\ResponseInterface
- * @throws \Exception With cURL's error and error number when there is no response.
+ * @throws utils\retry_later With cURL's error and error number when there is no response.
  */
 function post(\core\http_client $client, string $url, array $options) {
     $proxy = get_proxy($url);
@@ -119,9 +119,9 @@ function post(\core\http_client $client, string $url, array $options) {
         return $client->post($url, $options);
     } catch (TransferException $e) {
         // A transport failure (a refused connection, a timeout, a rejected TLS certificate)
-        // has no response, so report cURL's own error and error number.
+        // has no response, so report cURL's own error and error number, and try again later.
         $context = method_exists($e, 'getHandlerContext') ? $e->getHandlerContext() : [];
-        throw new \Exception('cURL error: ' . ($context['error'] ?? $e->getMessage()), $context['errno'] ?? 0);
+        throw new utils\retry_later('cURL error: ' . ($context['error'] ?? $e->getMessage()), $context['errno'] ?? 0);
     }
 }
 
@@ -201,18 +201,19 @@ function get_token_cache_key(array $config): string {
  * Get an access token from the identity provider with the client credentials grant.
  *
  * The client ID and secret are sent with Basic auth (client_secret_basic, RFC 6749 2.3.1).
- * Any failure is reported as an authentication error (401), with the identity provider's answer.
+ * Any failure is reported as an authentication error (401), with the identity provider's answer,
+ * and the batch is left in the queue to try again later.
  *
  * @param \core\http_client $client The client.
  * @param array $config An array of configuration settings.
  * @param string $basic The Basic Authorization header for the client ID and secret.
  * @return array The access_token, and when it expires (a Unix time).
- * @throws \Exception When no token is issued.
+ * @throws utils\retry_later When no token is issued.
  */
 function get_oauth2_token(\core\http_client $client, array $config, string $basic): array {
     $endpoint = $config['lrs_oauth2_token_endpoint'] ?? '';
     if ($endpoint === '') {
-        throw new \Exception('OAuth2 token request failed: no token endpoint is set.', 401);
+        throw new utils\retry_later('OAuth2 token request failed: no token endpoint is set.', 401);
     }
 
     $form = ['grant_type' => 'client_credentials'];
@@ -224,15 +225,15 @@ function get_oauth2_token(\core\http_client $client, array $config, string $basi
             'form_params' => $form,
             'headers' => ['Authorization' => $basic, 'Accept' => 'application/json'],
         ]);
-    } catch (\Exception $e) {
-        throw new \Exception('OAuth2 token request failed: ' . $e->getMessage(), $e->getCode());
+    } catch (utils\retry_later $e) {
+        throw new utils\retry_later('OAuth2 token request failed: ' . $e->getMessage(), $e->getCode());
     }
 
     $body = (string) $response->getBody();
     $data = json_decode($body, true);
     $token = is_array($data) ? ($data['access_token'] ?? null) : null;
     if ($response->getStatusCode() !== 200 || !is_string($token) || $token === '') {
-        throw new \Exception(
+        throw new utils\retry_later(
             'OAuth2 token request failed (HTTP ' . $response->getStatusCode() . '): ' . \core_text::substr($body, 0, 1000),
             401
         );
@@ -262,6 +263,9 @@ function load(array $config, array $events) {
         if (empty($statements)) {
             return;
         }
+        if (empty($config['lrs_endpoint'])) {
+            throw new utils\retry_later('The LRS endpoint is not set.');
+        }
 
         $postdata = json_encode($statements, JSON_INVALID_UTF8_SUBSTITUTE);
         if ($postdata === false) {
@@ -288,9 +292,16 @@ function load(array $config, array $events) {
             $response = $send();
         }
 
-        if ($response->getStatusCode() !== 200) {
-            throw new \Exception((string) $response->getBody(), $response->getStatusCode());
+        $status = $response->getStatusCode();
+        if ($status === 200) {
+            return;
         }
+        // Refused credentials, a wrong endpoint, a request to wait, or the LRS failing say nothing
+        // about the statements: try again later. Other errors (400 and the like) are about them.
+        if (in_array($status, [401, 403, 404, 408, 429], true) || $status >= 500) {
+            throw new utils\retry_later((string) $response->getBody(), $status);
+        }
+        throw new \Exception((string) $response->getBody(), $status);
     };
     return utils\load_in_batches($config, $events, $sendhttpstatements);
 }

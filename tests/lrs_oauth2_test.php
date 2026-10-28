@@ -20,6 +20,7 @@ defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
 require_once($CFG->dirroot . '/admin/tool/log/store/xapi/src/autoload.php');
+require_once($CFG->dirroot . '/admin/tool/log/store/xapi/lib.php');
 require_once(__DIR__ . '/fixtures/mock_lrs.php');
 
 use GuzzleHttp\Handler\MockHandler;
@@ -151,33 +152,35 @@ final class lrs_oauth2_test extends \advanced_testcase {
     }
 
     /**
-     * A token request that fails fails the batch as an authentication error, with the identity
-     * provider's answer.
+     * A token request that fails leaves the batch for a later run, as an authentication error
+     * with the identity provider's answer.
      *
      * @return void
      */
-    public function test_failed_token_request_fails_the_batch(): void {
+    public function test_failed_token_request_is_retried_later(): void {
         $this->answer(new Response(400, [], '{"error":"invalid_client"}'));
 
         $loaded = $this->send($this->events(1), $this->oauth2());
 
-        $this->assertFalse($loaded[0]['loaded']);
+        $this->assertSame(XAPI_LOADED_RETRY, $loaded[0]['loaded']);
         $this->assertEquals(401, $loaded[0]['event']->errortype);
         $this->assertSame('OAuth2 token request failed (HTTP 400): {"error":"invalid_client"}', $loaded[0]['event']->response);
         $this->assertCount(1, $this->requests);
     }
 
     /**
-     * Basic auth never asks for a token, and a 401 is not retried.
+     * Basic auth never asks for a token: a 401 isn't sent again in the run, and the batch waits
+     * for a later one.
      *
      * @return void
      */
-    public function test_basic_auth_401_is_not_retried(): void {
+    public function test_basic_auth_401_asks_for_no_token(): void {
         $this->answer(new Response(401, [], 'Unauthorized'));
 
         $loaded = $this->send($this->events(1), ['lrs_oauth2_token_endpoint' => 'https://idp.example.org/oauth2/token']);
 
         $this->assertCount(1, $this->requests);
+        $this->assertSame(XAPI_LOADED_RETRY, $loaded[0]['loaded']);
         $this->assertEquals(401, $loaded[0]['event']->errortype);
     }
 }

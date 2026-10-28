@@ -20,6 +20,7 @@ defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
 require_once($CFG->dirroot . '/admin/tool/log/store/xapi/src/autoload.php');
+require_once($CFG->dirroot . '/admin/tool/log/store/xapi/lib.php');
 require_once(__DIR__ . '/fixtures/mock_lrs.php');
 
 use GuzzleHttp\Exception\ConnectException;
@@ -178,7 +179,7 @@ final class lrs_sender_test extends \advanced_testcase {
     }
 
     /**
-     * A transport failure is reported with cURL's error and error number.
+     * A transport failure leaves the batch for a later run, with cURL's error and error number.
      *
      * @return void
      */
@@ -194,9 +195,44 @@ final class lrs_sender_test extends \advanced_testcase {
 
         $loaded = $this->send($this->events(1));
 
-        $this->assertFalse($loaded[0]['loaded']);
+        $this->assertSame(XAPI_LOADED_RETRY, $loaded[0]['loaded']);
         $this->assertSame('cURL error: Failed to connect to 127.0.0.1 port 8080', $loaded[0]['event']->response);
         $this->assertEquals(7, $loaded[0]['event']->errortype);
+    }
+
+    /**
+     * Refused credentials, a wrong endpoint, a request to wait and LRS failures leave the batch
+     * for a later run; other errors are about the statements, and fail it.
+     *
+     * @return void
+     */
+    public function test_status_handling(): void {
+        $expected = [
+            401 => XAPI_LOADED_RETRY, 403 => XAPI_LOADED_RETRY, 404 => XAPI_LOADED_RETRY,
+            408 => XAPI_LOADED_RETRY, 429 => XAPI_LOADED_RETRY, 500 => XAPI_LOADED_RETRY,
+            502 => XAPI_LOADED_RETRY, 503 => XAPI_LOADED_RETRY, 504 => XAPI_LOADED_RETRY,
+            400 => false, 422 => false,
+        ];
+        foreach ($expected as $status => $outcome) {
+            $this->answer(new Response($status, [], 'Error ' . $status));
+            $loaded = $this->send($this->events(1));
+
+            $this->assertSame($outcome, $loaded[0]['loaded'], "HTTP $status");
+            $this->assertEquals($status, $loaded[0]['event']->errortype);
+        }
+    }
+
+    /**
+     * Without an endpoint, nothing is sent and the batch waits until one is set.
+     *
+     * @return void
+     */
+    public function test_no_endpoint(): void {
+        $loaded = $this->send($this->events(1), ['lrs_endpoint' => '']);
+
+        $this->assertCount(0, $this->requests);
+        $this->assertSame(XAPI_LOADED_RETRY, $loaded[0]['loaded']);
+        $this->assertSame('The LRS endpoint is not set.', $loaded[0]['event']->response);
     }
 
     /**

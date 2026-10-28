@@ -64,34 +64,35 @@ function load_batch(array $config, array $transformedevents, callable $loader) {
             }
         }
 
+        // The LRS can't take statements now: leave the batch in the queue for a later run.
+        if ($e instanceof retry_later) {
+            return construct_loaded_events($transformedevents, XAPI_LOADED_RETRY);
+        }
+
         // Split the batch in half and send each half, down to the events that fail.
         if ($batchsize === 1 || !is_split_error($config, $e)) {
-            $loadedevents = construct_loaded_events($transformedevents, false);
-        } else {
-            $newconfig = $config;
-            $newconfig['lrs_max_batch_size'] = round($batchsize / 2);
-            $batches = get_event_batches($newconfig, $transformedevents);
-            $loadedevents = array_reduce($batches, function ($result, $batch) use ($newconfig, $loader) {
-                $loadedbatchevents = load_batch($newconfig, $batch, $loader);
-                return array_merge($result, $loadedbatchevents);
-            }, []);
+            return construct_loaded_events($transformedevents, false);
         }
-        return $loadedevents;
+        $newconfig = $config;
+        $newconfig['lrs_max_batch_size'] = round($batchsize / 2);
+        return load_batches($newconfig, get_event_batches($newconfig, $transformedevents), $loader);
     }
 }
 
 /**
  * Should a batch that failed with this error be split, so that only the events at fault fail?
  *
- * Always for a 409, so the statements the LRS doesn't have yet are stored. For a 400 (bad data),
- * only when "Resend failed batches" is on.
+ * Always for a 409, so the statements the LRS doesn't have yet are stored, and for a 413, so the
+ * batch fits; a single event that is still too large fails. For a 400 (bad data), only when
+ * "Resend failed batches" is on.
  *
  * @param array $config An array of configuration settings.
  * @param \Throwable $e The error.
  * @return bool
  */
 function is_split_error(array $config, \Throwable $e): bool {
-    return $e->getCode() === 409 || ($e->getCode() === 400 && $config['lrs_resend_failed_batches'] === '1');
+    return in_array($e->getCode(), [409, 413], true)
+        || ($e->getCode() === 400 && $config['lrs_resend_failed_batches'] === '1');
 }
 
 /**

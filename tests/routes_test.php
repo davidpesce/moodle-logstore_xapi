@@ -16,6 +16,9 @@
 
 namespace logstore_xapi;
 
+use GuzzleHttp\Promise\Create;
+use GuzzleHttp\Psr7\Response;
+use logstore_xapi\log\store;
 use logstore_xapi\task\emit_task;
 
 /**
@@ -31,6 +34,31 @@ use logstore_xapi\task\emit_task;
  * @covers    \logstore_xapi\log\store::is_event_ignored
  */
 final class routes_test extends \advanced_testcase {
+    /**
+     * Stand in for an LRS that rejects every batch as bad data (400), so that an event that is
+     * sent ends up in the failed log, and one that is skipped doesn't.
+     *
+     * @return void
+     */
+    protected function setUp(): void {
+        parent::setUp();
+        $this->resetAfterTest();
+        set_config('endpoint', 'https://lrs.example.org/xapi/', 'logstore_xapi');
+        store::$mocklrs = function () {
+            return Create::promiseFor(new Response(400, [], 'Invalid statement'));
+        };
+    }
+
+    /**
+     * Stop standing in for the LRS.
+     *
+     * @return void
+     */
+    protected function tearDown(): void {
+        store::$mocklrs = null;
+        parent::tearDown();
+    }
+
     /**
      * Queue an event in logstore_xapi_log.
      *
@@ -101,7 +129,7 @@ final class routes_test extends \advanced_testcase {
         $this->run_emit_task();
 
         $this->assertEquals(0, $DB->count_records('logstore_xapi_log'));
-        // No LRS is configured, so the routed event fails to load; the other is never attempted.
+        // The LRS rejects the routed event, so it fails to load; the other is never attempted.
         $failed = $DB->get_records('logstore_xapi_failed_log');
         $this->assertCount(1, $failed);
         $this->assertEquals('\core\event\course_viewed', reset($failed)->eventname);
@@ -169,7 +197,7 @@ final class routes_test extends \advanced_testcase {
         $this->run_emit_task();
 
         $this->assertEquals(0, $DB->count_records('logstore_xapi_log'));
-        // No LRS is configured, so the CLI event fails to load; the web one is never attempted.
+        // The LRS rejects the CLI event, so it fails to load; the web one is never attempted.
         $failed = $DB->get_records('logstore_xapi_failed_log');
         $this->assertCount(1, $failed);
         $this->assertEquals('cli', reset($failed)->origin);
