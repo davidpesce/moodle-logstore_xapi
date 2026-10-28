@@ -170,6 +170,14 @@ if ($hassiteconfig) {
         PARAM_INT
     ));
 
+    $settings->add(new admin_setting_configduration(
+        'logstore_xapi/maxruntime',
+        get_string('maxruntime', 'logstore_xapi'),
+        get_string('maxruntime_desc', 'logstore_xapi'),
+        XAPI_MAX_RUNTIME_DEFAULT,
+        MINSECS
+    ));
+
     $settings->add(new admin_setting_configcheckbox(
         'logstore_xapi/resendfailedbatches',
         get_string('resendfailedbatches', 'logstore_xapi'),

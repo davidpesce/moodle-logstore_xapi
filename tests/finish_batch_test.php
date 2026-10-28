@@ -133,14 +133,12 @@ final class finish_batch_test extends \advanced_testcase {
         $loaded[1]['event']->response = 'Service Unavailable';
         $loaded[1]['event']->errortype = 503;
 
-        ob_start();
-        logstore_xapi_finish_batch($loaded);
-        $output = ob_get_clean();
+        $counts = logstore_xapi_finish_batch($loaded);
 
         $this->assertSame([$loaded[1]['event']->id], array_keys($DB->get_records('logstore_xapi_log')));
         $this->assertEquals(0, $DB->count_records('logstore_xapi_failed_log'));
-        $this->assertStringContainsString('1 event(s) left in the queue to send later: HTTP 503: Service Unavailable', $output);
-        $error = \cache::make('logstore_xapi', 'senderror')->get('last');
-        $this->assertSame(503, $error->code);
+        $this->assertSame(['sent' => 1, 'failed' => 0, 'retry' => 1], array_slice($counts, 0, 3));
+        $this->assertSame(503, $counts['error']->code);
+        $this->assertSame(503, \cache::make('logstore_xapi', 'senderror')->get('last')->code);
     }
 }

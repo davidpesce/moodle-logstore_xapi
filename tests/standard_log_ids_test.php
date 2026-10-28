@@ -209,6 +209,28 @@ final class standard_log_ids_test extends \advanced_testcase {
     }
 
     /**
+     * Identical events in the same second sent in different batches of one run still get their
+     * own rows: the store remembers the rows it has given out.
+     *
+     * @return void
+     */
+    public function test_ids_are_distinct_across_batches(): void {
+        global $DB;
+        $standardids = $this->log_standard([1000, 1000, 1000]);
+        $this->queue([1000, 1000, 1000]);
+        $store = $this->get_store();
+
+        $ids = [];
+        foreach ($DB->get_records('logstore_xapi_log', ['type' => XAPI_IMPORT_TYPE_LIVE], 'id') as $event) {
+            $loaded = $store->process_events([$event]);
+            $ids[] = (int) $loaded[0]['event']->logstorestandardlogid;
+        }
+        sort($ids);
+
+        $this->assertEquals($standardids, $ids);
+    }
+
+    /**
      * A historic event keeps the standard log id it was queued with, even when an identical
      * event was logged in the same second.
      *
