@@ -117,6 +117,24 @@ the authoritative record.
   sent with a "Not logged in" actor (account name `0`). Before, they were queued whatever the
   setting, and each one went to the failed log with "user not found".
 
+### Resending without duplicates
+
+- **Statements have ids, so the LRS ignores a resend** (#931). Each statement's id is a
+  version 5 UUID of the site URL, the event's standard log id and the statement's content. A
+  statement sent again unchanged (after a timeout where the LRS had stored the batch, from the
+  failed log, or by replaying history) has the same id, and the LRS keeps one copy. A statement
+  whose content has changed, for example after an upgrade that fixes it, gets a new id and is
+  stored next to the old one: an LRS can't change a stored statement, and a correction is never
+  dropped. Statements sent by earlier versions have ids the LRS chose, so replaying those events
+  still stores them again.
+- **A conflict (409) no longer fails the batch.** An LRS that already has a statement with the
+  same id may answer 409 and reject the whole batch. The batch is now split, whatever "Resend
+  failed batches" is set to, so the other events are stored, and the event the LRS already has
+  counts as sent.
+- **A batch is removed from the queue only once its failures are stored.** Both happen in one
+  database transaction, so an error part-way leaves the batch queued, and the resend is ignored
+  by the LRS instead of being stored twice.
+
 ### Performance
 
 - **Fewer database reads per batch** (#934). Each batch keeps the records it has read, so the

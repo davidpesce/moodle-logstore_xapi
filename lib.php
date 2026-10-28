@@ -579,6 +579,31 @@ function logstore_xapi_save_sent_events(array $events) {
 }
 
 /**
+ * Record the outcome of a processed batch and remove it from the queue.
+ *
+ * The failures are stored and the processed queue rows deleted in one transaction. If either
+ * throws, neither happens: the batch stays queued and is sent again on the next run. The LRS
+ * ignores the statements it already has, as they are sent with the same ids (see
+ * \src\transformer\utils\set_statement_ids()).
+ *
+ * @param array $loadedevents Loaded events, as returned by store::process_events().
+ * @return void
+ */
+function logstore_xapi_finish_batch(array $loadedevents) {
+    global $DB;
+
+    $transaction = $DB->start_delegated_transaction();
+    try {
+        logstore_xapi_store_failed_events($loadedevents);
+        logstore_xapi_delete_processed_events($loadedevents);
+        $transaction->allow_commit();
+    } catch (\Throwable $e) {
+        $transaction->rollback($e);
+    }
+    logstore_xapi_record_successful_events($loadedevents);
+}
+
+/**
  * Get failed events as array.
  *
  * @param array $events An array of events.

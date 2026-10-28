@@ -58,6 +58,8 @@ function handler(array $config, array $events) {
                 if (!empty($eventobj->anonymous)) {
                     $eventstatements = utils\anonymise_statements($eventconfig, $eventobj, $eventstatements);
                 }
+                // Last, so the ids come from the statements as they are sent.
+                $eventstatements = utils\set_statement_ids($eventconfig, $eventobj, $eventstatements);
             } else {
                 $eventstatements = [];
             }
