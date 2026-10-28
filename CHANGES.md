@@ -134,9 +134,15 @@ the authoritative record.
   Solr. An LRS on an internal network or a port such as 8080 keeps working.
 - The connection to the LRS is reused for all the batches of a run, a batch with no statements
   is no longer sent, and invalid UTF-8 in a statement is replaced instead of failing the batch.
-- **The security report warns about a plain `http://` endpoint**, which sends the LRS
-  credentials and learner data unencrypted. It's a warning, not an error, as some sites run an
-  LRS over HTTP on a private network.
+- **OAuth2 client credentials** (#895). A new "LRS authentication" setting switches from Basic
+  auth to OAuth2: the key and secret are used as client ID and client secret to get an access
+  token from your identity provider's token endpoint (with an optional scope), and the token is
+  sent to the LRS. Tokens are cached until shortly before they expire, and a new one is fetched
+  once if the LRS refuses the current one. Basic stays the default, so nothing changes on
+  upgrade. Based on a contribution by piptouque.
+- **The security report warns about a plain `http://` endpoint**, and with OAuth2 a plain
+  `http://` token endpoint, which send the LRS credentials and learner data unencrypted. It's a
+  warning, not an error, as some sites run an LRS over HTTP on a private network.
 
 ### Resending without duplicates
 
