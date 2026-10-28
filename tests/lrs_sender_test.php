@@ -184,6 +184,37 @@ final class lrs_sender_test extends \advanced_testcase {
     }
 
     /**
+     * An LRS in "Proxy bypass hosts" is reached without the proxy, whatever form the entry
+     * takes: an IP range, a *.domain pattern or an exact host.
+     *
+     * @return void
+     */
+    public function test_proxy_bypass(): void {
+        global $CFG;
+        $this->resetAfterTest();
+        $CFG->proxyhost = 'proxy.example.org';
+        $CFG->proxyport = 3128;
+        $CFG->proxybypass = '192.168.0.0/16,*.internal.example.org,lrs.example.com';
+        $endpoints = [
+            'http://192.168.1.20:8080/xapi/' => '',
+            'https://lrs.internal.example.org/xapi/' => '',
+            'https://lrs.example.com/xapi/' => '',
+            'https://lrs.example.net/xapi/' => 'proxy.example.org:3128',
+        ];
+        foreach ($endpoints as $endpoint => $expected) {
+            $this->answer(new Response(200));
+            $this->send($this->events(1), ['lrs_endpoint' => $endpoint]);
+
+            $proxy = end($this->requests)['options']['proxy'];
+            if ($expected === '') {
+                $this->assertSame('', $proxy, $endpoint);
+            } else {
+                $this->assertStringContainsString($expected, $proxy['https'], $endpoint);
+            }
+        }
+    }
+
+    /**
      * An error response fails the batch with the response body and status.
      *
      * @return void

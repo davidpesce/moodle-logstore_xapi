@@ -83,7 +83,13 @@ function load(array $config, array $events) {
     $client = new \core\http_client(get_client_settings($config));
     $url = utils\correct_endpoint($config['lrs_endpoint']) . '/statements';
 
-    $sendhttpstatements = function (array $config, array $statements) use ($client, $url) {
+    // The site's "Proxy bypass hosts" can hold IP ranges and *.domain patterns. \core\http_client
+    // hands the list to Guzzle, which matches only exact host names and domain suffixes, so the
+    // bypass is decided here, with core's is_proxybypass() as \curl does. An empty proxy turns
+    // the proxy off for the request.
+    $requestoptions = is_proxybypass($url) ? ['proxy' => ''] : [];
+
+    $sendhttpstatements = function (array $config, array $statements) use ($client, $url, $requestoptions) {
         // A batch where no event produced a statement has nothing to send.
         if (empty($statements)) {
             return;
@@ -95,7 +101,7 @@ function load(array $config, array $events) {
         }
 
         try {
-            $response = $client->post($url, ['body' => $postdata]);
+            $response = $client->post($url, ['body' => $postdata] + $requestoptions);
         } catch (TransferException $e) {
             // A transport failure (a refused connection, a timeout, a rejected TLS certificate)
             // has no response, so report cURL's own error and error number.
