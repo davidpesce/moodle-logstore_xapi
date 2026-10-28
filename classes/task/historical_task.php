@@ -51,8 +51,6 @@ class historical_task extends \core\task\scheduled_task {
         $extractedevents = logstore_xapi_extract_events($batchsize, XAPI_REPORT_SOURCE_LOG, XAPI_IMPORT_TYPE_HISTORIC);
         $loadedevents = $store->process_events($extractedevents, XAPI_IMPORT_TYPE_HISTORIC);
 
-        logstore_xapi_store_failed_events($loadedevents);
-        logstore_xapi_record_successful_events($loadedevents);
-        logstore_xapi_delete_processed_events($loadedevents);
+        logstore_xapi_finish_batch($loadedevents);
     }
 }

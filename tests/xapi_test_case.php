@@ -157,6 +157,7 @@ abstract class xapi_test_case extends \advanced_testcase {
             $eventstatements = $loadedevent['statements'];
             return array_merge($result, $eventstatements);
         }, []);
+        $statements = $this->remove_statement_ids($statements);
         $this->assert_expected_statements($statements);
         foreach ($statements as $statement) {
             $this->assert_consistent_with_definition($statement);
@@ -167,6 +168,28 @@ abstract class xapi_test_case extends \advanced_testcase {
         foreach ($statements as $statement) {
             $this->assert_valid_xapi_statement($statement);
         }
+    }
+
+    /**
+     * Check that each statement has its own version 5 UUID as id, then remove the ids.
+     *
+     * The ids come from the statements' content (see utils\set_statement_ids()), so
+     * statements.json leaves them out; statement_ids_test covers how they are made.
+     *
+     * @param array $statements The statements.
+     * @return array The statements without ids.
+     */
+    private function remove_statement_ids(array $statements): array {
+        $ids = array_column($statements, 'id');
+        $this->assertCount(count($statements), $ids, 'Every statement must have an id');
+        $this->assertSame($ids, array_unique($ids), 'Statement ids must be unique');
+        foreach ($ids as $id) {
+            $this->assertMatchesRegularExpression('/^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/', $id);
+        }
+        return array_map(function ($statement) {
+            unset($statement['id']);
+            return $statement;
+        }, $statements);
     }
 
     /**

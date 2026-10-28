@@ -36,10 +36,22 @@ namespace src\loader\utils;
  */
 function load_batch(array $config, array $transformedevents, callable $loader) {
     try {
-        $statements = array_reduce($transformedevents, function ($result, $transformedevent) {
-            $eventstatements = $transformedevent['statements'];
-            return array_merge($result, $eventstatements);
-        }, []);
+        // Statement ids come from their content (see set_statement_ids()), so a repeated id is an
+        // identical statement, such as from two identical events in the same second. An LRS
+        // rejects a batch with two statements with the same id, and would keep only one anyway.
+        $statements = [];
+        $ids = [];
+        foreach ($transformedevents as $transformedevent) {
+            foreach ($transformedevent['statements'] as $statement) {
+                if (isset($statement['id'])) {
+                    if (isset($ids[$statement['id']])) {
+                        continue;
+                    }
+                    $ids[$statement['id']] = true;
+                }
+                $statements[] = $statement;
+            }
+        }
         $loader($config, $statements);
         $loadedevents = construct_loaded_events($transformedevents, true);
         return $loadedevents;
@@ -47,6 +59,14 @@ function load_batch(array $config, array $transformedevents, callable $loader) {
         $batchsize = count($transformedevents);
         $logerror = $config['log_error'];
         $loginfo = $config['log_info'];
+
+        // A 409 means the LRS already has a statement with one of these ids, and it rejects the
+        // whole batch. The ids come from the statements' content, so for a single event this
+        // means its statements are already stored (an LRS may answer 409 to an exact resend).
+        if ($e->getCode() === 409 && $batchsize === 1) {
+            $loginfo('The LRS already has the statements of this event: ' . $e->getMessage());
+            return construct_loaded_events($transformedevents, true);
+        }
         $logerror("Failed load batch (" . $batchsize . " events)" . $e->getMessage());
         $loginfo($e->getTraceAsString());
 
@@ -60,9 +80,12 @@ function load_batch(array $config, array $transformedevents, callable $loader) {
             }
         }
 
-        // In the event of a 400 error, recursively retry sending statements in increasingly
-        // smaller batches so that only the actual bad data fails.
-        if ($batchsize === 1 || $e->getCode() !== 400 || $config['lrs_resend_failed_batches'] !== '1') {
+        // Split the batch in half and send each half, down to the events that fail. Always for a
+        // 409, so the statements the LRS doesn't have yet are stored. For a 400 (bad data), only
+        // when "Resend failed batches" is on.
+        $split = $e->getCode() === 409
+            || ($e->getCode() === 400 && $config['lrs_resend_failed_batches'] === '1');
+        if ($batchsize === 1 || !$split) {
             $loadedevents = construct_loaded_events($transformedevents, false);
         } else {
             $newconfig = $config;
