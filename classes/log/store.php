@@ -43,6 +43,12 @@ class store extends php_obj implements log_writer {
     use helper_writer;
 
     /**
+     * @var callable|null A Guzzle handler that stands in for the LRS, in unit tests only, so that
+     *     the scheduled tasks can be tested against any LRS response. See \curl::mock_response().
+     */
+    public static $mocklrs = null;
+
+    /**
      * Constructs a new store.
      * @param log_manager $manager
      */
@@ -131,6 +137,11 @@ class store extends php_obj implements log_writer {
             // runs during a web request, so no mtrace() output.
             $loadedevents = $this->process_events($events);
             logstore_xapi_store_failed_events($loadedevents, false);
+            // Events the LRS can't take now go to the queue, for the emit task to send later.
+            logstore_xapi_record_retry_events($loadedevents, false);
+            foreach (logstore_xapi_get_retry_events($loadedevents) as $event) {
+                $DB->insert_record('logstore_xapi_log', $event);
+            }
         }
     }
 
@@ -319,6 +330,7 @@ class store extends php_obj implements log_writer {
                 'lrs_auth_method' => $this->get_config('authmethod', 'basic'),
                 'lrs_oauth2_token_endpoint' => $this->get_config('oauth2tokenendpoint', ''),
                 'lrs_oauth2_scope' => $this->get_config('oauth2scope', ''),
+                'lrs_mock_handler' => (defined('PHPUNIT_TEST') && PHPUNIT_TEST) ? self::$mocklrs : null,
                 'lrs_max_batch_size' => $this->get_max_batch_size(),
                 'lrs_resend_failed_batches' => $this->get_config('resendfailedbatches', false),
                 'lrs_ssl_verification' => $this->get_config('sslverification', true),

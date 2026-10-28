@@ -37,10 +37,7 @@ namespace src\loader\utils;
 function load_in_batches(array $config, array $events, callable $loader) {
     $successfultransformevents = filter_transformed_events($events, true);
     $batches = get_event_batches($config, $successfultransformevents);
-    $loadedevents = array_reduce($batches, function ($result, $batch) use ($config, $loader) {
-        $loadedbatchevents = load_batch($config, $batch, $loader);
-        return array_merge($result, $loadedbatchevents);
-    }, []);
+    $loadedevents = load_batches($config, $batches, $loader);
 
     // Flags events that weren't transformed successfully as events that didn't load.
     $failedtransformevents = filter_transformed_events($events, false);

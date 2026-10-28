@@ -28,6 +28,7 @@ require_once($CFG->dirroot . '/admin/tool/log/store/xapi/lib.php');
  * @copyright 2026 David Pesce <david.pesce@exputo.com>
  * @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @covers    ::logstore_xapi_finish_batch
+ * @covers    ::logstore_xapi_record_retry_events
  */
 final class finish_batch_test extends \advanced_testcase {
     /**
@@ -117,5 +118,29 @@ final class finish_batch_test extends \advanced_testcase {
             $this->assertEquals(2, $DB->count_records('logstore_xapi_log'));
             $this->assertEquals(0, $DB->count_records('logstore_xapi_failed_log'));
         }
+    }
+
+    /**
+     * Events the LRS couldn't take now stay in the queue, out of the failed log, and the error is
+     * kept for the status report.
+     *
+     * @return void
+     */
+    public function test_retry_events_stay_queued(): void {
+        global $DB;
+        $loaded = $this->queue_batch();
+        $loaded[1]['loaded'] = XAPI_LOADED_RETRY;
+        $loaded[1]['event']->response = 'Service Unavailable';
+        $loaded[1]['event']->errortype = 503;
+
+        ob_start();
+        logstore_xapi_finish_batch($loaded);
+        $output = ob_get_clean();
+
+        $this->assertSame([$loaded[1]['event']->id], array_keys($DB->get_records('logstore_xapi_log')));
+        $this->assertEquals(0, $DB->count_records('logstore_xapi_failed_log'));
+        $this->assertStringContainsString('1 event(s) left in the queue to send later: HTTP 503: Service Unavailable', $output);
+        $error = \cache::make('logstore_xapi', 'senderror')->get('last');
+        $this->assertSame(503, $error->code);
     }
 }

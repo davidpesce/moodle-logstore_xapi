@@ -144,6 +144,22 @@ the authoritative record.
   `http://` token endpoint, which send the LRS credentials and learner data unencrypted. It's a
   warning, not an error, as some sites run an LRS over HTTP on a private network.
 
+### When the LRS can't take statements
+
+- **Events wait in the queue while the LRS is unavailable** (#910). When the LRS can't be
+  reached (no connection, a timeout, a TLS error), refuses the credentials (401, 403, or a failed
+  OAuth2 token request), isn't at the endpoint (404), asks to wait (408, 429) or fails (5xx), the
+  batch stays in the queue and is sent on a later run, and the rest of the run is not sent. Before,
+  every run moved another batch to the failed log, to be resent by hand. Other errors, such as a
+  400 for bad data, still go to the failed log. In real-time mode, these events go to the queue
+  for the emit task. An endpoint that isn't set is treated the same way.
+- **A batch that is too large (413) is split** until it fits; an event that is too large on its
+  own goes to the failed log.
+- **A new check in the system status report** (Site administration > Reports > System status),
+  "xAPI statements sent to the LRS", warns when an event has been waiting more than an hour, and
+  shows the last error from the LRS. Events that wait don't appear in the error report and don't
+  trigger the failure notification emails, so this is where an outage shows.
+
 ### Resending without duplicates
 
 - **Statements have ids, so the LRS ignores a resend** (#931). Each statement's id is a

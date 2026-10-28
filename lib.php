@@ -55,6 +55,11 @@ define('XAPI_REPORT_ERRORTYPE_AUTH', 401);
 define('XAPI_REPORT_ERRORTYPE_LRS', 500);
 define('XAPI_REPORT_ERRORTYPE_TRANSFORM', 10000); // This high number has been set to avoid conflicting with other error codes.
 
+// The "loaded" state of events the LRS can't take now (see \src\loader\utils\retry_later):
+// they stay in the queue for a later run. Sent events are true, failed ones false and skipped
+// ones null.
+define('XAPI_LOADED_RETRY', 'retry');
+
 // Resend values.
 define('XAPI_REPORT_RESEND_FALSE', 0);
 define('XAPI_REPORT_RESEND_TRUE', 1);
@@ -516,15 +521,75 @@ function logstore_xapi_get_event_ids($loadedevents) {
 }
 
 /**
- * Delete processed events.
+ * Delete processed events from the queue, except those left for a later run.
  *
  * @param array $events raw events data
  * @return void
  */
 function logstore_xapi_delete_processed_events($events) {
     global $DB;
-    $eventids = logstore_xapi_get_event_ids($events);
-    $DB->delete_records_list('logstore_xapi_log', 'id', $eventids);
+    $processed = array_filter($events, function ($loadedevent) {
+        return $loadedevent['loaded'] !== XAPI_LOADED_RETRY;
+    });
+    $DB->delete_records_list('logstore_xapi_log', 'id', logstore_xapi_get_event_ids($processed));
+}
+
+/**
+ * The events the LRS couldn't take now, left in the queue for a later run.
+ *
+ * @param array $events Loaded events.
+ * @return array The events.
+ */
+function logstore_xapi_get_retry_events(array $events): array {
+    return array_values(array_map(function ($loadedevent) {
+        return $loadedevent['event'];
+    }, array_filter($events, function ($loadedevent) {
+        return $loadedevent['loaded'] === XAPI_LOADED_RETRY;
+    })));
+}
+
+/**
+ * Note the events left for a later run, and keep the LRS's error for the status report.
+ *
+ * The last error is cleared once events are sent again.
+ *
+ * @param array $events Loaded events.
+ * @param bool $trace Whether to print a summary with mtrace(). Off when called during a web request.
+ * @return void
+ */
+function logstore_xapi_record_retry_events(array $events, bool $trace = true) {
+    $cache = \cache::make('logstore_xapi', 'senderror');
+    $retry = logstore_xapi_get_retry_events($events);
+    if (empty($retry)) {
+        if (!empty(logstore_xapi_get_successful_events($events))) {
+            $cache->delete('last');
+        }
+        return;
+    }
+
+    $error = (object) [
+        'time' => time(),
+        'code' => (int) ($retry[0]->errortype ?? 0),
+        'message' => \core_text::substr((string) ($retry[0]->response ?? ''), 0, 1000),
+    ];
+    $cache->set('last', $error);
+    if ($trace) {
+        mtrace(get_string('retry_events', 'logstore_xapi', (object) [
+            'count' => count($retry),
+            'error' => logstore_xapi_get_send_error_string($error),
+        ]));
+    }
+}
+
+/**
+ * A short description of an error from the LRS: the HTTP status or cURL error, and the message.
+ *
+ * @param \stdClass $error The error: code and message.
+ * @return string
+ */
+function logstore_xapi_get_send_error_string(\stdClass $error): string {
+    $message = shorten_text(strip_tags($error->message), 200);
+    return $error->code >= 100 ? "HTTP {$error->code}: {$message}" : $message;
 }
 
 /**
@@ -584,7 +649,7 @@ function logstore_xapi_save_sent_events(array $events) {
  * The failures are stored and the processed queue rows deleted in one transaction. If either
  * throws, neither happens: the batch stays queued and is sent again on the next run. The LRS
  * ignores the statements it already has, as they are sent with the same ids (see
- * \src\transformer\utils\set_statement_ids()).
+ * \src\transformer\utils\set_statement_ids()). Events the LRS couldn't take now stay queued.
  *
  * @param array $loadedevents Loaded events, as returned by store::process_events().
  * @return void
@@ -601,6 +666,7 @@ function logstore_xapi_finish_batch(array $loadedevents) {
         $transaction->rollback($e);
     }
     logstore_xapi_record_successful_events($loadedevents);
+    logstore_xapi_record_retry_events($loadedevents);
 }
 
 /**
@@ -660,6 +726,19 @@ function logstore_xapi_get_type_from_table($table) {
         default:
             return XAPI_IMPORT_TYPE_LIVE;
     }
+}
+
+/**
+ * Status checks contributed to the system status report.
+ *
+ * Called by \core\check\manager::get_checks('status').
+ *
+ * @return array of \core\check\check
+ */
+function logstore_xapi_status_checks() {
+    return [
+        new \logstore_xapi\check\sending(),
+    ];
 }
 
 /**

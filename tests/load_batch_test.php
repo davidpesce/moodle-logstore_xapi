@@ -20,16 +20,21 @@ defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
 require_once($CFG->dirroot . '/admin/tool/log/store/xapi/src/autoload.php');
+require_once($CFG->dirroot . '/admin/tool/log/store/xapi/lib.php');
 
+use src\loader\utils\retry_later;
 use function src\loader\utils\load_batch;
+use function src\loader\utils\load_in_batches;
 
 /**
- * Unit tests for sending a batch: repeated statement ids and conflicts (409).
+ * Unit tests for sending a batch: repeated statement ids, conflicts (409), batches too large
+ * (413), and an LRS that can't take statements now.
  *
  * @package   logstore_xapi
  * @copyright 2026 David Pesce <david.pesce@exputo.com>
  * @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @covers    ::\src\loader\utils\load_batch
+ * @covers    ::\src\loader\utils\load_batches
  */
 final class load_batch_test extends \basic_testcase {
     /** @var array[] The statements of each request the LRS received. */
@@ -142,5 +147,75 @@ final class load_batch_test extends \basic_testcase {
 
         $this->assertSame([1 => false, 2 => false], $this->loaded($loaded));
         $this->assertEquals(400, $loaded[0]['event']->errortype);
+    }
+
+    /**
+     * An LRS that answers each request in turn: a status to throw, or nothing for success.
+     *
+     * @param array $answers For each request, null for success, an exception, or a function of
+     *     the statement ids that returns one of those.
+     * @return callable
+     */
+    private function scripted_lrs(array $answers): callable {
+        return function (array $config, array $statements) use (&$answers) {
+            $ids = array_column($statements, 'id');
+            $this->requests[] = $ids;
+            $answer = array_shift($answers);
+            $answer = is_callable($answer) ? $answer($ids) : $answer;
+            if ($answer instanceof \Throwable) {
+                throw $answer;
+            }
+        };
+    }
+
+    /**
+     * When the LRS can't take statements now, the batch is left for a later run, and the batches
+     * after it aren't sent.
+     *
+     * @return void
+     */
+    public function test_retry_leaves_the_batch_and_stops_the_run(): void {
+        $events = [$this->event(1, 'a'), $this->event(2, 'b'), $this->event(3, 'c'), $this->event(4, 'd')];
+        $config = ['lrs_max_batch_size' => 2] + $this->get_config();
+
+        $loaded = load_in_batches($config, $events, $this->scripted_lrs([new retry_later('Service Unavailable', 503)]));
+
+        $this->assertSame([['a', 'b']], $this->requests);
+        $this->assertSame(array_fill(1, 4, XAPI_LOADED_RETRY), $this->loaded($loaded));
+        $this->assertEquals(503, $loaded[0]['event']->errortype);
+    }
+
+    /**
+     * A retry part-way through splitting a batch stops the split too.
+     *
+     * @return void
+     */
+    public function test_retry_stops_a_split(): void {
+        $events = [$this->event(1, 'a'), $this->event(2, 'b'), $this->event(3, 'c'), $this->event(4, 'd')];
+        $lrs = $this->scripted_lrs([new \Exception('Conflict', 409), new retry_later('Bad Gateway', 502)]);
+
+        $loaded = load_batch($this->get_config(), $events, $lrs);
+
+        $this->assertSame([['a', 'b', 'c', 'd'], ['a', 'b']], $this->requests);
+        $this->assertSame(array_fill(1, 4, XAPI_LOADED_RETRY), $this->loaded($loaded));
+    }
+
+    /**
+     * A batch the LRS finds too large (413) is split, whatever "Resend failed batches" is set to,
+     * and only an event that is too large on its own fails.
+     *
+     * @return void
+     */
+    public function test_too_large_batch_is_split(): void {
+        $events = [$this->event(1, 'a'), $this->event(2, 'b'), $this->event(3, 'c')];
+        $toolarge = function (array $ids) {
+            return (count($ids) > 1 || $ids === ['c']) ? new \Exception('Payload Too Large', 413) : null;
+        };
+        $lrs = $this->scripted_lrs(array_fill(0, 10, $toolarge));
+
+        $loaded = load_batch($this->get_config('0'), $events, $lrs);
+
+        $this->assertSame([1 => true, 2 => true, 3 => false], $this->loaded($loaded));
+        $this->assertEquals(413, $loaded[2]['event']->errortype);
     }
 }

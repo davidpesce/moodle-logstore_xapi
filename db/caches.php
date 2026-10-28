@@ -34,4 +34,9 @@ $definitions = [
         'staticacceleration' => true,
         'staticaccelerationsize' => 1,
     ],
+    // The last error from the LRS when events were left in the queue, for the status report.
+    'senderror' => [
+        'mode' => cache_store::MODE_APPLICATION,
+        'simplekeys' => true,
+    ],
 ];
