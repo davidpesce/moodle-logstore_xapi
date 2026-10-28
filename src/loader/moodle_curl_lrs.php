@@ -146,29 +146,55 @@ function uses_oauth2(array $config): bool {
  *
  * @param \core\http_client $client The client.
  * @param array $config An array of configuration settings.
- * @param bool $renew Get a new token even if one is cached, as the LRS refused the last one.
  * @return string
  */
-function get_authorization(\core\http_client $client, array $config, bool $renew = false): string {
-    $basic = 'Basic ' . base64_encode(($config['lrs_username'] ?? '') . ':' . ($config['lrs_password'] ?? ''));
+function get_authorization(\core\http_client $client, array $config): string {
     if (!uses_oauth2($config)) {
-        return $basic;
+        return get_basic_authorization($config);
     }
+    $token = \cache::make('logstore_xapi', 'oauth2token')->get(get_token_cache_key($config));
+    if ($token === false || $token['expires'] - time() < 60) {
+        return renew_authorization($client, $config);
+    }
+    return 'Bearer ' . $token['access_token'];
+}
 
-    $cache = \cache::make('logstore_xapi', 'oauth2token');
-    // A change to any of the settings gets a new token.
-    $key = sha1(implode("\n", [
+/**
+ * Get a new OAuth2 access token, cache it, and return the Authorization header for it.
+ *
+ * @param \core\http_client $client The client.
+ * @param array $config An array of configuration settings.
+ * @return string
+ */
+function renew_authorization(\core\http_client $client, array $config): string {
+    $token = get_oauth2_token($client, $config, get_basic_authorization($config));
+    \cache::make('logstore_xapi', 'oauth2token')->set(get_token_cache_key($config), $token);
+    return 'Bearer ' . $token['access_token'];
+}
+
+/**
+ * The Basic Authorization header for the key and secret.
+ *
+ * @param array $config An array of configuration settings.
+ * @return string
+ */
+function get_basic_authorization(array $config): string {
+    return 'Basic ' . base64_encode(($config['lrs_username'] ?? '') . ':' . ($config['lrs_password'] ?? ''));
+}
+
+/**
+ * The cache key for an OAuth2 token: a change to any of the settings gets a new token.
+ *
+ * @param array $config An array of configuration settings.
+ * @return string
+ */
+function get_token_cache_key(array $config): string {
+    return sha1(implode("\n", [
         $config['lrs_oauth2_token_endpoint'] ?? '',
         $config['lrs_oauth2_scope'] ?? '',
         $config['lrs_username'] ?? '',
         $config['lrs_password'] ?? '',
     ]));
-    $token = $renew ? false : $cache->get($key);
-    if ($token === false || $token['expires'] - time() < 60) {
-        $token = get_oauth2_token($client, $config, $basic);
-        $cache->set($key, $token);
-    }
-    return 'Bearer ' . $token['access_token'];
 }
 
 /**
@@ -258,7 +284,7 @@ function load(array $config, array $events) {
         // An OAuth2 token can expire or be revoked before the time it was given for. Get a new
         // one and try again, once.
         if ($response->getStatusCode() === 401 && uses_oauth2($config)) {
-            $authorization = get_authorization($client, $config, true);
+            $authorization = renew_authorization($client, $config);
             $response = $send();
         }
 
