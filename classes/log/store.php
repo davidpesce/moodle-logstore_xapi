@@ -138,7 +138,7 @@ class store extends php_obj implements log_writer {
             $loadedevents = $this->process_events($events);
             logstore_xapi_store_failed_events($loadedevents, false);
             // Events the LRS can't take now go to the queue, for the emit task to send later.
-            logstore_xapi_record_retry_events($loadedevents, false);
+            logstore_xapi_record_retry_events($loadedevents);
             foreach (logstore_xapi_get_retry_events($loadedevents) as $event) {
                 $DB->insert_record('logstore_xapi_log', $event);
             }

@@ -549,22 +549,21 @@ function logstore_xapi_get_retry_events(array $events): array {
 }
 
 /**
- * Note the events left for a later run, and keep the LRS's error for the status report.
+ * Keep the LRS's error, when events are left for a later run, for the status report.
  *
  * The last error is cleared once events are sent again.
  *
  * @param array $events Loaded events.
- * @param bool $trace Whether to print a summary with mtrace(). Off when called during a web request.
- * @return void
+ * @return \stdClass|null The error (time, code and message), or null when no event was left.
  */
-function logstore_xapi_record_retry_events(array $events, bool $trace = true) {
+function logstore_xapi_record_retry_events(array $events): ?\stdClass {
     $cache = \cache::make('logstore_xapi', 'senderror');
     $retry = logstore_xapi_get_retry_events($events);
     if (empty($retry)) {
         if (!empty(logstore_xapi_get_successful_events($events))) {
             $cache->delete('last');
         }
-        return;
+        return null;
     }
 
     $error = (object) [
@@ -573,12 +572,7 @@ function logstore_xapi_record_retry_events(array $events, bool $trace = true) {
         'message' => \core_text::substr((string) ($retry[0]->response ?? ''), 0, 1000),
     ];
     $cache->set('last', $error);
-    if ($trace) {
-        mtrace(get_string('retry_events', 'logstore_xapi', (object) [
-            'count' => count($retry),
-            'error' => logstore_xapi_get_send_error_string($error),
-        ]));
-    }
+    return $error;
 }
 
 /**
@@ -666,7 +660,13 @@ function logstore_xapi_finish_batch(array $loadedevents) {
         $transaction->rollback($e);
     }
     logstore_xapi_record_successful_events($loadedevents);
-    logstore_xapi_record_retry_events($loadedevents);
+    $error = logstore_xapi_record_retry_events($loadedevents);
+    if ($error) {
+        mtrace(get_string('retry_events', 'logstore_xapi', (object) [
+            'count' => count(logstore_xapi_get_retry_events($loadedevents)),
+            'error' => logstore_xapi_get_send_error_string($error),
+        ]));
+    }
 }
 
 /**
