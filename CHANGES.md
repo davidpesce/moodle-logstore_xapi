@@ -117,6 +117,27 @@ the authoritative record.
   sent with a "Not logged in" actor (account name `0`). Before, they were queued whatever the
   setting, and each one went to the failed log with "user not found".
 
+### Connection to the LRS
+
+- **The site's proxy settings are used** (#910). Statements are sent with Moodle's HTTP client
+  (`\core\http_client`), which applies the proxy host, port, type, credentials and bypass list
+  under Site administration > Server > HTTP. Before, the proxy settings were ignored, so a site
+  that can only reach the internet through a proxy couldn't send at all.
+
+  **Before you upgrade:** if your site has a proxy but reaches the LRS directly, for example on
+  your internal network, add the LRS host to *Proxy bypass hosts*. Otherwise statements go
+  through the proxy, and fail if it can't reach the LRS. The list is read as Moodle documents
+  it: host names, `*.domain` patterns and IP ranges such as `192.168.0.0/16`. Sites without a
+  proxy are not affected.
+- Moodle's blocked hosts and allowed ports (Site administration > General > Security > HTTP
+  security) are not applied to the LRS, as for core's own admin-configured services such as
+  Solr. An LRS on an internal network or a port such as 8080 keeps working.
+- The connection to the LRS is reused for all the batches of a run, a batch with no statements
+  is no longer sent, and invalid UTF-8 in a statement is replaced instead of failing the batch.
+- **The security report warns about a plain `http://` endpoint**, which sends the LRS
+  credentials and learner data unencrypted. It's a warning, not an error, as some sites run an
+  LRS over HTTP on a private network.
+
 ### Resending without duplicates
 
 - **Statements have ids, so the LRS ignores a resend** (#931). Each statement's id is a

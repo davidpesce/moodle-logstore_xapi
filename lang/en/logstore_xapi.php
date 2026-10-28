@@ -42,6 +42,10 @@ $string['backgroundmode'] = 'Send statements by scheduled task?';
 $string['backgroundmode_desc'] = 'This will force Moodle to send the statements to the LRS in the background,
         via a cron task to avoid blocking page responses. This will make the process less close to real time, but will help to prevent unpredictable
         Moodle performance linked to the performance of the LRS.';
+$string['check_endpointhttps_details'] = 'The xAPI logstore sends learner data and its LRS credentials to the LRS endpoint. Over plain HTTP they are not encrypted, so anyone able to intercept the connection between this server and the LRS can read them. Use an https:// endpoint, unless the LRS is on a private network you trust.';
+$string['check_endpointhttps_name'] = 'xAPI LRS endpoint encryption';
+$string['check_endpointhttps_ok'] = 'The LRS endpoint uses HTTPS.';
+$string['check_endpointhttps_warning'] = 'The LRS endpoint uses plain HTTP.';
 $string['check_sslverification_details'] = 'The xAPI logstore sends learner data and its LRS credentials over this connection. With certificate verification disabled, anyone able to intercept the connection between this server and the LRS can read that data, capture the credentials, and alter the LRS response.';
 $string['check_sslverification_na'] = 'The xAPI logstore is not enabled, so no data is sent to an LRS.';
 $string['check_sslverification_name'] = 'xAPI LRS certificate verification';
