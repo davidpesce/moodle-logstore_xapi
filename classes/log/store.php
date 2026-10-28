@@ -49,7 +49,7 @@ class store extends php_obj implements log_writer {
     public static $mocklrs = null;
 
     /** @var bool[] The logstore_standard_log ids given to events so far, as keys. */
-    private $assignedstandardlogids = [];
+    private $usedlogids = [];
 
     /**
      * Constructs a new store.
@@ -109,7 +109,7 @@ class store extends php_obj implements log_writer {
 
         $sql = 'SELECT id FROM {logstore_standard_log} WHERE ' . implode(' AND ', $where) . ' ORDER BY id DESC';
         foreach ($DB->get_fieldset_sql($sql, $params) as $id) {
-            if (!isset($this->assignedstandardlogids[$id])) {
+            if (!isset($this->usedlogids[$id])) {
                 return (int) $id;
             }
         }
@@ -193,7 +193,7 @@ class store extends php_obj implements log_writer {
             if (empty($event->logstorestandardlogid)) {
                 $event->logstorestandardlogid = $this->get_event_id($event);
             }
-            $this->assignedstandardlogids[$event->logstorestandardlogid] = true;
+            $this->usedlogids[$event->logstorestandardlogid] = true;
         }
         return $events;
     }
