@@ -672,5 +672,6 @@ function logstore_xapi_get_type_from_table($table) {
 function logstore_xapi_security_checks() {
     return [
         new \logstore_xapi\check\ssl_verification(),
+        new \logstore_xapi\check\endpoint_https(),
     ];
 }
