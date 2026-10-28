@@ -72,6 +72,41 @@ function get_client_settings(array $config): array {
 }
 
 /**
+ * The proxy for a request to the LRS, from the site's proxy settings.
+ *
+ * \core\http_client sets up the proxy too, but through Moodle 5.3 it gets two things wrong:
+ * - It builds the URL of a proxy that needs a user name and password without ":" and "@"
+ *   (MDL-88125), so authenticated proxies fail.
+ * - It hands "Proxy bypass hosts" to Guzzle, which matches only exact host names and domain
+ *   suffixes, not the IP ranges and *.domain patterns Moodle documents for the setting.
+ *
+ * So the proxy is set for each request here: the site's proxy, or an empty string (which turns
+ * the proxy off) when the host is on the bypass list, as is_proxybypass() decides for \curl.
+ *
+ * @param string $url The request URL.
+ * @return string|null The proxy URL, '' for no proxy, or null when the site has no proxy.
+ */
+function get_proxy(string $url): ?string {
+    global $CFG;
+
+    if (empty($CFG->proxyhost)) {
+        return null;
+    }
+    if (is_proxybypass($url)) {
+        return '';
+    }
+
+    $scheme = (($CFG->proxytype ?? '') === 'SOCKS5') ? 'socks5://' : 'http://';
+    // As \curl does, credentials are used when both are set.
+    $credentials = '';
+    if (!empty($CFG->proxyuser) && !empty($CFG->proxypassword)) {
+        $credentials = rawurlencode($CFG->proxyuser) . ':' . rawurlencode($CFG->proxypassword) . '@';
+    }
+    $port = empty($CFG->proxyport) ? '' : ':' . $CFG->proxyport;
+    return $scheme . $credentials . $CFG->proxyhost . $port;
+}
+
+/**
  * Load data necessary to send statements to LRS.
  *
  * @param array $config An array of configuration settings.
@@ -83,11 +118,8 @@ function load(array $config, array $events) {
     $client = new \core\http_client(get_client_settings($config));
     $url = utils\correct_endpoint($config['lrs_endpoint']) . '/statements';
 
-    // The site's "Proxy bypass hosts" can hold IP ranges and *.domain patterns. \core\http_client
-    // hands the list to Guzzle, which matches only exact host names and domain suffixes, so the
-    // bypass is decided here, with core's is_proxybypass() as \curl does. An empty proxy turns
-    // the proxy off for the request.
-    $requestoptions = is_proxybypass($url) ? ['proxy' => ''] : [];
+    $proxy = get_proxy($url);
+    $requestoptions = is_null($proxy) ? [] : ['proxy' => $proxy];
 
     $sendhttpstatements = function (array $config, array $statements) use ($client, $url, $requestoptions) {
         // A batch where no event produced a statement has nothing to send.

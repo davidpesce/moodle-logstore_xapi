@@ -34,6 +34,7 @@ use Psr\Http\Message\RequestInterface;
  * @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @covers    ::\src\loader\moodle_curl_lrs\load
  * @covers    ::\src\loader\moodle_curl_lrs\get_client_settings
+ * @covers    ::\src\loader\moodle_curl_lrs\get_proxy
  */
 final class lrs_sender_test extends \advanced_testcase {
     /** @var MockHandler The LRS. */
@@ -164,23 +165,43 @@ final class lrs_sender_test extends \advanced_testcase {
     }
 
     /**
-     * The site's proxy settings are used.
+     * The proxy option of a request sent with the given proxy settings.
+     *
+     * @param array $proxysettings $CFG proxy settings.
+     * @param string $endpoint The LRS endpoint.
+     * @return string|null The proxy option, or null when the request has none.
+     */
+    private function get_request_proxy(array $proxysettings, string $endpoint = 'https://lrs.example.net/xapi/'): ?string {
+        global $CFG;
+        $this->resetAfterTest();
+        foreach ($proxysettings as $name => $value) {
+            $CFG->$name = $value;
+        }
+        $this->answer(new Response(200));
+
+        $this->send($this->events(1), ['lrs_endpoint' => $endpoint]);
+
+        return end($this->requests)['options']['proxy'] ?? null;
+    }
+
+    /**
+     * The site's proxy is used, with its credentials (as user:password@, encoded) and type.
      *
      * @return void
      */
     public function test_site_proxy_is_used(): void {
-        global $CFG;
-        $this->resetAfterTest();
-        $CFG->proxyhost = 'proxy.example.org';
-        $CFG->proxyport = 3128;
-        $CFG->proxybypass = 'localhost';
-        $this->answer(new Response(200));
+        $proxy = ['proxyhost' => 'proxy.example.org', 'proxyport' => 3128, 'proxytype' => 'HTTP'];
 
-        $this->send($this->events(1));
-
-        $proxy = $this->requests[0]['options']['proxy'];
-        $this->assertStringContainsString('proxy.example.org:3128', $proxy['https']);
-        $this->assertSame(['localhost'], $proxy['no']);
+        $this->assertNull($this->get_request_proxy([]));
+        $this->assertSame('http://proxy.example.org:3128', $this->get_request_proxy($proxy));
+        $this->assertSame(
+            'http://ann:p%40ss%3Aword@proxy.example.org:3128',
+            $this->get_request_proxy($proxy + ['proxyuser' => 'ann', 'proxypassword' => 'p@ss:word'])
+        );
+        $this->assertSame(
+            'socks5://proxy.example.org:3128',
+            $this->get_request_proxy(['proxytype' => 'SOCKS5', 'proxyuser' => '', 'proxypassword' => ''] + $proxy)
+        );
     }
 
     /**
@@ -190,27 +211,22 @@ final class lrs_sender_test extends \advanced_testcase {
      * @return void
      */
     public function test_proxy_bypass(): void {
-        global $CFG;
-        $this->resetAfterTest();
-        $CFG->proxyhost = 'proxy.example.org';
-        $CFG->proxyport = 3128;
-        $CFG->proxybypass = '192.168.0.0/16,*.internal.example.org,lrs.example.com';
+        $proxy = [
+            'proxyhost' => 'proxy.example.org',
+            'proxyport' => 3128,
+            'proxytype' => 'HTTP',
+            'proxyuser' => '',
+            'proxypassword' => '',
+            'proxybypass' => '192.168.0.0/16,*.internal.example.org,lrs.example.com',
+        ];
         $endpoints = [
             'http://192.168.1.20:8080/xapi/' => '',
             'https://lrs.internal.example.org/xapi/' => '',
             'https://lrs.example.com/xapi/' => '',
-            'https://lrs.example.net/xapi/' => 'proxy.example.org:3128',
+            'https://lrs.example.net/xapi/' => 'http://proxy.example.org:3128',
         ];
         foreach ($endpoints as $endpoint => $expected) {
-            $this->answer(new Response(200));
-            $this->send($this->events(1), ['lrs_endpoint' => $endpoint]);
-
-            $proxy = end($this->requests)['options']['proxy'];
-            if ($expected === '') {
-                $this->assertSame('', $proxy, $endpoint);
-            } else {
-                $this->assertStringContainsString($expected, $proxy['https'], $endpoint);
-            }
+            $this->assertSame($expected, $this->get_request_proxy($proxy, $endpoint), $endpoint);
         }
     }
 
