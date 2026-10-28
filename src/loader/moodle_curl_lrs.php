@@ -56,13 +56,8 @@ function get_client_settings(array $config): array {
         'connect_timeout' => 10,
         'timeout' => 60,
         'verify' => $verify,
-        // The status is checked below, so an error response is not an exception.
+        // The status is checked by the caller, so an error response is not an exception.
         'http_errors' => false,
-        'headers' => [
-            'Authorization' => 'Basic ' . base64_encode(($config['lrs_username'] ?? '') . ':' . ($config['lrs_password'] ?? '')),
-            'X-Experience-API-Version' => '1.0.3',
-            'Content-Type' => 'application/json',
-        ],
     ];
     // Tests replace the network with a Guzzle mock handler.
     if (isset($config['lrs_mock_handler'])) {
@@ -107,6 +102,149 @@ function get_proxy(string $url): ?string {
 }
 
 /**
+ * POST a request, through the site's proxy unless the host is on the bypass list.
+ *
+ * @param \core\http_client $client The client.
+ * @param string $url The URL.
+ * @param array $options Guzzle request options.
+ * @return \Psr\Http\Message\ResponseInterface
+ * @throws \Exception With cURL's error and error number when there is no response.
+ */
+function post(\core\http_client $client, string $url, array $options) {
+    $proxy = get_proxy($url);
+    if (!is_null($proxy)) {
+        $options['proxy'] = $proxy;
+    }
+    try {
+        return $client->post($url, $options);
+    } catch (TransferException $e) {
+        // A transport failure (a refused connection, a timeout, a rejected TLS certificate)
+        // has no response, so report cURL's own error and error number.
+        $context = method_exists($e, 'getHandlerContext') ? $e->getHandlerContext() : [];
+        throw new \Exception('cURL error: ' . ($context['error'] ?? $e->getMessage()), $context['errno'] ?? 0);
+    }
+}
+
+/**
+ * Is the LRS set up to use OAuth2 rather than Basic auth?
+ *
+ * @param array $config An array of configuration settings.
+ * @return bool
+ */
+function uses_oauth2(array $config): bool {
+    return ($config['lrs_auth_method'] ?? 'basic') === 'oauth2';
+}
+
+/**
+ * The Authorization header for requests to the LRS.
+ *
+ * Basic auth sends the key and secret with every request. OAuth2 (the client credentials grant)
+ * exchanges them, as client ID and client secret, for an access token at the identity provider's
+ * token endpoint, and sends the token. Tokens are kept in the application cache until a minute
+ * before they expire, so that each run, or in real-time mode each page request, doesn't ask for
+ * a new one.
+ *
+ * @param \core\http_client $client The client.
+ * @param array $config An array of configuration settings.
+ * @return string
+ */
+function get_authorization(\core\http_client $client, array $config): string {
+    if (!uses_oauth2($config)) {
+        return get_basic_authorization($config);
+    }
+    $token = \cache::make('logstore_xapi', 'oauth2token')->get(get_token_cache_key($config));
+    if ($token === false || $token['expires'] - time() < 60) {
+        return renew_authorization($client, $config);
+    }
+    return 'Bearer ' . $token['access_token'];
+}
+
+/**
+ * Get a new OAuth2 access token, cache it, and return the Authorization header for it.
+ *
+ * @param \core\http_client $client The client.
+ * @param array $config An array of configuration settings.
+ * @return string
+ */
+function renew_authorization(\core\http_client $client, array $config): string {
+    $token = get_oauth2_token($client, $config, get_basic_authorization($config));
+    \cache::make('logstore_xapi', 'oauth2token')->set(get_token_cache_key($config), $token);
+    return 'Bearer ' . $token['access_token'];
+}
+
+/**
+ * The Basic Authorization header for the key and secret.
+ *
+ * @param array $config An array of configuration settings.
+ * @return string
+ */
+function get_basic_authorization(array $config): string {
+    return 'Basic ' . base64_encode(($config['lrs_username'] ?? '') . ':' . ($config['lrs_password'] ?? ''));
+}
+
+/**
+ * The cache key for an OAuth2 token: a change to any of the settings gets a new token.
+ *
+ * @param array $config An array of configuration settings.
+ * @return string
+ */
+function get_token_cache_key(array $config): string {
+    return sha1(implode("\n", [
+        $config['lrs_oauth2_token_endpoint'] ?? '',
+        $config['lrs_oauth2_scope'] ?? '',
+        $config['lrs_username'] ?? '',
+        $config['lrs_password'] ?? '',
+    ]));
+}
+
+/**
+ * Get an access token from the identity provider with the client credentials grant.
+ *
+ * The client ID and secret are sent with Basic auth (client_secret_basic, RFC 6749 2.3.1).
+ * Any failure is reported as an authentication error (401), with the identity provider's answer.
+ *
+ * @param \core\http_client $client The client.
+ * @param array $config An array of configuration settings.
+ * @param string $basic The Basic Authorization header for the client ID and secret.
+ * @return array The access_token, and when it expires (a Unix time).
+ * @throws \Exception When no token is issued.
+ */
+function get_oauth2_token(\core\http_client $client, array $config, string $basic): array {
+    $endpoint = $config['lrs_oauth2_token_endpoint'] ?? '';
+    if ($endpoint === '') {
+        throw new \Exception('OAuth2 token request failed: no token endpoint is set.', 401);
+    }
+
+    $form = ['grant_type' => 'client_credentials'];
+    if (!empty($config['lrs_oauth2_scope'])) {
+        $form['scope'] = $config['lrs_oauth2_scope'];
+    }
+    try {
+        $response = post($client, $endpoint, [
+            'form_params' => $form,
+            'headers' => ['Authorization' => $basic, 'Accept' => 'application/json'],
+        ]);
+    } catch (\Exception $e) {
+        throw new \Exception('OAuth2 token request failed: ' . $e->getMessage(), $e->getCode());
+    }
+
+    $body = (string) $response->getBody();
+    $data = json_decode($body, true);
+    $token = is_array($data) ? ($data['access_token'] ?? null) : null;
+    if ($response->getStatusCode() !== 200 || !is_string($token) || $token === '') {
+        throw new \Exception(
+            'OAuth2 token request failed (HTTP ' . $response->getStatusCode() . '): ' . \core_text::substr($body, 0, 1000),
+            401
+        );
+    }
+    // Without expires_in (it is optional), the token is used for this run only.
+    return [
+        'access_token' => $token,
+        'expires' => time() + (int) ($data['expires_in'] ?? 0),
+    ];
+}
+
+/**
  * Load data necessary to send statements to LRS.
  *
  * @param array $config An array of configuration settings.
@@ -117,11 +255,9 @@ function load(array $config, array $events) {
     // One client for all the batches, so the connection to the LRS is reused.
     $client = new \core\http_client(get_client_settings($config));
     $url = utils\correct_endpoint($config['lrs_endpoint']) . '/statements';
+    $authorization = null;
 
-    $proxy = get_proxy($url);
-    $requestoptions = is_null($proxy) ? [] : ['proxy' => $proxy];
-
-    $sendhttpstatements = function (array $config, array $statements) use ($client, $url, $requestoptions) {
+    $sendhttpstatements = function (array $config, array $statements) use ($client, $url, &$authorization) {
         // A batch where no event produced a statement has nothing to send.
         if (empty($statements)) {
             return;
@@ -132,13 +268,24 @@ function load(array $config, array $events) {
             throw new \Exception('JSON encode error: ' . json_last_error_msg());
         }
 
-        try {
-            $response = $client->post($url, ['body' => $postdata] + $requestoptions);
-        } catch (TransferException $e) {
-            // A transport failure (a refused connection, a timeout, a rejected TLS certificate)
-            // has no response, so report cURL's own error and error number.
-            $context = method_exists($e, 'getHandlerContext') ? $e->getHandlerContext() : [];
-            throw new \Exception('cURL error: ' . ($context['error'] ?? $e->getMessage()), $context['errno'] ?? 0);
+        $authorization = $authorization ?? get_authorization($client, $config);
+        $send = function () use ($client, $url, $postdata, &$authorization) {
+            return post($client, $url, [
+                'body' => $postdata,
+                'headers' => [
+                    'Authorization' => $authorization,
+                    'X-Experience-API-Version' => '1.0.3',
+                    'Content-Type' => 'application/json',
+                ],
+            ]);
+        };
+        $response = $send();
+
+        // An OAuth2 token can expire or be revoked before the time it was given for. Get a new
+        // one and try again, once.
+        if ($response->getStatusCode() === 401 && uses_oauth2($config)) {
+            $authorization = renew_authorization($client, $config);
+            $response = $send();
         }
 
         if ($response->getStatusCode() !== 200) {

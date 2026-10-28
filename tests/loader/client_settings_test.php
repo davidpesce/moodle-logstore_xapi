@@ -99,18 +99,7 @@ final class client_settings_test extends advanced_testcase {
         $this->assertSame(10, $settings['connect_timeout']);
         $this->assertSame(60, $settings['timeout']);
         $this->assertArrayNotHasKey('mock', $settings);
-    }
-
-    /**
-     * The xAPI headers and Basic auth are set.
-     *
-     * @return void
-     */
-    public function test_headers(): void {
-        $headers = $this->settings(['lrs_username' => 'user', 'lrs_password' => 'pass'])['headers'];
-
-        $this->assertSame('Basic ' . base64_encode('user:pass'), $headers['Authorization']);
-        $this->assertSame('1.0.3', $headers['X-Experience-API-Version']);
-        $this->assertSame('application/json', $headers['Content-Type']);
+        // Each request sets its own headers: the LRS and the OAuth2 token endpoint differ.
+        $this->assertArrayNotHasKey('headers', $settings);
     }
 }

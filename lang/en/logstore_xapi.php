@@ -38,14 +38,20 @@ and assignment feedback comments are left out. Choose "Don\'t send" to keep thes
 $string['anonymousevents_skip'] = 'Don\'t send';
 $string['autherror'] = 'The server is returning a 401 error. Please ensure the endpoint, username and auth secret/password for
     the xAPI is correct in the Logstore xAPI settings.';
+$string['authmethod'] = 'LRS authentication';
+$string['authmethod_basic'] = 'Basic (key and secret)';
+$string['authmethod_desc'] = 'How to authenticate to the LRS. Basic sends the key and secret with every request. OAuth2 client credentials exchanges them, as client ID and client secret, for an access token at your identity provider\'s token endpoint, and sends the token.';
+$string['authmethod_oauth2'] = 'OAuth2 client credentials';
 $string['backgroundmode'] = 'Send statements by scheduled task?';
 $string['backgroundmode_desc'] = 'This will force Moodle to send the statements to the LRS in the background,
         via a cron task to avoid blocking page responses. This will make the process less close to real time, but will help to prevent unpredictable
         Moodle performance linked to the performance of the LRS.';
+$string['cachedef_oauth2token'] = 'OAuth2 access tokens for the LRS';
 $string['check_endpointhttps_details'] = 'The xAPI logstore sends learner data and its LRS credentials to the LRS endpoint. Over plain HTTP they are not encrypted, so anyone able to intercept the connection between this server and the LRS can read them. Use an https:// endpoint, unless the LRS is on a private network you trust.';
 $string['check_endpointhttps_name'] = 'xAPI LRS endpoint encryption';
 $string['check_endpointhttps_ok'] = 'The LRS endpoint uses HTTPS.';
 $string['check_endpointhttps_warning'] = 'The LRS endpoint uses plain HTTP.';
+$string['check_endpointhttps_warning_token'] = 'The OAuth2 token endpoint uses plain HTTP.';
 $string['check_sslverification_details'] = 'The xAPI logstore sends learner data and its LRS credentials over this connection. With certificate verification disabled, anyone able to intercept the connection between this server and the LRS can read that data, capture the credentials, and alter the LRS response.';
 $string['check_sslverification_na'] = 'The xAPI logstore is not enabled, so no data is sent to an LRS.';
 $string['check_sslverification_name'] = 'xAPI LRS certificate verification';
@@ -120,7 +126,12 @@ $string['noerrorsfound'] = 'No errors found';
 $string['norows'] = "No rows to report";
 $string['notificationsnotenabled'] = "Notifications not enabled";
 $string['notificationtriggerlimitnotreached'] = "Notification trigger limit not reached";
+$string['oauth2scope'] = 'OAuth2 scope';
+$string['oauth2scope_desc'] = 'Optional. The scope to ask for with the token, if your identity provider needs one. Separate several scopes with spaces.';
+$string['oauth2tokenendpoint'] = 'OAuth2 token endpoint';
+$string['oauth2tokenendpoint_desc'] = 'The token endpoint of your identity provider, for example https://login.example.org/oauth2/token.';
 $string['password'] = 'LRS auth secret';
+$string['password_desc'] = 'With OAuth2, the client secret.';
 $string['pluginadministration'] = 'Logstore xAPI administration';
 $string['pluginname'] = 'Logstore xAPI';
 $string['privacy:metadata:logstore_xapi_failed_log'] = 'xAPI holding table for failed events';
@@ -188,6 +199,7 @@ $string['updateactivities'] = 'Show the course\'s activities';
 $string['user'] = 'User';
 $string['user_help'] = 'Searches the users fullname';
 $string['username'] = 'LRS auth key';
+$string['username_desc'] = 'With OAuth2, the client ID.';
 $string['xapi'] = 'xAPI';
 $string['xapi:manageerrors'] = 'Replay failed statements';
 $string['xapi:managehistoric'] = 'Manage historic data';

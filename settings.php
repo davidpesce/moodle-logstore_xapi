@@ -69,10 +69,21 @@ if ($hassiteconfig) {
         60
     ));
 
+    $settings->add(new admin_setting_configselect(
+        'logstore_xapi/authmethod',
+        get_string('authmethod', 'logstore_xapi'),
+        get_string('authmethod_desc', 'logstore_xapi'),
+        'basic',
+        [
+            'basic' => get_string('authmethod_basic', 'logstore_xapi'),
+            'oauth2' => get_string('authmethod_oauth2', 'logstore_xapi'),
+        ]
+    ));
+
     $settings->add(new admin_setting_configtext(
         'logstore_xapi/username',
         get_string('username', 'logstore_xapi'),
-        '',
+        get_string('username_desc', 'logstore_xapi'),
         '',
         PARAM_TEXT,
         40
@@ -81,11 +92,31 @@ if ($hassiteconfig) {
     $passwordsetting = new admin_setting_configpasswordunmask(
         'logstore_xapi/password',
         get_string('password', 'logstore_xapi'),
-        '',
+        get_string('password_desc', 'logstore_xapi'),
         ''
     );
     $passwordsetting->size = 40;
     $settings->add($passwordsetting);
+
+    $settings->add(new admin_setting_configtext(
+        'logstore_xapi/oauth2tokenendpoint',
+        get_string('oauth2tokenendpoint', 'logstore_xapi'),
+        get_string('oauth2tokenendpoint_desc', 'logstore_xapi'),
+        '',
+        PARAM_URL,
+        60
+    ));
+    $settings->hide_if('logstore_xapi/oauth2tokenendpoint', 'logstore_xapi/authmethod', 'neq', 'oauth2');
+
+    $settings->add(new admin_setting_configtext(
+        'logstore_xapi/oauth2scope',
+        get_string('oauth2scope', 'logstore_xapi'),
+        get_string('oauth2scope_desc', 'logstore_xapi'),
+        '',
+        PARAM_TEXT,
+        40
+    ));
+    $settings->hide_if('logstore_xapi/oauth2scope', 'logstore_xapi/authmethod', 'neq', 'oauth2');
 
     $settings->add(new admin_setting_configcheckbox(
         'logstore_xapi/sslverification',

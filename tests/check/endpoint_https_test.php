@@ -54,6 +54,25 @@ final class endpoint_https_test extends advanced_testcase {
     }
 
     /**
+     * With OAuth2, a plain http:// token endpoint is a warning too.
+     *
+     * @return void
+     */
+    public function test_token_endpoint_scheme(): void {
+        $this->resetAfterTest();
+        set_config('oauth2tokenendpoint', 'http://idp.example.org/token', 'logstore_xapi');
+
+        set_config('authmethod', 'basic', 'logstore_xapi');
+        $this->assertSame(result::OK, $this->get_status('https://lrs.example.org/xapi/'));
+
+        set_config('authmethod', 'oauth2', 'logstore_xapi');
+        $this->assertSame(result::WARNING, $this->get_status('https://lrs.example.org/xapi/'));
+
+        set_config('oauth2tokenendpoint', 'https://idp.example.org/token', 'logstore_xapi');
+        $this->assertSame(result::OK, $this->get_status('https://lrs.example.org/xapi/'));
+    }
+
+    /**
      * Nothing is sent while the store is disabled, so the check doesn't apply.
      *
      * @return void

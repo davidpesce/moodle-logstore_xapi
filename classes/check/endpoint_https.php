@@ -28,7 +28,7 @@ use core\check\check;
 use core\check\result;
 
 /**
- * Reports whether the LRS endpoint uses HTTPS.
+ * Reports whether the LRS endpoint, and with OAuth2 the token endpoint, use HTTPS.
  *
  * Plain HTTP is allowed, as some sites run an LRS on a private network, but it sends the LRS
  * credentials and learner data unencrypted, so the report warns about it.
@@ -76,6 +76,16 @@ class endpoint_https extends check {
             return new result(
                 result::WARNING,
                 get_string('check_endpointhttps_warning', 'logstore_xapi'),
+                get_string('check_endpointhttps_details', 'logstore_xapi')
+            );
+        }
+
+        // With OAuth2, the client secret is sent to the token endpoint.
+        $tokenendpoint = (string) get_config('logstore_xapi', 'oauth2tokenendpoint');
+        if (get_config('logstore_xapi', 'authmethod') === 'oauth2' && stripos($tokenendpoint, 'http://') === 0) {
+            return new result(
+                result::WARNING,
+                get_string('check_endpointhttps_warning_token', 'logstore_xapi'),
                 get_string('check_endpointhttps_details', 'logstore_xapi')
             );
         }
