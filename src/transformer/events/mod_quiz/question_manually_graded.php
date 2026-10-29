@@ -66,9 +66,12 @@ function question_manually_graded(array $config, \stdClass $event) {
         return [];
     }
     $step = reset($questionattemptsteps);
-    $rawscore = (float) ($step->fraction ?? 0);
-    $minscore = (float) ($questionattempt->minfraction ?? 0);
-    $maxscore = (float) ($questionattempt->maxfraction ?? 0);
+    // Steps store the grade as a fraction; the question is worth maxmark marks, and the attempt's
+    // score is in marks too.
+    $maxmark = (float) ($questionattempt->maxmark ?? 0);
+    $rawscore = (float) ($step->fraction ?? 0) * $maxmark;
+    $minscore = (float) ($questionattempt->minfraction ?? 0) * $maxmark;
+    $maxscore = (float) ($questionattempt->maxfraction ?? 0) * $maxmark;
 
     return [[
         'actor' => utils\get_user($config, $user),

@@ -114,7 +114,7 @@
       "questionattemptid": 1,
       "sequencenumber": 2,
       "state": "gradedright",
-      "fraction": null,
+      "fraction": 1.0,
       "userid": 1,
       "timecreated": 1433946200
     }

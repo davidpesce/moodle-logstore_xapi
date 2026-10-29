@@ -34,7 +34,7 @@ use src\transformer\utils;
  * @param ?string $description The activity description.
  * @param array $choices The choices available.
  * @param string $lang The language.
- * @param ?array $rightchoices The correct or sequenced options, optional.
+ * @param ?array $rightchoices The keys of $choices in the correct order, optional.
  */
 function sequencing(
     array $config,

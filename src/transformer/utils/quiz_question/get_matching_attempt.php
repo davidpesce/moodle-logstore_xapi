@@ -123,25 +123,6 @@ function get_randomsamatch_items(array $first): array {
 }
 
 /**
- * The data of each step of a question attempt, in order.
- *
- * @param array $config The transformer config settings.
- * @param \stdClass $questionattempt The question attempt.
- * @return array Step data, name => value, one array per step.
- */
-function get_question_attempt_step_data(array $config, \stdClass $questionattempt): array {
-    $repo = $config['repo'];
-    $steps = $repo->read_records('question_attempt_steps', ['questionattemptid' => $questionattempt->id], 'sequencenumber ASC');
-    return array_values(array_map(function ($step) use ($repo) {
-        $data = [];
-        foreach ($repo->read_records('question_attempt_step_data', ['attemptstepid' => $step->id]) as $row) {
-            $data[$row->name] = $row->value;
-        }
-        return $data;
-    }, $steps));
-}
-
-/**
  * Keep the items the attempt showed, in the order it showed them. With no order recorded (no
  * steps), every item is kept, in its own order.
  *

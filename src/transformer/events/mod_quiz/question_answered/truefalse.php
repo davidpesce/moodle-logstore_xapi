@@ -48,13 +48,15 @@ function truefalse(array $config, \stdClass $event, \stdClass $questionattempt, 
     $lang = utils\get_course_lang($course);
 
     // The xAPI spec allows only "true" or "false" as a true-false response. The response summary is the
-    // translated label ("Vrai", "正しい"), so work the answer out from structure instead: the
-    // summary and the right-answer summary use the same language, so a match means the student
-    // gave the correct answer, and question_truefalse says whether that answer is "true".
-    $answered = $questionattempt->responsesummary !== null && $questionattempt->responsesummary !== '';
-    $iscorrect = $questionattempt->rightanswer === $questionattempt->responsesummary;
-    $correctanswer = question\get_true_false_correct_answer($config, $question);
-    $response = $iscorrect ? $correctanswer : !$correctanswer;
+    // translated label ("Vrai", "正しい"), so the response is read from the attempt's steps, where
+    // the question engine saves 1 for true and 0 for false.
+    $answer = utils\quiz_question\get_last_step_value(
+        utils\quiz_question\get_question_attempt_step_data($config, $questionattempt),
+        'answer'
+    );
+    $answered = $answer === '0' || $answer === '1';
+    $response = $answer === '1';
+    $success = utils\quiz_question\get_question_attempt_success($config, $questionattempt, $event);
 
     return [[
         'actor' => utils\get_user($config, $user),
@@ -73,7 +75,7 @@ function truefalse(array $config, \stdClass $event, \stdClass $questionattempt, 
             // An unanswered question has no response to report.
             ...($answered ? ['response' => $response ? 'true' : 'false'] : []),
             'completion' => $answered,
-            'success' => $iscorrect,
+            ...(is_null($success) ? [] : ['success' => $success]),
             ...($answered ? [
                 'extensions' => [
                     'http://learninglocker.net/xapi/cmi/true-false/response' => $response,

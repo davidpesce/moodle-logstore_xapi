@@ -75,18 +75,17 @@ function multichoice(
 
     // Radio and dropdown items store one 1-based index; checkbox items store several, separated
     // by "|". Indexes outside the list are skipped so the response is never null.
+    // The xAPI spec defines a choice response as the [,]-delimited ids of the selected choices, using the
+    // same ids as the definition. The readable text goes in the extension, as for quiz questions.
+    $ids = utils\get_activity\definition\cmi\get_choice_ids($choices);
     $selected = [];
     foreach (explode('|', (string) $feedbackvalue->value) as $index) {
         $position = intval($index) - 1;
         if (isset($choices[$position])) {
-            $selected[] = $choices[$position];
+            $selected[$position] = $choices[$position];
         }
     }
-    // The xAPI spec defines a choice response as the [,]-delimited ids of the selected choices, using the
-    // same ids as the definition. The readable text goes in the extension, as for quiz questions.
-    $selectedids = implode('[,]', array_map(function ($choice) {
-        return utils\slugify($choice);
-    }, $selected));
+    $selectedids = implode('[,]', array_intersect_key($ids, $selected));
     $selectedtext = implode('[,]', $selected);
 
     return [[

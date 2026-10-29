@@ -3,14 +3,14 @@
     "actor": {
       "account": {
         "homePage": "http://www.example.org",
-        "name": "2"
+        "name": "1"
       },
-      "name": "test_learner_fullname"
+      "name": "test_instructor_fullname"
     },
     "verb": {
-      "id": "http://activitystrea.ms/schema/1.0/receive",
+      "id": "http://id.tincanapi.com/verb/viewed",
       "display": {
-        "en": "Received"
+        "en": "Viewed"
       }
     },
     "object": {
@@ -86,14 +86,14 @@
           "event_name": "\\mod_quiz\\event\\attempt_reviewed",
           "http://moodle.org": "1.0.0",
           "https://github.com/xAPI-vle/moodle-logstore_xapi": "0.0.0-development"
-        }
-      },
-      "instructor": {
-        "account": {
-          "homePage": "http://www.example.org",
-          "name": "1"
         },
-        "name": "test_instructor_fullname"
+        "https://yetanalytics.com/profiles/prepositions/concepts/context-extensions/for": {
+          "account": {
+            "homePage": "http://www.example.org",
+            "name": "2"
+          },
+          "name": "test_learner_fullname"
+        }
       },
       "language": "en",
       "registration": "89fdb5f6-c98d-54d1-8a37-bb602c90a9ef"
