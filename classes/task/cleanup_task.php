@@ -24,8 +24,8 @@ require_once($CFG->dirroot . '/admin/tool/log/store/xapi/lib.php');
 /**
  * Remove rows the plugin no longer needs from its log tables.
  *
- * - Sent log rows record which standard log rows have been sent, so the historic report and task
- *   can leave them out. Once the standard log has deleted its rows (its "Keep logs for" setting),
+ * - Sent log rows record which standard log rows have been sent, so the historic report can leave
+ *   them out. Once the standard log has deleted its rows (its "Keep logs for" setting),
  *   the sent log rows for them are deleted too.
  * - Only the newest row of the notification log is read, so the older ones are deleted.
  * - Failed events older than "Keep failed events for" are deleted. They are kept by default.
