@@ -30,14 +30,17 @@ namespace src\transformer\utils;
  * A numeric interaction's response must be a number, but Moodle keeps the answer as typed:
  * with a unit before or after it ("5 m", "$5"), and with the decimal separator of the
  * learner's language ("5,5"). The unit is dropped and the number is returned with a "." decimal
- * point. A "," is read as a thousands separator when it groups digits in threes ("1,000"), and
- * as the decimal separator otherwise; with both "," and ".", the last one is the decimal point.
+ * point. Moodle rejects an answer that contains the thousands separator of the learner's
+ * language, so a single "," in a graded answer is the decimal separator ("0,125" is 0.125).
+ * Several "," or "." can only be thousands separators; with both, the last one is the decimal
+ * point. Exponents can be written as Moodle accepts them: 1.5e3, 1.5x10^3, 1.5*10**3, 1.5×10^3.
  *
  * @param ?string $answer The answer as typed.
  * @return string The number, or '' when the answer holds no number.
  */
 function get_numeric_response(?string $answer): string {
-    if (!preg_match('/[+-]?(?:\d[\d,.]*|[.,]\d+)(?:[eE][+-]?\d+)?/', (string) $answer, $matches)) {
+    $answer = preg_replace('/\s*(?:x|\*|×)\s*10\s*(?:\^|\*\*)\s*([+-]?\d+)/u', 'e$1', (string) $answer);
+    if (!preg_match('/[+-]?(?:\d[\d,.]*|[.,]\d+)(?:[eE][+-]?\d+)?/', $answer, $matches)) {
         return '';
     }
     $number = normalise_number_separators(rtrim($matches[0], ',.'));
@@ -60,9 +63,7 @@ function normalise_number_separators(string $number): string {
             : str_replace(',', '', $number);
     }
     if ($lastcomma !== false) {
-        return preg_match('/^[+-]?\d{1,3}(,\d{3})+$/', $number)
-            ? str_replace(',', '', $number)
-            : str_replace(',', '.', $number);
+        return substr_count($number, ',') > 1 ? str_replace(',', '', $number) : str_replace(',', '.', $number);
     }
     // Several points can only be thousands separators.
     return substr_count($number, '.') > 1 ? str_replace('.', '', $number) : $number;

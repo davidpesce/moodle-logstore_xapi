@@ -1,0 +1,60 @@
+{
+  "assign": [
+    {
+      "id": 1,
+      "name": "test_name"
+    }
+  ],
+  "modules": [
+    {
+      "id": 1,
+      "name": "assign"
+    }
+  ],
+  "assign_submission": [
+    {
+      "id": 1,
+      "assignment": 1,
+      "userid": 0,
+      "groupid": 1,
+      "status": "submitted",
+      "attemptnumber": 0
+    }
+  ],
+  "groups": [
+    {
+      "id": 1,
+      "courseid": 2,
+      "name": "test_group"
+    }
+  ],
+  "groups_members": [
+    {
+      "id": 1,
+      "groupid": 1,
+      "userid": 2
+    },
+    {
+      "id": 2,
+      "groupid": 1,
+      "userid": 3
+    }
+  ],
+  "user": [
+    {
+      "id": 1,
+      "firstname": "test_fullname1",
+      "email": "test1@test.com"
+    },
+    {
+      "id": 2,
+      "firstname": "test_fullname2",
+      "email": "test2@test.com"
+    },
+    {
+      "id": 3,
+      "firstname": "test_fullname3",
+      "email": "test3@test.com"
+    }
+  ]
+}

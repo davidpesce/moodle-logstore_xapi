@@ -1,0 +1,14 @@
+{
+  "contextinstanceid": 1,
+  "contextlevel": 70,
+  "courseid": 2,
+  "id": 1,
+  "objectid": 1,
+  "objecttable": "assign_submission",
+  "relateduserid": 0,
+  "userid": 1,
+  "eventname": "\\mod_assign\\event\\submission_viewed",
+  "other": "{\"assignid\":1}",
+  "timecreated": 1433946701,
+  "anonymous": 1
+}
