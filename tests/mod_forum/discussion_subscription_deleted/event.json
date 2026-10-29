@@ -5,7 +5,7 @@
   "objectid": 1,
   "userid": 1,
   "eventname": "\\mod_forum\\event\\discussion_subscription_deleted",
-  "objecttable": "forum",
+  "objecttable": "forum_discussion_subs",
   "other": "a:2:{s:10:\"discussion\";i:1;s:7:\"forumid\";i:1;}",
   "timecreated": 1433946701
 }
