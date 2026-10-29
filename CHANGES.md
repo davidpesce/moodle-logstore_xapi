@@ -226,6 +226,9 @@ the authoritative record.
   matched to the standard log again and could take the id of an identical event in the same
   second, so the report went on listing the other one. Historic events now keep their id, and
   identical live events in the same second are matched to different rows.
+- **Events that are never sent are no longer listed.** Events from guests and users who aren't
+  logged in (when "Log guest actions" is off) and anonymous events (when they are set not to be
+  sent) were listed on every visit, as sending them skips them without recording them as sent.
 
 ### Removed
 
@@ -243,6 +246,9 @@ the authoritative record.
   historic), and the report filter form.
 - **The event tests run with "Send response choices" on**, so choices and correct responses are
   checked against every response by default.
+- **The old release scripts are removed** (`scripts/`). They came from the Travis CI release
+  process and would build a wrong `version.php` and an incomplete zip. Releases are built by the
+  `moodle-release` and `camp-release` workflows when a version tag is pushed.
 
 ## 5.2.1 (2026-10-26)
 

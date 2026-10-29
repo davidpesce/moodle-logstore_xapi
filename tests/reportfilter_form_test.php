@@ -232,6 +232,11 @@ final class reportfilter_form_test extends \advanced_testcase {
         $this->assertSame([$quizcontext->id], array_keys($options));
         $this->assertStringNotContainsString('<b>', $options[$quizcontext->id]);
         $this->assertSame([], logstore_xapi_get_course_activity_options(0));
+
+        // Escaped once: "Q&A" shows as "Q&A", not "Q&amp;A".
+        $this->getDataGenerator()->create_module('quiz', ['course' => $other->id, 'name' => 'Q&A']);
+        $labels = array_values(logstore_xapi_get_course_activity_options($other->id));
+        $this->assertContains('Quiz: Q&amp;A', $labels);
         $this->assertSame([], logstore_xapi_get_course_activity_options(-5));
     }
 

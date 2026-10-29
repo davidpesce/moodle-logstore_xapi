@@ -133,6 +133,33 @@ final class hash_failed_responses_test extends \advanced_testcase {
     }
 
     /**
+     * Under cron, the running task's own row is still queued while it runs: the task is queued
+     * again anyway, so the rest is hashed after the running row is deleted.
+     *
+     * @return void
+     */
+    public function test_backfill_requeues_under_cron(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $DB->delete_records('task_adhoc', ['classname' => '\\' . hash_failed_responses::class]);
+        foreach (['a', 'b', 'c'] as $response) {
+            $this->add_unhashed_failure($response);
+        }
+        // Queued as the upgrade queues it; this row stands for the running task.
+        \core\task\manager::queue_adhoc_task(new hash_failed_responses(), true);
+        $running = $DB->get_field('task_adhoc', 'id', ['classname' => '\\' . hash_failed_responses::class]);
+
+        $task = new hash_failed_responses();
+        $task->batchsize = 2;
+        $task->timelimit = 0;
+        $this->run_task($task);
+        // Core deletes the running task's row once it ends.
+        $DB->delete_records('task_adhoc', ['id' => $running]);
+
+        $this->assertCount(1, \core\task\manager::get_adhoc_tasks(hash_failed_responses::class));
+    }
+
+    /**
      * New failures are stored with their hash, and transform errors without the event id.
      *
      * @return void

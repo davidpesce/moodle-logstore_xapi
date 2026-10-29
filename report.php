@@ -152,6 +152,10 @@ if ($id == XAPI_REPORT_ID_ERROR && logstore_xapi_has_unhashed_responses()) {
     $notifications[] = new notification(get_string('responsesindexing', 'logstore_xapi'), notification::NOTIFY_INFO);
 }
 $mform = new logstore_xapi\form\reportfilter_form($url, $filterparams);
+// The "Show the course's activities" button only reloads the form with the course's activities.
+if ($mform->no_submit_button_pressed()) {
+    $run = false;
+}
 
 $params = [];
 $where = ['1 = 1'];
@@ -224,9 +228,16 @@ if ($run) {
 
     if ($id == XAPI_REPORT_ID_HISTORIC) {
         $where[] = "NOT EXISTS (SELECT 1 FROM {logstore_xapi_sent_log} lxsl WHERE lxsl.logstorestandardlogid = x.id)";
+        [$skipwhere, $skipparams] = logstore_xapi_get_historic_skip_conditions('x');
+        $where = array_merge($where, $skipwhere);
+        $params = array_merge($params, $skipparams);
     }
 
     $where = implode(' AND ', $where);
+
+    // The historic report reads a date range of the standard log, so it is ordered by time,
+    // which its timecreated index matches; ordered by id, the database may scan from the oldest row.
+    $orderby = $id == XAPI_REPORT_ID_HISTORIC ? 'x.timecreated, x.id' : 'x.id';
 
     // The historic report shows each event's context; join them so they load with the page.
     $contextjoin = $id == XAPI_REPORT_ID_HISTORIC ? 'LEFT JOIN {context} ctx ON ctx.id = x.contextid' : '';
@@ -236,7 +247,7 @@ if ($run) {
                 ON u.id = x.userid
                    $contextjoin
              WHERE $where
-          ORDER BY x.id";
+          ORDER BY $orderby";
 
     // Resend elements.
     $canresenderrors = !empty($fromform->resend) && $fromform->resend == XAPI_REPORT_RESEND_TRUE && $canmanage;

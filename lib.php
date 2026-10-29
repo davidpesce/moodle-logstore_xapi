@@ -340,8 +340,9 @@ function logstore_xapi_get_course_activity_options(int $courseid): array {
     }
     $options = [];
     foreach (get_fast_modinfo($courseid)->get_cms() as $cm) {
-        // Core's select template prints option labels unescaped, so escape them.
-        $options[$cm->context->id] = s($cm->get_module_type_name() . ': ' . $cm->get_formatted_name());
+        // Core's select template prints option labels unescaped, so escape them. The name is
+        // already formatted (and escaped) by get_formatted_name().
+        $options[$cm->context->id] = s($cm->get_module_type_name()) . ': ' . $cm->get_formatted_name();
     }
     return $options;
 }
@@ -408,6 +409,33 @@ function logstore_xapi_clean_report_filters(string $onpage, array $eventnames) {
     }
 
     return $filters;
+}
+
+/**
+ * SQL conditions that leave out of the historic report the events the store would skip.
+ *
+ * The store skips events from guests and users who aren't logged in (except CLI scripts) when
+ * "Log guest actions" is off, and anonymous events when they are set not to be sent (see
+ * store::split_skipped_events()). Skipped events are not recorded as sent, so without these
+ * conditions the report would list them again on every visit.
+ *
+ * @param string $alias The alias of logstore_standard_log in the query.
+ * @return array The SQL conditions and their named parameters.
+ */
+function logstore_xapi_get_historic_skip_conditions(string $alias = 'x'): array {
+    global $CFG;
+
+    $where = [];
+    $params = [];
+    $logguests = get_config('logstore_xapi', 'logguests');
+    if ($logguests !== false && empty($logguests)) {
+        $where[] = "NOT ($alias.userid = :skipguestid OR ($alias.userid = 0 AND COALESCE($alias.origin, '') <> 'cli'))";
+        $params['skipguestid'] = (int) ($CFG->siteguest ?? 0);
+    }
+    if (get_config('logstore_xapi', 'anonymousevents') === XAPI_ANONYMOUS_EVENTS_SKIP) {
+        $where[] = "$alias.anonymous = 0";
+    }
+    return [$where, $params];
 }
 
 /**
