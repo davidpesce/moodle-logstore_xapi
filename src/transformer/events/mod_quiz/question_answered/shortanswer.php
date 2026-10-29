@@ -64,7 +64,8 @@ function shortanswer(array $config, \stdClass $event, \stdClass $questionattempt
             'definition' => question\get_shortanswer_definition($config, $question, $lang),
         ],
         'result' => [
-            'response' => $responsesummary,
+            // The answer is free text, which "Send content" leaves out.
+            ...(utils\is_sending_content($config) ? ['response' => $responsesummary] : []),
             'completion' => $responsesummary !== '',
             ...(is_null($success) ? [] : ['success' => $success]),
         ],

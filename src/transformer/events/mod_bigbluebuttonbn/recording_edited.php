@@ -32,5 +32,5 @@ namespace src\transformer\events\mod_bigbluebuttonbn;
  * @return array
  */
 function recording_edited(array $config, \stdClass $event) {
-    return create_statement($config, $event, 'https://w3id.org/xapi/dod-isd/verbs/edited', 'Edited');
+    return create_statement($config, $event, 'https://w3id.org/xapi/dod-isd/verbs/edited', 'Edited', true);
 }

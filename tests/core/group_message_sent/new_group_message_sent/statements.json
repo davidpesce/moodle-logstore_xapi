@@ -71,19 +71,6 @@
           "event_name": "\\core\\event\\group_message_sent",
           "http://moodle.org": "1.0.0",
           "https://github.com/xAPI-vle/moodle-logstore_xapi": "0.0.0-development"
-        },
-        "https://yetanalytics.com/profiles/prepositions/concepts/context-extensions/to": {
-          "member": [
-            {
-              "account": {
-                "homePage": "http://www.example.org",
-                "name": "1"
-              },
-              "name": "test_fullname"
-            }
-          ],
-          "name": "test_name",
-          "objectType": "Group"
         }
       }
     }

@@ -15,22 +15,24 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Used to convey what actions occur during a recording.
+ * Transformer utility for the "Send content" setting.
  *
- * @package     logstore_xapi
- * @copyright   Paul Walter (https://github.com/paulito-bandito)
- * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package   logstore_xapi
+ * @copyright 2026 David Pesce <david.pesce@exputo.com>
+ * @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-namespace src\transformer\events\mod_bigbluebuttonbn;
+namespace src\transformer\utils;
 
 /**
- * Transformer for bigbluebutton live session event.
+ * Whether statements carry content people wrote: forum posts, messages, comments, glossary
+ * definitions, wiki pages, book chapters, notes, and free-text answers and feedback.
+ *
+ * On unless the admin turns "Send content" off, as statements carried it before the setting.
  *
  * @param array $config The transformer config settings.
- * @param \stdClass $event The event to be transformed.
- * @return array
+ * @return bool
  */
-function live_session(array $config, \stdClass $event) {
-    return create_statement($config, $event, 'http://id.tincanapi.com/verb/live', 'Live');
+function is_sending_content(array $config): bool {
+    return !array_key_exists('send_content', $config) || !empty($config['send_content']);
 }

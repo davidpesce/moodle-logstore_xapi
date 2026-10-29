@@ -1,0 +1,24 @@
+{
+  "post": [
+    {
+      "id": 1,
+      "content": "here is a note",
+      "subject": "no subject",
+      "publishstate": "draft"
+    }
+  ],
+  "user": [
+    {
+      "id": 1,
+      "firstname": "note_author_firstname",
+      "lastname": "note_author_lastname",
+      "email": "author@test.com"
+    },
+    {
+      "id": 2,
+      "firstname": "note_subject_firstname",
+      "lastname": "note_subject_lastname",
+      "email": "subject@test.com"
+    }
+  ]
+}

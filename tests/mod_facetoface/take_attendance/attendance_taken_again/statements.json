@@ -3,23 +3,23 @@
     "actor": {
       "account": {
         "homePage": "http://www.example.org",
-        "name": "1"
+        "name": "2"
       },
-      "name": "test_fullname"
+      "name": "test_attendee_name"
     },
     "verb": {
-      "id": "http://id.tincanapi.com/verb/live",
+      "id": "http://adlnet.gov/expapi/verbs/attended",
       "display": {
-        "en": "Live"
+        "en": "Attended"
       }
     },
     "object": {
-      "id": "http://www.example.org/mod/bigbluebuttonbn/view.php?id=1",
+      "id": "http://www.example.org/mod/facetoface/view.php?id=1",
       "definition": {
         "name": {
-          "en": "test_bigbluebuttonbn_name"
+          "en": "test_facetoface_name"
         },
-        "type": "http://adlnet.gov/expapi/activities/meeting"
+        "type": "https://w3id.org/xapi/acrossx/activities/face-to-face-discussion"
       },
       "objectType": "Activity"
     },
@@ -62,13 +62,24 @@
       },
       "extensions": {
         "http://lrs.learninglocker.net/define/extensions/info": {
-          "event_function": "\\src\\transformer\\events\\mod_bigbluebuttonbn\\live_session",
-          "event_name": "\\mod_bigbluebuttonbn\\event\\live_session_event",
+          "event_function": "\\src\\transformer\\events\\mod_facetoface\\take_attendance",
+          "event_name": "\\mod_facetoface\\event\\take_attendance",
           "http://moodle.org": "1.0.0",
           "https://github.com/xAPI-vle/moodle-logstore_xapi": "0.0.0-development"
         }
       },
+      "instructor": {
+        "account": {
+          "homePage": "http://www.example.org",
+          "name": "1"
+        },
+        "name": "test_instructor_name"
+      },
       "language": "en"
+    },
+    "result": {
+      "completion": false,
+      "duration": "PT0S"
     }
   }
 ]

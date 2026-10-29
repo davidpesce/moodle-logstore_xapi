@@ -74,9 +74,12 @@ function numerical(
         'result' => [
             'response' => $feedbackvalue->value,
             'completion' => $feedbackvalue->value !== '',
-            'extensions' => [
-                'http://learninglocker.net/xapi/cmi/numeric/response' => floatval($feedbackvalue->value),
-            ],
+            // An item left empty has no number to send.
+            ...($feedbackvalue->value !== '' ? [
+                'extensions' => [
+                    'http://learninglocker.net/xapi/cmi/numeric/response' => floatval($feedbackvalue->value),
+                ],
+            ] : []),
         ],
         'context' => [
             ...utils\get_context_base($config, $event, $lang, $course),

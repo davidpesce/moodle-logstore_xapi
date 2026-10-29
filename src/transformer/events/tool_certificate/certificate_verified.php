@@ -37,8 +37,10 @@ function certificate_verified(array $config, \stdClass $event) {
     $repo = $config['repo'];
     $user = $repo->read_record_by_id('user', $event->userid);
     $issue = $repo->read_record_by_id('tool_certificate_issues', $event->objectid);
-    $course = (!is_null($issue->courseid))
-        ? $repo->read_record_by_id('course', $issue->courseid)
+    // The event is in the issue's course when it has one that still exists, as for revoked
+    // certificates, whose issue is deleted.
+    $course = !empty($event->courseid)
+        ? $repo->read_record_by_id('course', $event->courseid)
         : null;
     $lang = is_null($course)
         ? $config['source_lang']
@@ -54,7 +56,8 @@ function certificate_verified(array $config, \stdClass $event) {
         ],
         'object' => utils\get_activity\certificate(
             $config,
-            $issue->code
+            $issue->code,
+            $lang
         ),
         'context' => [
             ...utils\get_context_base($config, $event, $lang, $course),

@@ -4,7 +4,7 @@
   "id": 1,
   "objectid": 1,
   "userid": 1,
-  "eventname": "\\mod_bigbluebuttonbn\\event\\live_session_event",
-  "objecttable": "bigbluebuttonbn",
+  "eventname": "\\mod_wiki\\event\\page_viewed",
+  "objecttable": "wiki_pages",
   "timecreated": 1433946701
 }

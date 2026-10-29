@@ -6,5 +6,6 @@
   "userid": 1,
   "eventname": "\\mod_bigbluebuttonbn\\event\\recording_viewed",
   "objecttable": "bigbluebuttonbn",
-  "timecreated": 1433946701
+  "timecreated": 1433946701,
+  "other": "5"
 }

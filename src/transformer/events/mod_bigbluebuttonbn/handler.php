@@ -26,19 +26,30 @@ namespace src\transformer\events\mod_bigbluebuttonbn;
 use src\transformer\utils;
 
 /**
- * Create the statement from available data in Moodle and BigBlueButton.
+ * Create a statement about a BigBlueButton activity, or about one of its recordings.
  *
- * @param array $config
- * @param \stdClass $event
- * @param string $evtid The URL of the verb to use.
- * @param string $evtdispname The conjugated verb so that it reads better.
+ * Moodle passes a recording event's recording id as the event's "other". The recording is then
+ * the object, with the activity as its parent.
+ *
+ * @param array $config The transformer config settings.
+ * @param \stdClass $event The event to be transformed.
+ * @param string $evtid The verb id.
+ * @param string $evtdispname The verb's display name.
+ * @param bool $isrecording Whether the event is about a recording.
  * @return array
  */
-function create_statement(array $config, \stdClass $event, $evtid, $evtdispname) {
+function create_statement(array $config, \stdClass $event, $evtid, $evtdispname, bool $isrecording = false) {
     $repo = $config['repo'];
     $user = $repo->read_record_by_id('user', $event->userid);
     $course = $repo->read_record_by_id('course', $event->courseid);
     $lang = utils\get_course_lang($course);
+    $recordingid = $isrecording ? utils\decode_other($event->other) : null;
+    $isrecording = is_numeric($recordingid);
+
+    $object = $isrecording
+        ? utils\get_activity\bigbluebuttonbn_recording($config, $course, $event->contextinstanceid, (int) $recordingid)
+        : utils\get_activity\course_module($config, $course, $event->contextinstanceid);
+    $parents = utils\context_activities\get_parent($config, $event->contextinstanceid, $isrecording);
 
     return [[
         'actor' => utils\get_user($config, $user),
@@ -48,18 +59,11 @@ function create_statement(array $config, \stdClass $event, $evtid, $evtdispname)
                 'en' => $evtdispname,
             ],
         ],
-        'object' => utils\get_activity\course_module(
-            $config,
-            $course,
-            $event->contextinstanceid
-        ),
+        'object' => $object,
         'context' => [
             ...utils\get_context_base($config, $event, $lang, $course),
             'contextActivities' => [
-                'parent' => utils\context_activities\get_parent(
-                    $config,
-                    $event->contextinstanceid
-                ),
+                'parent' => $parents,
                 'category' => [
                     utils\get_activity\site($config),
                 ],

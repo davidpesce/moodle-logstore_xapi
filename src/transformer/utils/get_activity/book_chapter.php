@@ -50,7 +50,7 @@ function book_chapter(array $config, \stdClass $course, \stdClass $chapter, stri
         $definition['name'][$courselang] = $chapter->title;
     }
 
-    if (property_exists($chapter, 'content')) {
+    if (property_exists($chapter, 'content') && utils\is_sending_content($config)) {
         $definition['description'] = [
             $courselang => utils\get_string_html_removed($chapter->content),
         ];

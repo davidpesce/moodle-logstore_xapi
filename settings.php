@@ -270,6 +270,13 @@ if ($hassiteconfig) {
         0
     ));
 
+    $settings->add(new admin_setting_configcheckbox(
+        'logstore_xapi/sendcontent',
+        get_string('send_content', 'logstore_xapi'),
+        get_string('send_content_desc', 'logstore_xapi'),
+        1
+    ));
+
     // Notifications.
     $settings->add(new admin_setting_heading(
         'notifications',

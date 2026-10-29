@@ -55,7 +55,8 @@ function calendar_event_deleted(array $config, \stdClass $event) {
             $config,
             $lang,
             $event->objectid,
-            utils\decode_other($event->other)['name'],
+            // A personal event's name is the user's own note, which isn't sent.
+            utils\is_personal_calendar_event($event) ? null : utils\decode_other($event->other)['name'],
         ),
         'context' => [
             ...utils\get_context_base($config, $event, $lang, $course),

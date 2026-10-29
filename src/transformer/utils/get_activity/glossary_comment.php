@@ -56,7 +56,7 @@ function glossary_comment(array $config, \stdClass $course, \stdClass $comment) 
     }
 
     // Comments only have descriptions when they aren't deleted.
-    if (isset($comment->content)) {
+    if (isset($comment->content) && utils\is_sending_content($config)) {
         $activity['definition']['description'] = [
             $courselang => utils\get_string_html_removed($comment->content),
         ];

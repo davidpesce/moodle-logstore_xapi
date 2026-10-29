@@ -1,0 +1,29 @@
+{
+  "modules": [
+    {
+      "id": 1,
+      "name": "wiki"
+    }
+  ],
+  "wiki": [
+    {
+      "id": 1,
+      "name": "test_name",
+      "intro": "<p>test_intro</p>"
+    }
+  ],
+  "wiki_pages": [
+    {
+      "id": 1,
+      "subwikiid": 1,
+      "cachedcontent": "<p>test_content</p>",
+      "title": "test_page_title"
+    }
+  ],
+  "wiki_subwikis": [
+    {
+      "id": 1,
+      "wikiid": 1
+    }
+  ]
+}

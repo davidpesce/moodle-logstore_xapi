@@ -1,5 +1,5 @@
 {
-  "courseid": 2,
+  "courseid": 0,
   "id": 1,
   "objectid": 1,
   "relateduserid": 2,
@@ -7,5 +7,7 @@
   "eventname": "\\tool_certificate\\event\\certificate_verified",
   "objecttable": "tool_certificate_issues",
   "other": "a:1:{s:4:\"code\";s:12:\"4303209428AU\";}",
-  "timecreated": 1433946701
+  "timecreated": 1433946701,
+  "contextlevel": 10,
+  "contextinstanceid": 0
 }

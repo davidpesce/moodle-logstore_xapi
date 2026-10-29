@@ -97,7 +97,7 @@ Each test inherits `test_create_event()` from `xapi_test_case`, which:
 - Checks responses and correct responses use the ids the definition declares (`assert_consistent_with_definition`)
 - Validates each statement against the xAPI spec via `yetanalytics/statementfactory` (skipped if the plugin's `vendor/` isn't installed)
 
-The base config has `send_response_choices` on. To cover a statement with it off, override `get_transformer_config()` with `[...parent::get_transformer_config(), 'send_response_choices' => false]`, as `mod_quiz/attempt_submitted/multichoice` does.
+The base config has `send_response_choices` on. To cover a statement with it off, override `get_transformer_config()` with `[...parent::get_transformer_config(), 'send_response_choices' => false]`, as `mod_quiz/attempt_submitted/multichoice` does. `send_content` is on when the config doesn't set it; the `*_no_content` tests turn it off the same way.
 
 The `tests/common/` directory holds shared base data merged into every test's data, event, and statement files.
 
@@ -117,6 +117,7 @@ Key config flags that control statement content:
 - `send_mbox` — include actor email as mbox
 - `send_name` — include actor display name
 - `send_response_choices` — include answer choices in responses
+- `send_content` — include what people wrote (posts, messages, comments, free-text answers); read it with `utils\is_sending_content()`
 - `send_short_course_id` / `send_course_and_module_idnumber` — control activity ID format
 - `send_username` — include username in actor
 

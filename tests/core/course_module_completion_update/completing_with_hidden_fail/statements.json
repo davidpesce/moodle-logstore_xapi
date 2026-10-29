@@ -8,18 +8,18 @@
       "name": "test_fullname"
     },
     "verb": {
-      "id": "http://id.tincanapi.com/verb/viewed",
+      "id": "http://adlnet.gov/expapi/verbs/completed",
       "display": {
-        "en": "Viewed"
+        "en": "Completed"
       }
     },
     "object": {
-      "id": "http://www.example.org/mod/h5pactivity/view.php?id=1",
+      "id": "http://www.example.org/mod/book/view.php?id=1",
       "definition": {
         "name": {
-          "en": "test_name"
+          "en": "test_book_name"
         },
-        "type": "http://adlnet.gov/expapi/activities/media"
+        "type": "http://id.tincanapi.com/activitytype/book"
       },
       "objectType": "Activity"
     },
@@ -62,13 +62,16 @@
       },
       "extensions": {
         "http://lrs.learninglocker.net/define/extensions/info": {
-          "event_function": "\\src\\transformer\\events\\core_h5p\\h5p_viewed",
-          "event_name": "\\core_h5p\\event\\h5p_viewed",
+          "event_function": "\\src\\transformer\\events\\core\\course_module_completion_updated",
+          "event_name": "\\core\\event\\course_module_completion_updated",
           "http://moodle.org": "1.0.0",
           "https://github.com/xAPI-vle/moodle-logstore_xapi": "0.0.0-development"
         }
       },
       "language": "en"
+    },
+    "result": {
+      "completion": true
     }
   }
 ]

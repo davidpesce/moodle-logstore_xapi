@@ -52,7 +52,7 @@ function glossary_entry(array $config, \stdClass $course, \stdClass $entry) {
             $courselang => $entry->concept,
         ];
     }
-    if (isset($entry->definition)) {
+    if (isset($entry->definition) && utils\is_sending_content($config)) {
         $activity['definition']['description'] = [
             $courselang => utils\get_string_html_removed($entry->definition),
         ];

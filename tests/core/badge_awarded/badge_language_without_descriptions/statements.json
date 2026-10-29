@@ -16,7 +16,6 @@
     "object": {
       "id": "http://www.example.org/badges/overview.php?id=1",
       "definition": {
-        "description": null,
         "extensions": {
           "https://xapi.edlm/profiles/edlm-lms/v1/concepts/activity-extensions/badge-type": "Course",
           "https://xapi.edlm/profiles/edlm-lms/v1/concepts/activity-extensions/badge-version": "1.0"
@@ -68,9 +67,6 @@
         "https://xapi.edlm/profiles/edlm-lms/v1/concepts/context-extensions/badge-assignment-method": "Automatic"
       },
       "language": "pt-br"
-    },
-    "result": {
-      "response": "you got the test badge!"
     }
   }
 ]

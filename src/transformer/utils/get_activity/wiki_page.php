@@ -49,9 +49,11 @@ function wiki_page(
             'name' => [
                 $lang => $wikipage->title,
             ],
-            'description' => [
-                $lang => utils\get_string_html_removed($wikipage->cachedcontent),
-            ],
+            ...(utils\is_sending_content($config) ? [
+                'description' => [
+                    $lang => utils\get_string_html_removed($wikipage->cachedcontent),
+                ],
+            ] : []),
         ],
     ];
 }

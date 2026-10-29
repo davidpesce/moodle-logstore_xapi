@@ -32,5 +32,5 @@ namespace src\transformer\events\mod_bigbluebuttonbn;
  * @return array
  */
 function recording_published(array $config, \stdClass $event) {
-    return create_statement($config, $event, 'https://w3id.org/xapi/dod-isd/verbs/published', 'Published');
+    return create_statement($config, $event, 'https://w3id.org/xapi/dod-isd/verbs/published', 'Published', true);
 }

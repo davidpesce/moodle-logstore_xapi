@@ -1,0 +1,9 @@
+{
+  "contextinstanceid": 1,
+  "courseid": 2,
+  "id": 1,
+  "relateduserid": 1,
+  "eventname": "\\core\\event\\course_module_completion_updated",
+  "other": "a:3:{s:13:\"relateduserid\";i:1;s:10:\"overrideby\";N;s:15:\"completionstate\";i:4;}",
+  "timecreated": 1433946701
+}

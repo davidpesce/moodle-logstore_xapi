@@ -57,9 +57,12 @@ function get_lesson_question_result(array $config, \stdClass $lesson, \stdClass 
     }
     if ($attempt) {
         if ($page->qtype == 10) { // LESSON_PAGE_ESSAY.
-            // Essay is graded later, and is also serialized into an object.
+            // Essay is graded later, and is also serialized into an object. Its text is content,
+            // which "Send content" leaves out.
             $essay = decode_other($attempt->useranswer);
-            $result['response'] = get_string_html_removed($essay->answer);
+            if (is_sending_content($config)) {
+                $result['response'] = get_string_html_removed($essay->answer);
+            }
         } else if ($page->qtype == 5) { // LESSON_PAGE_MATCHING.
             // Matching is the tricky one because the stored response is
             // nothing like the xapi expectation. We need to merge the answers
@@ -99,9 +102,12 @@ function get_lesson_question_result(array $config, \stdClass $lesson, \stdClass 
                 return $ids[(int) $answerid] ?? null;
             }, $selected))));
         } else {
-            // Other questions know if they are correct or not immediately.
+            // Other questions know if they are correct or not immediately. A short answer is free
+            // text, which "Send content" leaves out.
             $result['success'] = ($attempt->correct == 1);
-            $result['response'] = get_string_html_removed($attempt->useranswer);
+            if ($page->qtype != 1 || is_sending_content($config)) { // LESSON_PAGE_SHORTANSWER.
+                $result['response'] = get_string_html_removed($attempt->useranswer);
+            }
         }
     }
     return $result;

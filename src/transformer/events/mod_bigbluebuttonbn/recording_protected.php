@@ -32,5 +32,5 @@ namespace src\transformer\events\mod_bigbluebuttonbn;
  * @return array
  */
 function recording_protected(array $config, \stdClass $event) {
-    return create_statement($config, $event, 'http://id.tincanapi.com/verb/secured', 'Secured');
+    return create_statement($config, $event, 'http://id.tincanapi.com/verb/secured', 'Secured', true);
 }

@@ -52,9 +52,10 @@ function course_module_completion_updated(array $config, \stdClass $event) {
             ],
         ];
 
-        // Completionstate values are 1=completion, 2=pass, 3=fail.
+        // Completionstate values are 1=completion, 2=pass, 3=fail and 4=fail with the grade hidden
+        // from the student, who sees the activity as complete; its result isn't sent.
         $result['completion'] = true;
-        if ($completionstate > 1) {
+        if ($completionstate == 2 || $completionstate == 3) {
             $result['success'] = ($completionstate == 2);
         }
     } else {

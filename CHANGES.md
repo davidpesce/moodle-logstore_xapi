@@ -43,6 +43,48 @@ the authoritative record.
   followed by a right one sent two right answers. "Completed" sent the gradebook grade, which
   follows the lesson's handling of retakes (mean or highest); it now sends the grade of the
   retake that ended.
+- **BigBlueButton recording statements are about the recording** (#998). Their object was the
+  activity, so every recording looked the same. It is now the recording, identified by the
+  address Moodle plays it from, with the activity as parent. "Live session" is no longer
+  transformed: Moodle 4.5 to 5.3 never record it.
+- **Badge awarded no longer sends the badge's message as the learner's response** (#998). It was
+  the award email's template, not something the learner did.
+- **Messages are sent with the course they came from** (#998). Moodle logs a message in the
+  system context with its course in the event's details, so messages were never linked to a
+  course.
+- **Group messages no longer list every member of the group** (#998). The group is in the
+  statement's context, as before; one statement carried every member as a recipient, which took a
+  database read for each.
+- **Face-to-face attendance is sent for every attendee marked** (#998). An attendee was only sent
+  when their status was saved in the same second as the event, so attendees in larger sessions
+  were dropped. Each attendee's status is now the one they had when attendance was taken.
+- **An empty feedback number** no longer sends `0` as the numeric response (#998).
+- **Notes say whether they are personal, course or site notes** (#998). Every note was sent as a
+  course note.
+- **Certificates** issued or verified for a course that has been deleted no longer fail, and the
+  certificate's name uses the course's language (#998).
+- **H5P content played in an activity is sent as the content**, with the activity as parent
+  (#998). It was sent as a view of the activity, the same as the activity's own "viewed"
+  statement, so one visit sent two.
+- **Wiki comments are sent like glossary comments** (#998): the comment is the object, with the
+  page's discussion and the page as parents. A comment was the discussion with the text as the
+  response when added, and an unnamed comment when deleted.
+
+### Privacy
+
+- **New setting: "Send content"** (#997), under "Statement content". It decides whether
+  statements carry what people wrote: forum post subjects and messages, private messages, wiki
+  pages and comments, glossary definitions and comments, book chapters, notes, the text of essay
+  and short-answer questions in quizzes and lessons, a teacher's comment on a lesson essay, and
+  feedback text answers. It is on by default, so statements don't change; turn it off and they
+  still say what happened, without the text.
+- **Anonymous feedback never sends text answers** (#997), whatever "Send content" says, as the
+  text can say who wrote it.
+- **Personal calendar events are sent without their name** (#997). A "user" event can only be
+  seen by its owner, and its name is often a private note ("Dentist").
+- **A failing grade hidden from the student isn't sent** (#997). When an activity is complete
+  with a failing grade the student can't see (completion state 4), its completion statement now
+  says complete without `success: false`.
 
 ## 5.3.0 (2026-10-29)
 

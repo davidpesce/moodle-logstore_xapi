@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-namespace logstore_xapi\core_h5p\course_module_viewed;
+namespace logstore_xapi\core\course_module_completion_update\completing_with_hidden_fail;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -23,13 +23,13 @@ global $CFG;
 require_once($CFG->dirroot . '/admin/tool/log/store/xapi/tests/xapi_test_case.php');
 
 /**
- * Unit test for h5p module viewed event.
+ * Unit test for course module completion updated event, complete with a failing grade the student can't see.
  *
  * @package   logstore_xapi
- * @copyright Milt Reder <milt@yetanalytics.com>
+ * @copyright 2026 David Pesce <david.pesce@exputo.com>
  * @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-final class user_viewed_h5p_test extends \logstore_xapi\xapi_test_case {
+final class completing_with_hidden_fail_test extends \logstore_xapi\xapi_test_case {
     /**
      * Retrieve the directory of the unit test.
      *
@@ -45,7 +45,7 @@ final class user_viewed_h5p_test extends \logstore_xapi\xapi_test_case {
      * @return string
      */
     protected function get_plugin_type() {
-        return "mod";
+        return "core";
     }
 
     /**
@@ -54,13 +54,13 @@ final class user_viewed_h5p_test extends \logstore_xapi\xapi_test_case {
      * @return string
      */
     protected function get_plugin_name() {
-        return "h5pactivity";
+        return "course";
     }
 
     /**
      * Appease auto-detecting of test cases. xapi_test_case has default test cases.
      *
-     * @covers ::course_module_viewed
+     * @covers ::course_module_completion_updated
      * @return void
      */
     public function test_init(): void {

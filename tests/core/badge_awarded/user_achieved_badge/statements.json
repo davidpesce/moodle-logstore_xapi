@@ -77,9 +77,6 @@
         "name": "test_awarder_firstname test_awarder_lastname"
       },
       "language": "en"
-    },
-    "result": {
-      "response": "you got the test badge!"
     }
   }
 ]

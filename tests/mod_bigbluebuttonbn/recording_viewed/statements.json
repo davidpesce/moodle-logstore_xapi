@@ -14,12 +14,12 @@
       }
     },
     "object": {
-      "id": "http://www.example.org/mod/bigbluebuttonbn/view.php?id=1",
+      "id": "http://www.example.org/mod/bigbluebuttonbn/bbb_view.php?action=play&bn=1&rid=5",
       "definition": {
         "name": {
-          "en": "test_bigbluebuttonbn_name"
+          "en": "test_bigbluebuttonbn_name Recording 5"
         },
-        "type": "http://adlnet.gov/expapi/activities/meeting"
+        "type": "https://w3id.org/xapi/video/activity-type/video"
       },
       "objectType": "Activity"
     },
@@ -38,6 +38,16 @@
           }
         ],
         "parent": [
+          {
+            "id": "http://www.example.org/mod/bigbluebuttonbn/view.php?id=1",
+            "definition": {
+              "name": {
+                "en": "test_bigbluebuttonbn_name"
+              },
+              "type": "http://adlnet.gov/expapi/activities/meeting"
+            },
+            "objectType": "Activity"
+          },
           {
             "id": "http://www.example.org/course/section.php?id=1",
             "definition": {

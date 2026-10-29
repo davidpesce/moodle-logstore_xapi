@@ -35,15 +35,17 @@ use src\transformer\utils;
  * @return array
  */
 function message(array $config, string $lang, \stdClass $message) {
+    // A message's subject and text are content, which "Send content" leaves out.
+    $content = utils\is_sending_content($config);
     return [
         ...base(),
         'id' => $config['app_url'] . '/message?id=' . $message->id,
         'definition' => [
             'type' => 'http://id.tincanapi.com/activitytype/chat-message',
             'name' => [
-                $lang => ($message->subject ?? '') !== '' ? $message->subject : '[Untitled Message]',
+                $lang => ($content && ($message->subject ?? '') !== '') ? $message->subject : '[Untitled Message]',
             ],
-            ...(($message->fullmessage ?? '') !== ''
+            ...(($content && ($message->fullmessage ?? '') !== '')
                 ? [
                     'description' => [
                         $lang => $message->fullmessage,

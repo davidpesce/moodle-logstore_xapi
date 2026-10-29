@@ -70,9 +70,6 @@
         "https://xapi.edlm/profiles/edlm-lms/v1/concepts/context-extensions/badge-assignment-method": "Automatic"
       },
       "language": "en"
-    },
-    "result": {
-      "response": "you got the test badge!"
     }
   }
 ]

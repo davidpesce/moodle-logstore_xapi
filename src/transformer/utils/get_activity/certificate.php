@@ -31,11 +31,13 @@ use src\transformer\utils;
  *
  * @param array $config The transformer config settings.
  * @param string $code The certificate issue code.
+ * @param string $lang The language.
  * @return array
  */
 function certificate(
     array $config,
-    string $code
+    string $code,
+    string $lang
 ) {
     return [
         ...base(),
@@ -43,7 +45,7 @@ function certificate(
         'definition' => [
             'type' => 'https://xapi.edlm/profiles/edlm-lms/concepts/activity-types/certificate',
             'name' => [
-                'en' => 'Certificate ' . $code,
+                $lang => 'Certificate ' . $code,
             ],
         ],
     ];
