@@ -223,6 +223,46 @@ final class lrs_sender_test extends \advanced_testcase {
     }
 
     /**
+     * A redirect isn't followed: the POST would become a GET that the LRS answers with 200, and
+     * the statements would be counted as sent. The batch waits for the endpoint to be fixed.
+     *
+     * @return void
+     */
+    public function test_redirect_is_not_followed(): void {
+        $this->answer(new Response(301, ['Location' => 'http://127.0.0.1:8080/xapi/statements/']));
+
+        $loaded = $this->send($this->events(1));
+
+        $this->assertCount(1, $this->requests);
+        $this->assertSame(XAPI_LOADED_RETRY, $loaded[0]['loaded']);
+        $this->assertEquals(301, $loaded[0]['event']->errortype);
+    }
+
+    /**
+     * An error that stops the request before it is sent, such as a CA bundle file that isn't
+     * there, leaves the batch for a later run instead of failing it.
+     *
+     * @return void
+     */
+    public function test_request_error_is_retried_later(): void {
+        $this->answer(function () {
+            throw new \InvalidArgumentException('SSL CA bundle not found: /etc/ssl/missing.pem');
+        });
+        $loaded = $this->send($this->events(1));
+        $this->assertSame(XAPI_LOADED_RETRY, $loaded[0]['loaded']);
+        $this->assertSame('SSL CA bundle not found: /etc/ssl/missing.pem', $loaded[0]['event']->response);
+
+        // The same with Guzzle's own handler, which checks the bundle before connecting.
+        $loaded = $this->send($this->events(1), [
+            'lrs_mock_handler' => null,
+            'lrs_endpoint' => 'https://127.0.0.1:1/xapi/',
+            'lrs_ssl_cabundle' => '/etc/ssl/missing.pem',
+        ]);
+        $this->assertSame(XAPI_LOADED_RETRY, $loaded[0]['loaded']);
+        $this->assertStringContainsString('SSL CA bundle not found', $loaded[0]['event']->response);
+    }
+
+    /**
      * Without an endpoint, nothing is sent and the batch waits until one is set.
      *
      * @return void

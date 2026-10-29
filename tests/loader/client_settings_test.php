@@ -34,6 +34,7 @@ require_once($CFG->dirroot . '/admin/tool/log/store/xapi/src/autoload.php');
  * @copyright 2026 David Pesce <david.pesce@exputo.com>
  * @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @covers    ::\src\loader\moodle_curl_lrs\get_client_settings
+ * @covers    ::\src\loader\moodle_curl_lrs\get_client
  */
 final class client_settings_test extends advanced_testcase {
     /**
@@ -95,11 +96,24 @@ final class client_settings_test extends advanced_testcase {
         $settings = $this->settings([]);
 
         $this->assertTrue($settings['ignoresecurity']);
+        $this->assertFalse($settings['allow_redirects']);
         $this->assertFalse($settings['http_errors']);
         $this->assertSame(10, $settings['connect_timeout']);
         $this->assertSame(60, $settings['timeout']);
         $this->assertArrayNotHasKey('mock', $settings);
         // Each request sets its own headers: the LRS and the OAuth2 token endpoint differ.
         $this->assertArrayNotHasKey('headers', $settings);
+    }
+
+    /**
+     * The same settings get the same client, so its connection is reused by every batch of a run.
+     *
+     * @return void
+     */
+    public function test_client_is_reused(): void {
+        $client = \src\loader\moodle_curl_lrs\get_client(['lrs_ssl_cabundle' => '']);
+
+        $this->assertSame($client, \src\loader\moodle_curl_lrs\get_client(['lrs_ssl_cabundle' => '']));
+        $this->assertNotSame($client, \src\loader\moodle_curl_lrs\get_client(['lrs_ssl_verification' => '0']));
     }
 }

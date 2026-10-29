@@ -231,6 +231,25 @@ final class standard_log_ids_test extends \advanced_testcase {
     }
 
     /**
+     * Identical events in the same second sent in different runs (by different stores) still get
+     * their own rows: a row already in the sent log isn't given out again.
+     *
+     * @return void
+     */
+    public function test_ids_are_distinct_across_runs(): void {
+        global $DB;
+        $standardids = $this->log_standard([1000, 1000]);
+
+        foreach ([1, 2] as $run) {
+            $DB->delete_records('logstore_xapi_log');
+            $this->queue([1000]);
+            $this->send();
+        }
+
+        $this->assertEquals($standardids, $this->get_sent_ids());
+    }
+
+    /**
      * A historic event keeps the standard log id it was queued with, even when an identical
      * event was logged in the same second.
      *

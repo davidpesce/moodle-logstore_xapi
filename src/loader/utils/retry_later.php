@@ -27,9 +27,10 @@ namespace src\loader\utils;
 /**
  * The LRS can't take statements now: try again on a later run.
  *
- * Thrown when the LRS can't be reached (no connection, a timeout, a TLS error, no endpoint set),
- * refuses the credentials (401, 403, a failed OAuth2 token request), isn't at the endpoint (404),
- * asks to wait (408, 429) or fails itself (5xx). None of these say anything about the
+ * Thrown when the LRS can't be reached (no connection, a timeout, a TLS error, no endpoint set,
+ * or anything else that stops the request), redirects (3xx), refuses the credentials (401, 403, a
+ * failed OAuth2 token request), isn't at the endpoint (404), asks to wait (408, 429) or fails
+ * itself (5xx). None of these say anything about the
  * statements, so the batch stays in the queue and the run stops, instead of moving the batch to
  * the failed log. The code is the HTTP status, or cURL's error number.
  */
