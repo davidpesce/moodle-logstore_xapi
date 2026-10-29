@@ -1,0 +1,154 @@
+{
+  "grade_grades": [
+    {
+      "itemid": 1,
+      "userid": 1,
+      "rawgrade": 50
+    }
+  ],
+  "grade_items": [
+    {
+      "id": 1,
+      "grademax": 100,
+      "grademin": 0,
+      "gradepass": 50,
+      "iteminstance": 1,
+      "itemmodule": "quiz",
+      "itemtype": "mod",
+      "itemnumber": 0
+    }
+  ],
+  "modules": [
+    {
+      "id": 1,
+      "name": "quiz"
+    }
+  ],
+  "question": [
+    {
+      "id": 1,
+      "name": "test_name",
+      "qtype": "numerical",
+      "questiontext": "test_question"
+    }
+  ],
+  "question_answers": [
+    {
+      "id": 1,
+      "answer": "5000",
+      "fraction": 1.0,
+      "question": 1
+    }
+  ],
+  "question_attempt_step_data": [
+    {
+      "id": 1,
+      "attemptstepid": 1,
+      "name": "_separators",
+      "value": ".$,"
+    },
+    {
+      "id": 2,
+      "attemptstepid": 2,
+      "name": "answer",
+      "value": "5"
+    },
+    {
+      "id": 3,
+      "attemptstepid": 2,
+      "name": "unit",
+      "value": "km"
+    },
+    {
+      "id": 4,
+      "attemptstepid": 3,
+      "name": "-finish",
+      "value": "1"
+    }
+  ],
+  "question_attempt_steps": [
+    {
+      "id": 1,
+      "questionattemptid": 1,
+      "sequencenumber": 0,
+      "state": "todo",
+      "fraction": null,
+      "userid": 1,
+      "timecreated": 1433946000
+    },
+    {
+      "id": 2,
+      "questionattemptid": 1,
+      "sequencenumber": 1,
+      "state": "complete",
+      "fraction": null,
+      "userid": 1,
+      "timecreated": 1433946100
+    },
+    {
+      "id": 3,
+      "questionattemptid": 1,
+      "sequencenumber": 2,
+      "state": "gradedright",
+      "fraction": 1.0,
+      "userid": 1,
+      "timecreated": 1433946200
+    }
+  ],
+  "question_attempts": [
+    {
+      "id": 1,
+      "questionid": 1,
+      "questionusageid": 1,
+      "responsesummary": "5 km",
+      "rightanswer": "5000 m"
+    }
+  ],
+  "question_numerical": [
+    {
+      "id": 1,
+      "answer": 1,
+      "question": 1,
+      "tolerance": 0
+    }
+  ],
+  "question_numerical_units": [
+    {
+      "id": 1,
+      "question": 1,
+      "multiplier": 1.0,
+      "unit": "m"
+    },
+    {
+      "id": 2,
+      "question": 1,
+      "multiplier": 0.001,
+      "unit": "km"
+    }
+  ],
+  "question_usages": [
+    {
+      "id": 1
+    }
+  ],
+  "quiz": [
+    {
+      "id": 1,
+      "name": "test_quiz_name",
+      "grade": 100,
+      "sumgrades": 100
+    }
+  ],
+  "quiz_attempts": [
+    {
+      "id": 1,
+      "uniqueid": 1,
+      "quiz": 1,
+      "attempt": 1,
+      "state": "finished",
+      "sumgrades": 50,
+      "timefinish": 1,
+      "timestart": 0
+    }
+  ]
+}

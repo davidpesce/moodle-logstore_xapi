@@ -31,6 +31,7 @@ use src\transformer\utils\get_activity\definition\cmi;
  * @copyright 2026 David Pesce <david.pesce@exputo.com>
  * @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @covers    ::\src\transformer\utils\get_activity\definition\cmi\choice
+ * @covers    ::\src\transformer\utils\get_activity\definition\cmi\get_choice_ids
  * @covers    ::\src\transformer\utils\get_activity\definition\cmi\sequencing
  * @covers    ::\src\transformer\utils\get_activity\definition\cmi\fill_in
  * @covers    ::\src\transformer\utils\get_activity\definition\cmi\true_false
@@ -50,8 +51,8 @@ final class response_choices_test extends \basic_testcase {
     private function get_definitions(bool $sendresponsechoices): array {
         $config = ['send_response_choices' => $sendresponsechoices];
         return [
-            'choice' => cmi\choice($config, 'Q', 'Pick one', ['Red', 'Blue'], 'en', [['Red']]),
-            'sequencing' => cmi\sequencing($config, 'Q', 'Order', ['One', 'Two'], 'en', ['One', 'Two']),
+            'choice' => cmi\choice($config, 'Q', 'Pick one', ['Red', 'Blue'], 'en', [[0]]),
+            'sequencing' => cmi\sequencing($config, 'Q', 'Order', ['One', 'Two'], 'en', [0, 1]),
             'fill-in' => cmi\fill_in($config, 'Q', 'Capital of France', 'en', ['Paris']),
             'true-false' => cmi\true_false($config, 'Q', 'The sky is blue', 'en', true),
             'numeric exact' => cmi\numeric($config, 'Q', '2 + 2', 'en', [cmi\numeric_pattern(null, null, '4')]),
@@ -104,5 +105,23 @@ final class response_choices_test extends \basic_testcase {
         $this->assertCount(2, $definitions['choice']['choices']);
         $this->assertCount(2, $definitions['matching']['source']);
         $this->assertCount(2, $definitions['matching']['target']);
+    }
+
+    /**
+     * Choices whose text gives the same id get ids of their own, and correct responses use them.
+     *
+     * @return void
+     */
+    public function test_choice_ids_are_unique(): void {
+        $choices = [7 => 'Yes', 8 => 'yes', 9 => 'Yes 2', 10 => 'Yes'];
+        $this->assertSame(
+            [7 => 'yes', 8 => 'yes-2', 9 => 'yes-2-2', 10 => 'yes-3'],
+            cmi\get_choice_ids($choices)
+        );
+
+        $config = ['send_response_choices' => true];
+        $definition = cmi\choice($config, 'Q', null, $choices, 'en', [[8, 10]]);
+        $this->assertSame(['yes', 'yes-2', 'yes-2-2', 'yes-3'], array_column($definition['choices'], 'id'));
+        $this->assertSame(['yes-2[,]yes-3'], $definition['correctResponsesPattern']);
     }
 }

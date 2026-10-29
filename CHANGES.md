@@ -6,24 +6,36 @@ the authoritative record.
 
 ## 5.4.0 (unreleased)
 
-### Privacy
-
-- **New setting: "Send content"** (#997), under "Statement content". It decides whether
-  statements carry what people wrote: forum post subjects and messages, private messages, wiki
-  pages and comments, glossary definitions and comments, book chapters, notes, the text of essay
-  and short-answer questions in quizzes and lessons, a teacher's comment on a lesson essay, and
-  feedback text answers. It is on by default, so statements don't change; turn it off and they
-  still say what happened, without the text.
-- **Anonymous feedback never sends text answers** (#997), whatever "Send content" says, as the
-  text can say who wrote it.
-- **Personal calendar events are sent without their name** (#997). A "user" event can only be
-  seen by its owner, and its name is often a private note ("Dentist").
-- **A failing grade hidden from the student isn't sent** (#997). When an activity is complete
-  with a failing grade the student can't see (completion state 4), its completion statement now
-  says complete without `success: false`.
-
 ### Statement fixes
 
+- **Quiz question `success` comes from the grade the question engine gave** (#992). It was
+  worked out by comparing the answer with the right answer, which went wrong for numerical
+  questions with more than one answer that gets full marks, numerical answers in a unit with a
+  multiplier ("5 km" when the unit is m), and multiple-choice answers that Moodle formats. It is
+  now `true` when the question was graded right; `false` when it was wrong, partly right or not
+  answered; and left out while it needs grading. Short-answer questions now send `success` too.
+  Numerical definitions list every answer that gets full marks as a correct response.
+- **Multiple-choice responses match the defined choices** (#993). Quiz responses were made from
+  Moodle's summary of the answer, which formats it (spaces for `&nbsp;`, entities, filters), so
+  "Option&nbsp;A" sent a response of `option-a` for a choice of `optiona`, and an answer
+  containing "; " became two. They are now read from the attempt's step data, as are true/false
+  responses. Choices whose text gives the same id ("Yes" and "yes") each get their own (`yes`,
+  `yes-2`) in quizzes, lessons, feedback and Choice activities, and responses use them. In a
+  single-answer quiz question every answer with full marks is a correct response; in a
+  multiple-answer question, every answer with a positive grade, together.
+- **Quiz attempt reviewed has the viewer as the actor** (#994). Moodle records it each time
+  someone opens an attempt's review page. The statement said the attempt's owner "received" a
+  review, with the viewer as instructor, so students who looked at their own attempt were sent as
+  their own instructor. It is now "viewed", by the viewer, "for" the student when the viewer is
+  someone else. LRS reports built on the old statement need updating.
+- **Manually graded questions are scored in marks** (#996). A 10-mark question graded 5 was sent
+  as raw 0.5, max 1; it is now raw 5, max 10, as attempt scores are. The scaled score is
+  unchanged.
+- **Lesson statements report the answer and the retake the event was about** (#995). A page that
+  takes several answers in a retake sent the newest answer for each of them, so a wrong answer
+  followed by a right one sent two right answers. "Completed" sent the gradebook grade, which
+  follows the lesson's handling of retakes (mean or highest); it now sends the grade of the
+  retake that ended.
 - **BigBlueButton recording statements are about the recording** (#998). Their object was the
   activity, so every recording looked the same. It is now the recording, identified by the
   address Moodle plays it from, with the activity as parent. "Live session" is no longer
@@ -50,6 +62,22 @@ the authoritative record.
 - **Wiki comments are sent like glossary comments** (#998): the comment is the object, with the
   page's discussion and the page as parents. A comment was the discussion with the text as the
   response when added, and an unnamed comment when deleted.
+
+### Privacy
+
+- **New setting: "Send content"** (#997), under "Statement content". It decides whether
+  statements carry what people wrote: forum post subjects and messages, private messages, wiki
+  pages and comments, glossary definitions and comments, book chapters, notes, the text of essay
+  and short-answer questions in quizzes and lessons, a teacher's comment on a lesson essay, and
+  feedback text answers. It is on by default, so statements don't change; turn it off and they
+  still say what happened, without the text.
+- **Anonymous feedback never sends text answers** (#997), whatever "Send content" says, as the
+  text can say who wrote it.
+- **Personal calendar events are sent without their name** (#997). A "user" event can only be
+  seen by its owner, and its name is often a private note ("Dentist").
+- **A failing grade hidden from the student isn't sent** (#997). When an activity is complete
+  with a failing grade the student can't see (completion state 4), its completion statement now
+  says complete without `success: false`.
 
 ## 5.3.0 (2026-10-29)
 

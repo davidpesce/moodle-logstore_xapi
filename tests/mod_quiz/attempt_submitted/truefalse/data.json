@@ -46,6 +46,49 @@
       "question": 1
     }
   ],
+  "question_attempt_step_data": [
+    {
+      "id": 1,
+      "attemptstepid": 2,
+      "name": "answer",
+      "value": "1"
+    },
+    {
+      "id": 2,
+      "attemptstepid": 3,
+      "name": "-finish",
+      "value": "1"
+    }
+  ],
+  "question_attempt_steps": [
+    {
+      "id": 1,
+      "questionattemptid": 1,
+      "sequencenumber": 0,
+      "state": "todo",
+      "fraction": null,
+      "userid": 1,
+      "timecreated": 1433946000
+    },
+    {
+      "id": 2,
+      "questionattemptid": 1,
+      "sequencenumber": 1,
+      "state": "complete",
+      "fraction": null,
+      "userid": 1,
+      "timecreated": 1433946100
+    },
+    {
+      "id": 3,
+      "questionattemptid": 1,
+      "sequencenumber": 2,
+      "state": "gradedright",
+      "fraction": 1.0,
+      "userid": 1,
+      "timecreated": 1433946200
+    }
+  ],
   "question_attempts": [
     {
       "id": 1,
@@ -53,6 +96,14 @@
       "questionusageid": 1,
       "responsesummary": "True",
       "rightanswer": "True"
+    }
+  ],
+  "question_truefalse": [
+    {
+      "id": 1,
+      "question": 1,
+      "trueanswer": 1,
+      "falseanswer": 2
     }
   ],
   "question_usages": [
@@ -78,14 +129,6 @@
       "sumgrades": 50,
       "timefinish": 1,
       "timestart": 0
-    }
-  ],
-  "question_truefalse": [
-    {
-      "id": 1,
-      "question": 1,
-      "trueanswer": 1,
-      "falseanswer": 2
     }
   ]
 }

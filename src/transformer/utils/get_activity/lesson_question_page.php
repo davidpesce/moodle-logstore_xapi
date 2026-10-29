@@ -47,7 +47,7 @@ function lesson_question_page(array $config, \stdClass $course, \stdClass $lesso
         'id' => $entryurl,
     ];
 
-    $answers = $repo->read_records('lesson_answers', ['pageid' => $page->id]);
+    $answers = $repo->read_records('lesson_answers', ['pageid' => $page->id], 'id ASC');
     $correctanswers = array_filter($answers, function ($a) use ($config, $lesson, $page) {
         return utils\is_lesson_answer_correct($config, $lesson, $page, $a);
     });
@@ -88,22 +88,7 @@ function lesson_question_page(array $config, \stdClass $course, \stdClass $lesso
             break;
         case 2: // LESSON_PAGE_TRUEFALSE.
         case 3: // LESSON_PAGE_MULTICHOICE.
-            $choices = array_values(
-                array_map(
-                    function ($answer) {
-                        return utils\get_string_html_removed($answer->answer);
-                    },
-                    $answers
-                )
-            );
-            $correctchoices = array_values(
-                array_map(
-                    function ($answer) {
-                        return utils\get_string_html_removed($answer->answer);
-                    },
-                    $correctanswers
-                )
-            );
+            $correctchoices = array_keys($correctanswers);
             // A multiple-answer page (multichoice with qoption set) needs all the correct answers
             // together; otherwise each correct answer is right on its own.
             $multianswer = $page->qtype == 3 && !empty($page->qoption);
@@ -111,7 +96,7 @@ function lesson_question_page(array $config, \stdClass $course, \stdClass $lesso
                 $config,
                 $page->title,
                 utils\get_string_html_removed($page->contents),
-                $choices,
+                utils\get_lesson_choices($answers),
                 $courselang,
                 $multianswer ? [$correctchoices] : array_map(function ($choice) {
                     return [$choice];
