@@ -35,6 +35,7 @@ namespace src\transformer\utils\get_activity;
  * @return array
  */
 function h5p_content(string $url, string $lang) {
+    $url = get_h5p_content_url($url);
     $filename = rawurldecode(basename((string) parse_url($url, PHP_URL_PATH)));
     $name = preg_replace('/\.h5p$/i', '', $filename);
     return [
@@ -45,4 +46,19 @@ function h5p_content(string $url, string $lang) {
             ...($name !== '' ? ['name' => [$lang => $name]] : []),
         ],
     ];
+}
+
+/**
+ * The URL of an .h5p file, without a user's private access key.
+ *
+ * The Moodle app plays H5P content through tokenpluginfile.php, whose URL holds the user's
+ * private access key: tokenpluginfile.php/<key>/<context>/... The key gives access to that
+ * user's files, so it must not reach the LRS, and the same content must have one id for everyone.
+ * The URL is rewritten to the matching pluginfile.php URL.
+ *
+ * @param string $url The URL of the .h5p file.
+ * @return string
+ */
+function get_h5p_content_url(string $url): string {
+    return preg_replace('#/tokenpluginfile\.php/[^/]+/#', '/pluginfile.php/', $url);
 }

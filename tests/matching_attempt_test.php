@@ -32,6 +32,7 @@ use src\transformer\utils\get_activity\definition\question;
  * @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @covers    ::\src\transformer\utils\quiz_question\get_matching_attempt
  * @covers    ::\src\transformer\utils\quiz_question\get_match_subquestions
+ * @covers    ::\src\transformer\utils\quiz_question\get_match_stem_text
  * @covers    ::\src\transformer\utils\get_activity\definition\question\get_match_definition
  */
 final class matching_attempt_test extends \basic_testcase {
@@ -109,5 +110,55 @@ final class matching_attempt_test extends \basic_testcase {
         $this->assertArrayNotHasKey('source', $definition);
         $this->assertArrayNotHasKey('target', $definition);
         $this->assertArrayNotHasKey('correctResponsesPattern', $definition);
+    }
+
+    /**
+     * A stem that is an image alone is a stem, as in qtype_match: it stands for its alt text or
+     * file name, and an attempt with every pair right matches the right answer.
+     *
+     * @return void
+     */
+    public function test_image_stems(): void {
+        $config = [
+            'send_response_choices' => true,
+            'repo' => new \src\transformer\repos\TestRepository((object) [
+                'qtype_match_subquestions' => [
+                    (object) ['id' => 1, 'questionid' => 1, 'answertext' => 'Cat',
+                        'questiontext' => '<p><img src="@@PLUGINFILE@@/cat.png" alt="A small cat"></p>'],
+                    (object) ['id' => 2, 'questionid' => 1, 'answertext' => 'Dog',
+                        'questiontext' => '<p><img src="@@PLUGINFILE@@/dog%20photo.jpg" alt=""></p>'],
+                    (object) ['id' => 3, 'questionid' => 1, 'questiontext' => '', 'answertext' => 'Fish'],
+                ],
+                'question_attempt_steps' => [
+                    (object) ['id' => 1, 'questionattemptid' => 1, 'sequencenumber' => 0],
+                    (object) ['id' => 2, 'questionattemptid' => 1, 'sequencenumber' => 1],
+                ],
+                'question_attempt_step_data' => [
+                    (object) ['id' => 1, 'attemptstepid' => 1, 'name' => '_stemorder', 'value' => '1,2'],
+                    (object) ['id' => 2, 'attemptstepid' => 1, 'name' => '_choiceorder', 'value' => '1,2,3'],
+                    (object) ['id' => 3, 'attemptstepid' => 2, 'name' => 'sub0', 'value' => '1'],
+                    (object) ['id' => 4, 'attemptstepid' => 2, 'name' => 'sub1', 'value' => '2'],
+                ],
+            ]),
+        ];
+        $question = (object) ['id' => 1, 'qtype' => 'match'];
+
+        $attempt = quiz_question\get_matching_attempt($config, (object) ['id' => 1], $question);
+
+        $this->assertSame([1 => 'A small cat', 2 => 'dog photo.jpg'], $attempt['stems']);
+        $this->assertEquals($attempt['right'], $attempt['response']);
+    }
+
+    /**
+     * A stem's text without HTML, or for an image alone its alt text, file name or a hash.
+     *
+     * @return void
+     */
+    public function test_match_stem_text(): void {
+        $this->assertSame('Red', quiz_question\get_match_stem_text('<p>Red</p>'));
+        $this->assertSame('', quiz_question\get_match_stem_text(''));
+        $this->assertSame('Tom & Jerry', quiz_question\get_match_stem_text('<img alt="Tom &amp; Jerry" src="x.png">'));
+        $this->assertSame('x.png', quiz_question\get_match_stem_text('<img src="https://e.org/pluginfile.php/1/x.png?t=1">'));
+        $this->assertMatchesRegularExpression('/^stem-[0-9a-f]{12}$/', quiz_question\get_match_stem_text('<p><br></p>'));
     }
 }

@@ -41,9 +41,13 @@ function submission_viewed(array $config, \stdClass $event) {
     $lang = utils\get_course_lang($course);
 
     // A group submission belongs to a group, not a user: relateduserid is 0. Submissions from
-    // users in no group belong to the default group, groupid 0, and have no "for" at all.
+    // users in no group belong to the default group, groupid 0, and have no "for" at all. Under
+    // blind marking (an anonymous event), the group's members are the students to hide, so a
+    // group submission has no "for" either.
     if (!empty($event->relateduserid)) {
         $for = utils\get_user($config, $repo->read_record_by_id('user', $event->relateduserid));
+    } else if (!empty($event->anonymous)) {
+        $for = null;
     } else {
         $submission = $repo->read_record_by_id('assign_submission', $event->objectid);
         $for = empty($submission->groupid)

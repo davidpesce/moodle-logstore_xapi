@@ -44,9 +44,9 @@ function get_match_subquestions(array $config, \stdClass $question): array {
             $key = $subquestion->id;
             $choices[$key] = $subquestion->answertext;
         }
-        $stem = utils\get_string_html_removed($subquestion->questiontext);
-        if ($stem !== '') {
-            $stems[$subquestion->id] = $stem;
+        // As in qtype_match, any stem text makes a stem, including an image alone.
+        if ((string) $subquestion->questiontext !== '') {
+            $stems[$subquestion->id] = get_match_stem_text($subquestion->questiontext);
             $right[$subquestion->id] = $key;
         }
     }
@@ -113,7 +113,7 @@ function get_matching_attempt(array $config, \stdClass $questionattempt, \stdCla
 function get_randomsamatch_items(array $first): array {
     $stems = $choices = $right = [];
     foreach (array_filter(explode(',', $first['_stemorder'] ?? '')) as $stemid) {
-        $stems[$stemid] = utils\get_string_html_removed($first['_stem_' . $stemid] ?? '');
+        $stems[$stemid] = get_match_stem_text($first['_stem_' . $stemid] ?? '');
         $right[$stemid] = $first['_right_' . $stemid] ?? null;
     }
     foreach (array_filter(explode(',', $first['_choiceorder'] ?? '')) as $choicekey) {
@@ -160,4 +160,31 @@ function order_by_keys(array $items, array $order): array {
         }
     }
     return $ordered;
+}
+
+/**
+ * The text that stands for a matching stem: its text without HTML.
+ *
+ * A stem can be an image alone, which has no text once the HTML is removed. It then stands for
+ * the image's alt text, or else its file name, or else a short hash of the HTML, so that each
+ * stem has a label, and an interaction id, that stays the same from one attempt to the next.
+ *
+ * @param string $questiontext The stem, as stored (HTML).
+ * @return string
+ */
+function get_match_stem_text(string $questiontext): string {
+    $text = utils\get_string_html_removed($questiontext);
+    if ($text !== '' || trim($questiontext) === '') {
+        return $text;
+    }
+    if (preg_match('/<img\b[^>]*\balt\s*=\s*"([^"]*[^"\s][^"]*)"/i', $questiontext, $matches)) {
+        return trim(html_entity_decode($matches[1], ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+    }
+    if (preg_match('/<img\b[^>]*\bsrc\s*=\s*"([^"]+)"/i', $questiontext, $matches)) {
+        $filename = rawurldecode(basename((string) parse_url(html_entity_decode($matches[1]), PHP_URL_PATH)));
+        if ($filename !== '') {
+            return $filename;
+        }
+    }
+    return 'stem-' . substr(sha1($questiontext), 0, 12);
 }

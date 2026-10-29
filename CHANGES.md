@@ -46,9 +46,11 @@ the authoritative record.
   short-answer, numerical and single-answer multiple-choice pages. Multiple-answer pages still
   need all their right answers together. Short-answer pages that use regular expressions no
   longer send the expressions as correct responses.
-- **Quiz numerical answers typed with a unit** ("5 m") or a decimal comma ("12,5") send the
-  number alone as the response, which a numeric interaction requires. `success` is now right
-  for them too; they were always reported as wrong.
+- **Quiz numerical answers typed with a unit** ("5 m"), a decimal comma ("12,5") or an
+  exponent as Moodle accepts it ("1.5x10^3") send the number alone as the response, which a
+  numeric interaction requires. `success` is now right for them too; they were always reported
+  as wrong. Answers in a unit with a multiplier ("5 km" when the unit is m) are still reported as
+  wrong.
 - **Scores with no range** (a maximum grade of 0, or min equal to max) send the raw score only.
   xAPI requires max to be greater than min, and strict LRSs rejected these statements. This
   applies to quiz attempts and manually graded questions, lessons, lesson essays, SCORM and
@@ -71,7 +73,9 @@ the authoritative record.
   them. A raw score saved while the status is one of those is sent as "scored".
 - **H5P content viewed outside an activity** (the content bank, or content embedded in a course,
   section or user text) is identified by its file URL, with the course as parent when there is
-  one. It was transformed as a course module view, which read the wrong activity or failed.
+  one. It was transformed as a course module view, which read the wrong activity or failed. When
+  the content is played in the Moodle app, the URL holds the user's private access key; it is
+  removed, so the key doesn't reach the LRS and the content has one id for everyone.
 - **Select missing words (gapselect) questions are sent as `matching`, not `sequencing`.** Each
   gap is a source and each choice a target, so the response says which choice went in which gap
   (`gap-1[.]spicy[,]gap-2[.]mango`). Sequencing could not describe a choice that is right for
@@ -86,7 +90,8 @@ the authoritative record.
   short-answer matching responses were split out of Moodle's "stem -> choice; …" summary, which
   went wrong when a stem or choice contained "; " or " -> ". They are now read from the attempt's
   step data, as the question engine stores them. Targets are listed in the order the attempt
-  showed them.
+  showed them. A stem that is an image alone is a stem, as in Moodle, labelled with its alt text
+  or file name.
 - **Random short-answer matching (randomsamatch) questions are defined by their attempt.** Their
   stems are short-answer questions drawn for each attempt, but the definition was read from match
   question tables that randomsamatch never uses, so in production it had no stems or choices and a
@@ -105,7 +110,8 @@ the authoritative record.
   resend failed again:
   - Notes viewed for a whole course or the site is sent without a note subject.
   - Submission viewed for a group submission is "for" the group, or has no "for" when the
-    submission is in the default group.
+    submission is in the default group or the assignment uses blind marking (the group's
+    members are the students to hide).
   - Feedback viewed for a grade with no grader in the assignment (one entered in the gradebook)
     is sent without an instructor.
   - Question created and questions imported in a system or course category question bank
