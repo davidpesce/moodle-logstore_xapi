@@ -1,0 +1,24 @@
+{
+  "course": [
+    {
+      "id": 1,
+      "fullname": "test_site_fullname",
+      "lang": "en"
+    },
+    {
+      "id": 2,
+      "fullname": "test_name",
+      "lang": "en",
+      "summary": "test_summary"
+    }
+  ],
+  "event": [],
+  "user": [
+    {
+      "id": 1,
+      "firstname": "event_deleter_firstname",
+      "lastname": "event_deleter_lastname",
+      "email": "deleter@test.com"
+    }
+  ]
+}

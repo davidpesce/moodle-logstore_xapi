@@ -46,49 +46,54 @@ function take_attendance(array $config, \stdClass $event) {
     $sessionduration = utils\get_session_duration($config, $sessionid);
 
     foreach ($signups as $signup) {
-        try {
-            $currentstatus = $repo->read_record('facetoface_signups_status', [
-                'signupid' => $signup->id,
-                'timecreated' => $event->timecreated,
-            ]);
-            if ($currentstatus->statuscode >= 90) {
-                $attendee = $repo->read_record_by_id('user', $signup->userid);
-                $statement = [
-                    'actor' => utils\get_user($config, $attendee),
-                    'verb' => [
-                        'id' => 'http://adlnet.gov/expapi/verbs/attended',
-                        'display' => [
-                            'en' => 'Attended',
-                        ],
-                    ],
-                    'object' => utils\get_activity\course_module(
-                        $config,
-                        $course,
-                        $event->contextinstanceid
-                    ),
-                    'result' => [
-                        'duration' => "PT" . (string) $sessionduration . "S",
-                        'completion' => (int) $currentstatus->statuscode === 100,
-                    ],
-                    'context' => [
-                        ...utils\get_context_base($config, $event, $lang, $course),
-                        'instructor' => utils\get_user($config, $user),
-                        'contextActivities' => [
-                            'parent' => utils\context_activities\get_parent(
-                                $config,
-                                $event->contextinstanceid
-                            ),
-                            'category' => [
-                                utils\get_activity\site($config),
-                            ],
-                        ],
-                    ],
-                ];
-                array_push($statements, $statement);
+        // Each attendance submission records a new status for every attendee it marks, at or just
+        // before the event. The attendee's status for this event is the newest one by then.
+        $currentstatus = null;
+        $statuses = $repo->read_records(
+            'facetoface_signups_status',
+            ['signupid' => $signup->id],
+            'timecreated DESC, id DESC'
+        );
+        foreach ($statuses as $status) {
+            if ((int) $status->timecreated <= (int) $event->timecreated) {
+                $currentstatus = $status;
+                break;
             }
-        } catch (\Exception $ex) {
-            // No current status.
-            continue;
+        }
+        if (!is_null($currentstatus) && $currentstatus->statuscode >= 90) {
+            $attendee = $repo->read_record_by_id('user', $signup->userid);
+            $statement = [
+                'actor' => utils\get_user($config, $attendee),
+                'verb' => [
+                    'id' => 'http://adlnet.gov/expapi/verbs/attended',
+                    'display' => [
+                        'en' => 'Attended',
+                    ],
+                ],
+                'object' => utils\get_activity\course_module(
+                    $config,
+                    $course,
+                    $event->contextinstanceid
+                ),
+                'result' => [
+                    'duration' => "PT" . (string) $sessionduration . "S",
+                    'completion' => (int) $currentstatus->statuscode === 100,
+                ],
+                'context' => [
+                    ...utils\get_context_base($config, $event, $lang, $course),
+                    'instructor' => utils\get_user($config, $user),
+                    'contextActivities' => [
+                        'parent' => utils\context_activities\get_parent(
+                            $config,
+                            $event->contextinstanceid
+                        ),
+                        'category' => [
+                            utils\get_activity\site($config),
+                        ],
+                    ],
+                ],
+            ];
+            array_push($statements, $statement);
         }
     }
 

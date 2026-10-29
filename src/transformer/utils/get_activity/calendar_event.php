@@ -40,22 +40,24 @@ namespace src\transformer\utils\get_activity;
  * @param array $config The transformer config.
  * @param string $lang The language.
  * @param int $eventid The id of the event.
- * @param string $name The name of the event.
+ * @param ?string $name The name of the event, or null to send none.
  * @return array
  */
 function calendar_event(
     array $config,
     string $lang,
     int $eventid,
-    string $name
+    ?string $name
 ) {
     return [
         ...base(),
         'id' => $config['app_url'] . '/calendar/view.php?id=' . $eventid,
         'definition' => [
-            'name' => [
-                $lang => $name,
-            ],
+            ...(is_null($name) ? [] : [
+                'name' => [
+                    $lang => $name,
+                ],
+            ]),
             'type' => 'https://xapi.edlm/profiles/edlm-lms/concepts/activity-types/calendar-event',
         ],
     ];

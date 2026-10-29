@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-namespace logstore_xapi\mod_bigbluebuttonbn\live_session;
+namespace logstore_xapi\mod_forum\post_created_no_content;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -23,15 +23,13 @@ global $CFG;
 require_once($CFG->dirroot . '/admin/tool/log/store/xapi/tests/xapi_test_case.php');
 
 /**
- * Unit test for mod_bigbluebuttonbn live session event.
+ * Unit test for forum post created event, with "Send content" off.
  *
  * @package   logstore_xapi
- * @copyright Jerret Fowler <jerrett.fowler@gmail.com>
- *            Ryan Smith <https://www.linkedin.com/in/ryan-smith-uk/>
- *            David Pesce <david.pesce@exputo.com>
+ * @copyright 2026 David Pesce <david.pesce@exputo.com>
  * @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-final class live_session_test extends \logstore_xapi\xapi_test_case {
+final class post_created_no_content_test extends \logstore_xapi\xapi_test_case {
     /**
      * Retrieve the directory of the unit test.
      *
@@ -56,13 +54,25 @@ final class live_session_test extends \logstore_xapi\xapi_test_case {
      * @return string
      */
     protected function get_plugin_name() {
-        return "bigbluebuttonbn";
+        return "forum";
+    }
+
+    /**
+     * Turn "Send content" off.
+     *
+     * @return array
+     */
+    protected function get_transformer_config() {
+        return [
+            ...parent::get_transformer_config(),
+            'send_content' => false,
+        ];
     }
 
     /**
      * Appease auto-detecting of test cases. xapi_test_case has default test cases.
      *
-     * @covers ::live_session
+     * @covers ::post_created
      * @return void
      */
     public function test_init(): void {

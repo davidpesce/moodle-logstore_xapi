@@ -55,7 +55,13 @@ function note_created(array $config, \stdClass $event) {
                 'en' => 'Created',
             ],
         ],
-        'object' => activity\course_note($config, $lang, $subject, $note),
+        'object' => activity\course_note(
+            $config,
+            $lang,
+            $subject,
+            $note,
+            utils\decode_other($event->other)['publishstate'] ?? null
+        ),
         'context' => [
             ...utils\get_context_base($config, $event, $lang, $course),
             'contextActivities' => [

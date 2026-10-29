@@ -1,0 +1,28 @@
+{
+  "forum": [
+    {
+      "id": 1,
+      "name": "test_forum_name"
+    }
+  ],
+  "forum_discussions": [
+    {
+      "id": 1,
+      "name": "test_forum_discussion_name"
+    }
+  ],
+  "forum_posts": [
+    {
+      "id": 1,
+      "discussion": 1,
+      "message": "<div class=\"text_to_html\">test_response_text</div>",
+      "subject": "Re: test_forum_discussion_name"
+    }
+  ],
+  "modules": [
+    {
+      "id": 1,
+      "name": "forum"
+    }
+  ]
+}

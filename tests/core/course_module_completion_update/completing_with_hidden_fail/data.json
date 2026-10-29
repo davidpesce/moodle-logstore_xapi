@@ -1,0 +1,14 @@
+{
+  "book": [
+    {
+      "id": 1,
+      "name": "test_book_name"
+    }
+  ],
+  "modules": [
+    {
+      "id": 1,
+      "name": "book"
+    }
+  ]
+}

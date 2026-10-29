@@ -5,5 +5,7 @@
   "objectid": 1,
   "userid": 1,
   "eventname": "\\mod_feedback\\event\\response_submitted",
-  "timecreated": 1433946701
+  "timecreated": 1433946701,
+  "anonymous": 1,
+  "relateduserid": 1
 }

@@ -1,0 +1,21 @@
+{
+  "tool_certificate_issues": [
+    {
+      "courseid": 5,
+      "id": 1,
+      "code": "4303209428AU"
+    }
+  ],
+  "user": [
+    {
+      "id": 1,
+      "firstname": "test_fullname1",
+      "email": "test1@test.com"
+    },
+    {
+      "id": 2,
+      "firstname": "test_fullname2",
+      "email": "test2@test.com"
+    }
+  ]
+}

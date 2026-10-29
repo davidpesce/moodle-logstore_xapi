@@ -53,7 +53,8 @@ function calendar_event_created(array $config, \stdClass $event) {
             $config,
             $lang,
             $event->objectid,
-            $eventobject->name
+            // A personal event's name is the user's own note, which isn't sent.
+            utils\is_personal_calendar_event($event, $eventobject) ? null : $eventobject->name
         ),
         'context' => [
             ...utils\get_context_base($config, $event, $lang, $course),

@@ -1,0 +1,62 @@
+[
+  {
+    "actor": {
+      "account": {
+        "homePage": "http://www.example.org",
+        "name": "1"
+      },
+      "name": "sender senderson"
+    },
+    "context": {
+      "contextActivities": {
+        "category": [
+          {
+            "definition": {
+              "name": {
+                "en": "test_site_fullname"
+              },
+              "type": "http://id.tincanapi.com/activitytype/lms"
+            },
+            "id": "http://www.example.org",
+            "objectType": "Activity"
+          }
+        ]
+      },
+      "extensions": {
+        "http://lrs.learninglocker.net/define/extensions/info": {
+          "event_function": "\\src\\transformer\\events\\core\\message_sent",
+          "event_name": "\\core\\event\\message_sent",
+          "http://moodle.org": "1.0.0",
+          "https://github.com/xAPI-vle/moodle-logstore_xapi": "0.0.0-development"
+        },
+        "https://yetanalytics.com/profiles/prepositions/concepts/context-extensions/to": {
+          "account": {
+            "homePage": "http://www.example.org",
+            "name": "2"
+          },
+          "name": "receiver receiverson"
+        }
+      },
+      "language": "en"
+    },
+    "object": {
+      "definition": {
+        "description": {
+          "en": "hi there!(messagetext)"
+        },
+        "name": {
+          "en": "hi there(subject)"
+        },
+        "type": "http://id.tincanapi.com/activitytype/chat-message"
+      },
+      "id": "http://www.example.org/message?id=1",
+      "objectType": "Activity"
+    },
+    "verb": {
+      "display": {
+        "en": "Sent"
+      },
+      "id": "http://activitystrea.ms/send"
+    }
+  }
+]

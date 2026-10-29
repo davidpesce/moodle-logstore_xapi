@@ -3,7 +3,8 @@
     {
       "id": 1,
       "content": "contents of a note",
-      "subject": "a note title"
+      "subject": "a note title",
+      "publishstate": "public"
     }
   ],
   "user": [

@@ -65,9 +65,6 @@ function badge_awarded(array $config, \stdClass $event) {
                 ],
             ],
             'object' => utils\get_activity\badge($config, $lang, $badge),
-            'result' => [
-                'response' => $badge->message,
-            ],
             'context' => [
                 ...utils\get_context_base($config, $event, $lang, $course),
                 'contextActivities' => [

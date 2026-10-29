@@ -60,18 +60,12 @@ function comment_deleted(array $config, \stdClass $event) {
                 'en' => 'Deleted',
             ],
         ],
-        'object' => [
-            'id' => $config['app_url']
-                . '/mod/wiki/instancecomments.php?commentid=' . $event->objectid
-                . '&pageid=' . $wikipage->id,
-            'objectType' => 'Activity',
-            'definition' => [
-                'type' => 'http://activitystrea.ms/comment',
-                'name' => [
-                    'en' => 'Comment',
-                ],
-            ],
-        ],
+        'object' => utils\get_activity\wiki_comment(
+            $config,
+            $course,
+            $wikipage,
+            $event->objectid
+        ),
         'context' => [
             ...utils\get_context_base($config, $event, $lang, $course),
             'contextActivities' => [

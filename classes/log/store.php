@@ -313,6 +313,7 @@ class store extends php_obj implements log_writer {
                 'send_mbox' => $this->get_config('mbox', false),
                 'send_name' => $this->get_config('send_name', true),
                 'send_response_choices' => $this->get_config('sendresponsechoices', false),
+                'send_content' => $this->get_config('sendcontent', true),
                 'send_short_course_id' => $this->get_config('shortcourseid', false),
                 'send_course_and_module_idnumber' => $this->get_config('sendidnumber', false),
                 'send_username' => $this->get_config('send_username', false),

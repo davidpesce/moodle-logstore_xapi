@@ -47,7 +47,11 @@ function forum_discussion_post_reply(array $config, \stdClass $course, \stdClass
         ],
     ];
 
-    // Forum activities only have names when they aren't deleted.
+    // Forum activities only have names when they aren't deleted. A post's subject and message are
+    // content, which "Send content" leaves out.
+    if (!utils\is_sending_content($config)) {
+        return $activity;
+    }
     if (isset($post->subject)) {
         $activity['definition']['name'] = [
             $lang => $post->subject,

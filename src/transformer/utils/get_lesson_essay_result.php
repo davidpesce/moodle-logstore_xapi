@@ -40,7 +40,8 @@ function get_lesson_essay_result(array $config, \stdClass $lesson, \stdClass $an
     $attemptdetail = decode_other($attempt->useranswer);
 
     $result = [
-        'response' => get_string_html_removed($attemptdetail->response),
+        // The grader's comment is content, which "Send content" leaves out.
+        ...(is_sending_content($config) ? ['response' => get_string_html_removed($attemptdetail->response)] : []),
         'score' => get_score(floatval($attemptdetail->score ?: 0), 0.0, floatval($answer->score)),
     ];
     return $result;

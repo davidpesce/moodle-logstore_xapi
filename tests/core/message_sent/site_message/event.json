@@ -1,0 +1,13 @@
+{
+  "courseid": 0,
+  "id": 1,
+  "objectid": 1,
+  "relateduserid": 2,
+  "userid": 1,
+  "eventname": "\\core\\event\\message_sent",
+  "objecttable": "messages",
+  "timecreated": 1433946701,
+  "contextlevel": 10,
+  "contextinstanceid": 0,
+  "other": "{\"courseid\":1}"
+}

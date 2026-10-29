@@ -14,12 +14,15 @@
       }
     },
     "object": {
-      "id": "http://www.example.org/mod/wiki/comments.php?pageid=1",
+      "id": "http://www.example.org/mod/wiki/instancecomments.php?commentid=1&pageid=1",
       "definition": {
         "name": {
-          "en": "test_page_title Discussion"
+          "en": "RE: test_page_title"
         },
-        "type": "http://id.tincanapi.com/activitytype/discussion"
+        "type": "http://activitystrea.ms/comment",
+        "description": {
+          "en": "test_content"
+        }
       },
       "objectType": "Activity"
     },
@@ -38,6 +41,16 @@
           }
         ],
         "parent": [
+          {
+            "id": "http://www.example.org/mod/wiki/comments.php?pageid=1",
+            "definition": {
+              "name": {
+                "en": "test_page_title Discussion"
+              },
+              "type": "http://id.tincanapi.com/activitytype/discussion"
+            },
+            "objectType": "Activity"
+          },
           {
             "id": "http://www.example.org/mod/wiki/view.php?pageid=1",
             "definition": {
@@ -95,9 +108,6 @@
         }
       },
       "language": "en"
-    },
-    "result": {
-      "response": "test_content"
     }
   }
 ]

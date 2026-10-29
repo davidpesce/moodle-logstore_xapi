@@ -17,7 +17,7 @@
       "id": "http://www.example.org/mod/wiki/instancecomments.php?commentid=1&pageid=1",
       "definition": {
         "name": {
-          "en": "Comment"
+          "en": "RE: test_page_title"
         },
         "type": "http://activitystrea.ms/comment"
       },

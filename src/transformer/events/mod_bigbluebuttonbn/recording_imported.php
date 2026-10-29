@@ -32,5 +32,5 @@ namespace src\transformer\events\mod_bigbluebuttonbn;
  * @return array
  */
 function recording_imported(array $config, \stdClass $event) {
-    return create_statement($config, $event, 'http://adlnet.gov/expapi/verbs/imported', 'Imported');
+    return create_statement($config, $event, 'http://adlnet.gov/expapi/verbs/imported', 'Imported', true);
 }

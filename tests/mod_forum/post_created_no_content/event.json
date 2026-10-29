@@ -1,0 +1,11 @@
+{
+  "contextinstanceid": 1,
+  "courseid": 2,
+  "id": 1,
+  "objectid": 1,
+  "userid": 1,
+  "eventname": "\\mod_forum\\event\\post_created",
+  "objecttable": "forum_posts",
+  "other": "a:3:{s:12:\"discussionid\";i:1;s:7:\"forumid\";i:2;s:9:\"forumtype\";s:7:\"general\";}",
+  "timecreated": 1433946701
+}

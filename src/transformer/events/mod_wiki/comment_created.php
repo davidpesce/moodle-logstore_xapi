@@ -58,18 +58,22 @@ function comment_created(array $config, \stdClass $event) {
                 'en' => 'Commented',
             ],
         ],
-        'object' => utils\get_activity\wiki_discussion(
+        'object' => utils\get_activity\wiki_comment(
             $config,
             $course,
-            $wikipage
+            $wikipage,
+            $comment->id,
+            $comment
         ),
-        'result' => [
-            'response' => utils\get_string_html_removed($comment->content),
-        ],
         'context' => [
             ...utils\get_context_base($config, $event, $lang, $course),
             'contextActivities' => [
                 'parent' => [
+                    utils\get_activity\wiki_discussion(
+                        $config,
+                        $course,
+                        $wikipage
+                    ),
                     utils\get_activity\wiki_page(
                         $config,
                         $course,

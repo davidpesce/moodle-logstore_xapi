@@ -10,6 +10,15 @@ Go to Site administration > Plugins > Logging > Logstore xAPI > General Settings
 
 By default the plugin sends statements from a scheduled task every minute ("Send statements by scheduled task?"), so pages don't wait for the LRS. Make sure [cron](https://docs.moodle.org/en/Cron) is running.
 
+## What statements contain
+
+Two settings under "Statement content" decide how much of what learners write and answer reaches the LRS:
+
+- **Send content**, on by default, sends the text people write with the statements about it: forum posts, private messages, wiki pages and comments, glossary definitions and comments, book chapters, notes, essay and short-answer text, a teacher's comment on a lesson essay, and feedback text answers. Turn it off if the LRS doesn't need the text, and the statements still say what happened. Feedback text answers are never sent from anonymous feedback.
+- **Send response choices**, off by default, sends the possible and correct answers of quiz, lesson and feedback questions.
+
+The name of a personal calendar event is never sent.
+
 ## Proxy
 
 Statements are sent through the proxy set in Site administration > Server > HTTP. If your site has a proxy but reaches the LRS directly, for example on your internal network, add the LRS host to "Proxy bypass hosts".

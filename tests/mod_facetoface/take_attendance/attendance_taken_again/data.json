@@ -1,0 +1,82 @@
+{
+  "facetoface": [
+    {
+      "id": 1,
+      "name": "test_facetoface_name"
+    }
+  ],
+  "facetoface_sessions": [
+    {
+      "id": 1,
+      "facetoface": 1
+    }
+  ],
+  "facetoface_sessions_dates": [
+    {
+      "id": 1,
+      "sessionid": 1,
+      "timefinish": 123123123,
+      "timestart": 123123123
+    }
+  ],
+  "facetoface_signups": [
+    {
+      "id": 1,
+      "sessionid": 1,
+      "userid": 2
+    },
+    {
+      "id": 2,
+      "sessionid": 1,
+      "userid": 1
+    }
+  ],
+  "facetoface_signups_status": [
+    {
+      "id": 1,
+      "signupid": 1,
+      "statuscode": 70,
+      "superceded": 1,
+      "timecreated": 1433940000
+    },
+    {
+      "id": 2,
+      "signupid": 1,
+      "statuscode": 90,
+      "superceded": 1,
+      "timecreated": 1433946700
+    },
+    {
+      "id": 3,
+      "signupid": 1,
+      "statuscode": 80,
+      "superceded": 0,
+      "timecreated": 1433950000
+    },
+    {
+      "id": 4,
+      "signupid": 2,
+      "statuscode": 80,
+      "superceded": 0,
+      "timecreated": 1433946700
+    }
+  ],
+  "modules": [
+    {
+      "id": 1,
+      "name": "facetoface"
+    }
+  ],
+  "user": [
+    {
+      "id": 1,
+      "firstname": "test_instructor_name",
+      "email": "instructor@test.com"
+    },
+    {
+      "id": 2,
+      "firstname": "test_attendee_name",
+      "email": "attendee@test.com"
+    }
+  ]
+}

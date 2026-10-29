@@ -1,0 +1,11 @@
+{
+  "courseid": 0,
+  "id": 1,
+  "objectid": 1,
+  "userid": 1,
+  "eventname": "\\core\\event\\calendar_event_created",
+  "objecttable": "event",
+  "timecreated": 1433946701,
+  "contextlevel": 30,
+  "contextinstanceid": 1
+}

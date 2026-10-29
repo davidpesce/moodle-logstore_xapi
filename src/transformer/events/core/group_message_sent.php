@@ -70,8 +70,8 @@ function group_message_sent(array $config, \stdClass $event) {
             ],
         ],
     ];
-    $statement['context']['extensions']['https://yetanalytics.com/profiles/prepositions/concepts/context-extensions/to'] =
-        utils\get_group($config, $group);
+    // The group is the grouping activity. Listing its members as recipients put every member in
+    // each statement.
     return [
         $statement,
     ];

@@ -32,5 +32,5 @@ namespace src\transformer\events\mod_bigbluebuttonbn;
  * @return array
  */
 function recording_unprotected(array $config, \stdClass $event) {
-    return create_statement($config, $event, 'http://id.tincanapi.com/verb/unsecured', 'Unsecured');
+    return create_statement($config, $event, 'http://id.tincanapi.com/verb/unsecured', 'Unsecured', true);
 }

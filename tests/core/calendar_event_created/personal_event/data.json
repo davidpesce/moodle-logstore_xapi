@@ -1,0 +1,33 @@
+{
+  "course": [
+    {
+      "id": 1,
+      "fullname": "test_site_fullname",
+      "lang": "en"
+    },
+    {
+      "id": 2,
+      "fullname": "test_name",
+      "lang": "en",
+      "summary": "test_summary"
+    }
+  ],
+  "event": [
+    {
+      "id": 1,
+      "name": "Dentist",
+      "eventtype": "user",
+      "userid": 1,
+      "courseid": 0
+    }
+  ],
+  "user": [
+    {
+      "id": 1,
+      "firstname": "event_creator_firstname",
+      "lastname": "event_creator_lastname",
+      "username": "creator",
+      "email": "creator@test.com"
+    }
+  ]
+}

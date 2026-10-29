@@ -38,7 +38,7 @@ function certificate_revoked(array $config, \stdClass $event) {
     $user = $repo->read_record_by_id('user', $event->relateduserid);
     $revoker = $repo->read_record_by_id('user', $event->userid);
     $code = utils\decode_other($event->other)['code'];
-    $course = ($event->courseid != 0)
+    $course = !empty($event->courseid)
         ? $repo->read_record_by_id('course', $event->courseid)
         : null;
     $lang = is_null($course)
@@ -55,7 +55,8 @@ function certificate_revoked(array $config, \stdClass $event) {
         ],
         'object' => utils\get_activity\certificate(
             $config,
-            $code
+            $code,
+            $lang
         ),
         'context' => [
             ...utils\get_context_base($config, $event, $lang, $course),

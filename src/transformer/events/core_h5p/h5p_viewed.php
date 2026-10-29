@@ -24,26 +24,21 @@
 
 namespace src\transformer\events\core_h5p;
 
-use src\transformer\events\all;
 use src\transformer\utils;
 
 /**
  * Transformer for the H5P viewed event.
  *
- * Core fires it in the context the H5P file belongs to. In an activity (the H5P activity, or
- * content embedded in another module) that is the course module, and the statement is a module
- * view. Elsewhere (the content bank, or content embedded in a course, section or user text)
- * contextinstanceid is not a course module, so the content is identified by its file URL.
+ * Core fires it in the context the H5P file belongs to: an activity (the H5P activity, or content
+ * embedded in another module), the content bank, or a course, section or user text. The content
+ * is identified by its file URL, with the activity or course as its parent. The activity's own
+ * "viewed" event covers the activity.
  *
  * @param array $config The transformer config settings.
  * @param \stdClass $event The event to be transformed.
  * @return array
  */
 function h5p_viewed(array $config, \stdClass $event) {
-    if ((int) ($event->contextlevel ?? 0) === CONTEXT_MODULE) {
-        return all\course_module_viewed($config, $event);
-    }
-
     $repo = $config['repo'];
     $user = $repo->read_record_by_id('user', $event->userid);
     $course = empty($event->courseid) ? null : $repo->read_record_by_id('course', $event->courseid);
@@ -67,7 +62,15 @@ function h5p_viewed(array $config, \stdClass $event) {
         ],
     ];
 
-    if ($course) {
+    // Content played in an activity (an H5P activity, or content in a page or forum post) has
+    // the activity as its parent.
+    if ((int) ($event->contextlevel ?? 0) === CONTEXT_MODULE) {
+        $statement['context']['contextActivities']['parent'] = utils\context_activities\get_parent(
+            $config,
+            $event->contextinstanceid,
+            true
+        );
+    } else if ($course) {
         $statement = utils\add_parent($config, $statement, $course);
     }
 

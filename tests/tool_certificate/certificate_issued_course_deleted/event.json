@@ -1,0 +1,11 @@
+{
+  "courseid": 0,
+  "id": 1,
+  "objectid": 1,
+  "relateduserid": 2,
+  "userid": 1,
+  "eventname": "\\tool_certificate\\event\\certificate_issued",
+  "objecttable": "tool_certificate_issues",
+  "other": "a:1:{s:4:\"code\";s:12:\"4303209428AU\";}",
+  "timecreated": 1433946701
+}

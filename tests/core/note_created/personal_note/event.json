@@ -1,0 +1,11 @@
+{
+  "courseid": 2,
+  "id": 1,
+  "objectid": 1,
+  "relateduserid": 2,
+  "userid": 1,
+  "eventname": "\\core\\event\\note_created",
+  "objecttable": "post",
+  "timecreated": 1433946701,
+  "other": "{\"publishstate\":\"draft\"}"
+}

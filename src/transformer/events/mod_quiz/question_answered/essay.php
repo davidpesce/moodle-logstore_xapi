@@ -67,7 +67,8 @@ function essay(array $config, \stdClass $event, \stdClass $questionattempt, \std
             ),
         ],
         'result' => [
-            'response' => $responsesummary,
+            // The answer is free text, which "Send content" leaves out.
+            ...(utils\is_sending_content($config) ? ['response' => $responsesummary] : []),
             'completion' => $responsesummary !== '',
         ],
         'context' => [
