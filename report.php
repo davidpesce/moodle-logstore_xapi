@@ -91,7 +91,7 @@ $defaults = [
     'courseid' => XAPI_REPORT_COURSEID_DEFAULT,
     'activity' => XAPI_REPORT_ACTIVITY_DEFAULT,
     'eventnames' => XAPI_REPORT_EVENTNAMES_DEFAULT,
-    'errortype' => XAPI_REPORT_ERROTYPE_DEFAULT,
+    'errortype' => XAPI_REPORT_ERRORTYPE_DEFAULT,
     'resend' => XAPI_REPORT_RESEND_FALSE,
     'response' => XAPI_REPORT_RESPONSE_DEFAULT,
     'userfullname' => XAPI_REPORT_USERNAME_DEFAULT,
@@ -132,7 +132,7 @@ switch ($id) {
 
     case XAPI_REPORT_ID_HISTORIC:
         $basetable = XAPI_REPORT_SOURCE_HISTORICAL;
-        $extraselect = 'u.username, x.contextid, ' . context_helper::get_preload_record_columns_sql('ctx');
+        $extraselect = 'u.username, ' . context_helper::get_preload_record_columns_sql('ctx');
         $pagename = 'logstorexapihistoriclog';
         // The activity filter lists the chosen course's activities: the course just submitted
         // (also with "Show activities"), or the one carried in onpage when paging.
@@ -157,9 +157,6 @@ if ($mform->no_submit_button_pressed()) {
     $run = false;
 }
 
-$params = [];
-$where = ['1 = 1'];
-
 // If we have submitted data overwrite form elements from form.
 if ($fromform = $mform->get_data()) {
     // Set onpage because moodle_url function is not handling arrays.
@@ -170,50 +167,6 @@ if ($fromform = $mform->get_data()) {
     $urlparams['onpage'] = json_encode($formelements);
 }
 
-if (isset($formelements)) {
-    if (!empty($formelements->userfullname)) {
-        $userfullname = $DB->sql_fullname('u.firstname', 'u.lastname');
-        $where[] = $DB->sql_like($userfullname, ':userfullname', false, false);
-        $params['userfullname'] = '%' . $DB->sql_like_escape($formelements->userfullname) . '%';
-    }
-
-    if (!empty($formelements->errortype)) {
-        $where[] = 'x.errortype = :errortype';
-        $params['errortype'] = $formelements->errortype;
-    }
-
-    if (!empty($formelements->courseid)) {
-        // Course-wide: events in the course and its activities (indexed in core by courseid).
-        $where[] = 'x.courseid = :courseid';
-        $params['courseid'] = $formelements->courseid;
-    }
-
-    if (!empty($formelements->activity)) {
-        $where[] = 'x.contextid = :activity';
-        $params['activity'] = $formelements->activity;
-    }
-
-    if (!empty($formelements->eventnames)) {
-        $eventnames = $formelements->eventnames;
-    }
-
-    if (!empty($formelements->response)) {
-        $where[] = 'x.responsehash = :response';
-        $params['response'] = $formelements->response;
-    }
-
-    if (!empty($formelements->datefrom)) {
-        $where[] = 'x.timecreated >= :datefrom';
-        $params['datefrom'] = $formelements->datefrom;
-    }
-
-    if (!empty($formelements->dateto)) {
-        // Set it to end of the day.
-        $where[] = 'x.timecreated <= :dateto';
-        $params['dateto'] = $formelements->dateto + (DAYSECS - 1);
-    }
-}
-
 // The form requires a start date for the historic report; onpage can be edited, so check here too.
 if ($run && $id == XAPI_REPORT_ID_HISTORIC && empty($formelements->datefrom ?? null)) {
     $run = false;
@@ -221,19 +174,7 @@ if ($run && $id == XAPI_REPORT_ID_HISTORIC && empty($formelements->datefrom ?? n
 }
 
 if ($run) {
-    // With no events to offer (no routes enabled), match nothing rather than throw.
-    [$insql, $inparams] = $DB->get_in_or_equal($eventnames, SQL_PARAMS_NAMED, 'evt', true, '');
-    $where[] = "x.eventname $insql";
-    $params = array_merge($params, $inparams);
-
-    if ($id == XAPI_REPORT_ID_HISTORIC) {
-        $where[] = "NOT EXISTS (SELECT 1 FROM {logstore_xapi_sent_log} lxsl WHERE lxsl.logstorestandardlogid = x.id)";
-        [$skipwhere, $skipparams] = logstore_xapi_get_historic_skip_conditions('x');
-        $where = array_merge($where, $skipwhere);
-        $params = array_merge($params, $skipparams);
-    }
-
-    $where = implode(' AND ', $where);
+    [$where, $params] = logstore_xapi_get_report_where($id, $formelements ?? null, $eventnames);
 
     // The historic report reads a date range of the standard log, so it is ordered by time,
     // which its timecreated index matches; ordered by id, the database may scan from the oldest row.
@@ -252,23 +193,20 @@ if ($run) {
     // Resend elements.
     $canresenderrors = !empty($fromform->resend) && $fromform->resend == XAPI_REPORT_RESEND_TRUE && $canmanage;
 
+    // The events are queued by an ad-hoc task, in chunks: a filter can match more events than a
+    // page request could move.
     if ($canresenderrors) {
-        $eventids = array_keys($DB->get_records_sql($sql, $params));
-
-        if (!empty($eventids)) {
-            $mover = new \logstore_xapi\log\moveback($eventids, $id);
-            if ($mover->execute()) {
-                $notifications[] = new notification(
-                    get_string('resendevents:success', 'logstore_xapi'),
-                    notification::NOTIFY_SUCCESS
-                );
-            } else {
-                $notifications[] = new notification(
-                    get_string('resendevents:failed', 'logstore_xapi'),
-                    notification::NOTIFY_ERROR
-                );
-            }
-        }
+        $task = new \logstore_xapi\task\resend_task();
+        $task->set_custom_data([
+            'reportid' => $id,
+            'filters' => $formelements ?? new stdClass(),
+            'eventnames' => array_values($eventnames),
+        ]);
+        \core\task\manager::queue_adhoc_task($task);
+        $notifications[] = new notification(
+            get_string('resendevents:queued', 'logstore_xapi'),
+            notification::NOTIFY_SUCCESS
+        );
     }
 }
 
@@ -372,7 +310,6 @@ $PAGE->set_heading(get_string($pagename, 'logstore_xapi'));
 if ($canmanage && $run) {
     $PAGE->requires->js_call_amd('logstore_xapi/replayevents', 'init', [$count, XAPI_REPORT_RESEND_FALSE, XAPI_REPORT_RESEND_TRUE]);
 }
-$PAGE->requires->css('/admin/tool/log/store/xapi/styles.css');
 
 // Show page.
 echo $OUTPUT->header();

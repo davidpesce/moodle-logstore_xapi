@@ -26,3 +26,9 @@ Statements are sent through the proxy set in Site administration > Server > HTTP
 ## When the LRS is unavailable
 
 Events wait in the queue and are sent once the LRS works again. The check "xAPI statements sent to the LRS", in Site administration > Reports > System status, warns when an event has been waiting more than an hour, and shows the last error from the LRS.
+
+When the LRS fails on the same batch with a server error (5xx) five runs in a row, the batch is split to find the events it fails on. An event the LRS fails on alone goes to the error report if the LRS took the rest, and to the end of the queue if it took nothing, as it may be down.
+
+## Failed events
+
+Events the LRS rejects go to the error report (Logstore xAPI Error Log), where you can resend them once the problem is fixed. They are kept until you resend them, unless you set "Keep failed events for". The plugin's other log tables are cleaned up by the "Delete old xAPI log rows" task.

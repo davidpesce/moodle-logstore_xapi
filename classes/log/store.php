@@ -206,14 +206,17 @@ class store extends php_obj implements log_writer {
      *
      * @param array $events raw event data
      * @param int $eventtype event type
+     * @param bool $splitservererrors Whether to split a batch the LRS fails on (a server error) to
+     *     find the events it fails on, for a batch that has failed before.
      * @return array
      */
-    public function process_events(array $events, $eventtype = XAPI_IMPORT_TYPE_LIVE) {
+    public function process_events(array $events, $eventtype = XAPI_IMPORT_TYPE_LIVE, bool $splitservererrors = false) {
         $events = $this->convert_array_to_objects($events);
         [$events, $skippedevents] = $this->split_skipped_events($events);
         $events = $this->get_persistent_eventids($events, $eventtype);
 
         $config = $this->get_handler_config();
+        $config['loader']['split_server_errors'] = $splitservererrors;
         $loadedevents = \src\handler($config, $events);
         logstore_xapi_save_sent_events($loadedevents);
 

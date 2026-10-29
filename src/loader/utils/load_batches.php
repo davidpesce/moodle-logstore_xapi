@@ -41,7 +41,10 @@ function load_batches(array $config, array $batches, callable $loader): array {
     $retry = false;
     foreach ($batches as $batch) {
         $loadedbatch = $retry ? construct_loaded_events($batch, XAPI_LOADED_RETRY) : load_batch($config, $batch, $loader);
-        $retry = $retry || in_array(XAPI_LOADED_RETRY, array_column($loadedbatch, 'loaded'), true);
+        // Once the LRS can't take statements, or an event it fails on alone is found, the rest of
+        // the batches wait for a later run.
+        $loaded = array_column($loadedbatch, 'loaded');
+        $retry = $retry || in_array(XAPI_LOADED_RETRY, $loaded, true) || in_array(XAPI_LOADED_STUCK, $loaded, true);
         $loadedevents = array_merge($loadedevents, $loadedbatch);
     }
     return $loadedevents;

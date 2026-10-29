@@ -33,6 +33,9 @@ require_once($CFG->dirroot . '/admin/tool/log/store/xapi/lib.php');
  * @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @covers    ::logstore_xapi_send_queued_events
  * @covers    ::logstore_xapi_extract_events
+ * @covers    ::logstore_xapi_resolve_stuck_events
+ * @covers    ::logstore_xapi_requeue_stuck_events
+ * @covers    ::logstore_xapi_count_send_attempts
  */
 final class send_queue_test extends \advanced_testcase {
     /** @var int[] The number of statements in each request the LRS received. */
@@ -78,15 +81,38 @@ final class send_queue_test extends \advanced_testcase {
     }
 
     /**
+     * Make the LRS fail (500) every request with a statement about one of these courses, and
+     * take the others, recording each request.
+     *
+     * @param int[] $courseids The courses.
+     * @return void
+     */
+    private function lrs_fails_on(array $courseids): void {
+        store::$mocklrs = function ($request) use ($courseids) {
+            $statements = json_decode((string) $request->getBody(), true);
+            $this->requests[] = count($statements);
+            foreach ($statements as $statement) {
+                foreach ($courseids as $courseid) {
+                    if (str_ends_with($statement['object']['id'], '/course/view.php?id=' . $courseid)) {
+                        return Create::promiseFor(new Response(500, [], 'Internal Server Error'));
+                    }
+                }
+            }
+            return Create::promiseFor(new Response(200, [], '[]'));
+        };
+    }
+
+    /**
      * Queue course views.
      *
      * @param int $count The number of events.
+     * @param \stdClass|null $course The course, or null for a new one.
      * @return int[] The queue ids, oldest first.
      */
-    private function queue(int $count): array {
+    private function queue(int $count, ?\stdClass $course = null): array {
         global $DB;
         $user = $this->getDataGenerator()->create_user();
-        $course = $this->getDataGenerator()->create_course();
+        $course = $course ?? $this->getDataGenerator()->create_course();
         $context = \context_course::instance($course->id);
         $ids = [];
         for ($i = 0; $i < $count; $i++) {
@@ -193,9 +219,10 @@ final class send_queue_test extends \advanced_testcase {
              *
              * @param array $events Event data.
              * @param int $eventtype The import type.
+             * @param bool $splitservererrors Whether to split server errors.
              * @return array
              */
-            public function process_events(array $events, $eventtype = XAPI_IMPORT_TYPE_LIVE) {
+            public function process_events(array $events, $eventtype = XAPI_IMPORT_TYPE_LIVE, bool $splitservererrors = false) {
                 $this->runs++;
                 return [];
             }
@@ -205,5 +232,119 @@ final class send_queue_test extends \advanced_testcase {
 
         $this->assertSame(1, $store->runs);
         $this->assertEquals(2, $DB->count_records('logstore_xapi_log'));
+    }
+
+    /**
+     * Send the queue as many times as it takes the LRS's failures to make the head batch stuck.
+     *
+     * @return void
+     */
+    private function send_until_stuck(): void {
+        for ($run = 0; $run < XAPI_MAX_SEND_ATTEMPTS; $run++) {
+            $this->send();
+        }
+        $this->requests = [];
+    }
+
+    /**
+     * A batch the LRS keeps failing on (a server error) is split once it has failed in
+     * XAPI_MAX_SEND_ATTEMPTS runs. The event it fails on alone goes to the failed log, as it took
+     * the others, and the rest are sent.
+     *
+     * @return void
+     */
+    public function test_stuck_event_goes_to_the_failed_log(): void {
+        global $DB;
+        $bad = $this->getDataGenerator()->create_course();
+        $this->queue(1);
+        [$badid] = $this->queue(1, $bad);
+        $this->queue(1);
+        $this->lrs_fails_on([$bad->id]);
+
+        $this->send_until_stuck();
+        $this->assertEquals(XAPI_MAX_SEND_ATTEMPTS, $DB->get_field('logstore_xapi_log', 'attempts', ['id' => $badid]));
+        $this->assertEquals(0, $DB->count_records('logstore_xapi_failed_log'));
+
+        $this->send();
+        $this->assertSame([3, 2, 1, 1], $this->requests);
+        $failed = $DB->get_records('logstore_xapi_failed_log');
+        $this->assertCount(1, $failed);
+        $this->assertEquals($bad->id, reset($failed)->courseid);
+        $this->assertEquals(500, reset($failed)->errortype);
+        $this->assertEquals(1, $DB->count_records('logstore_xapi_log'));
+
+        $this->send();
+        $this->assertEquals(0, $DB->count_records('logstore_xapi_log'));
+    }
+
+    /**
+     * When the LRS fails every request, splitting finds nothing to blame: no event goes to the
+     * failed log. The first event is moved to the end of the queue, so that the events behind it
+     * are tried first next time.
+     *
+     * @return void
+     */
+    public function test_lrs_failing_everything_moves_nothing_to_the_failed_log(): void {
+        global $DB;
+        $ids = $this->queue(3);
+        $this->lrs_answers([500]);
+
+        $this->send_until_stuck();
+        $this->send();
+
+        $this->assertSame([3, 2, 1], $this->requests);
+        $this->assertEquals(0, $DB->count_records('logstore_xapi_failed_log'));
+        $queue = array_values($DB->get_records('logstore_xapi_log', null, 'id'));
+        $this->assertCount(3, $queue);
+        $this->assertEquals([$ids[1], $ids[2]], [$queue[0]->id, $queue[1]->id]);
+        $this->assertGreaterThan($ids[2], $queue[2]->id);
+        $this->assertEquals(XAPI_MAX_SEND_ATTEMPTS + 1, $queue[2]->attempts);
+    }
+
+    /**
+     * Errors that say nothing about the events (here, too many requests) aren't counted, so the
+     * batch is never split.
+     *
+     * @return void
+     */
+    public function test_other_errors_are_not_counted(): void {
+        global $DB;
+        $this->queue(2);
+        $this->lrs_answers([429]);
+
+        $this->send_until_stuck();
+        $this->send();
+
+        $this->assertSame([2], $this->requests);
+        $this->assertEquals(0, $DB->count_records_select('logstore_xapi_log', 'attempts > 0'));
+    }
+
+    /**
+     * An error outside the handling of each event and batch leaves the events in the queue, with
+     * the error recorded for the status check.
+     *
+     * @return void
+     */
+    public function test_handler_error_leaves_the_events_queued(): void {
+        global $DB;
+        $this->queue(2);
+        $store = new class (get_log_manager()) extends store {
+            /**
+             * Point the handler at a loader that doesn't exist.
+             *
+             * @return array
+             */
+            protected function get_handler_config() {
+                $config = parent::get_handler_config();
+                $config['loader']['loader'] = 'missing';
+                return $config;
+            }
+        };
+
+        $output = $this->send($store);
+
+        $this->assertEquals(2, $DB->count_records('logstore_xapi_log'));
+        $this->assertStringContainsString('2 event(s) left in the queue to send later', $output);
+        $this->assertStringContainsString('missing', \cache::make('logstore_xapi', 'senderror')->get('last')->message);
     }
 }

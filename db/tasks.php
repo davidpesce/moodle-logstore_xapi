@@ -64,4 +64,14 @@ $tasks = [
         'dayofweek' => '*',
         'month' => '*',
     ],
+    [
+        'classname' => '\logstore_xapi\task\cleanup_task',
+        'blocking' => 0,
+        // Once a day, at a time chosen for each site.
+        'minute' => 'R',
+        'hour' => 'R',
+        'day' => '*',
+        'dayofweek' => '*',
+        'month' => '*',
+    ],
 ];

@@ -29,6 +29,7 @@
         <FIELD NAME="realuserid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="real user id when logged-in-as"/>
         <FIELD NAME="logstorestandardlogid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Reference to the id of standard log."/>
         <FIELD NAME="type" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="xAPI message type."/>
+        <FIELD NAME="attempts" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Runs in which the LRS failed on the event with a server error."/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
