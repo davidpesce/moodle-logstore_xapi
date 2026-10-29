@@ -6,14 +6,6 @@ the authoritative record.
 
 ## 5.4.0 (unreleased)
 
-### Development
-
-- **The code checker fails the CI build** on any error or warning (#1000); it only reported them.
-  The copy/paste detector and mess detector still only report. The workflow checks the code out
-  with `actions/checkout@v7`.
-- **Forum test fixtures use the object tables core logs** (#1000): `forum_posts`,
-  `forum_discussions`, `forum_subscriptions` and `forum_discussion_subs`, not `forum`.
-
 ### Statement fixes
 
 - **Enrolment changes are sent as "updated", not "suspended" or "resumed"** (#939). Moodle
@@ -124,6 +116,21 @@ the authoritative record.
 - **Failure notifications are sent from the site's no-reply address** (#999). They were sent
   from a made-up user with no name or address, which raised debugging messages.
 - Smaller cleanups in the reports and the code (#999).
+
+### Development
+
+- **The code checker fails the CI build** on any error or warning (#1000); it only reported them.
+  The copy/paste detector and mess detector still only report. The workflow checks the code out
+  with `actions/checkout@v7`.
+- **Forum test fixtures use the object tables core logs** (#1000): `forum_posts`,
+  `forum_discussions`, `forum_subscriptions` and `forum_discussion_subs`, not `forum`.
+- **The documentation is rewritten** (#1004). The ten guides in `docs/` are now four: an admin
+  guide (install, connect to the LRS, choose what is sent, handle failures, send past events), how
+  it works (new: the path from event to statement, what happens when something fails, the tasks
+  and tables), develop (change a statement, support a new event, tests), and a list of the
+  supported events, which a unit test keeps in step with the event map. The install guides no
+  longer point to a ZIP file on GitHub releases, which have none, and links point to this
+  repository rather than `xAPI-vle`.
 
 ## 5.3.0 (2026-10-29)
 

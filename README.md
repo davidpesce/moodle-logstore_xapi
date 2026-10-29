@@ -1,11 +1,17 @@
-# [Moodle Logstore xAPI](https://moodle.org/plugins/view/logstore_xapi)
-> Emits [xAPI](https://github.com/adlnet/xAPI-Spec/blob/master/xAPI.md) statements using the [Moodle](https://moodle.org/) Logstore.
+# Moodle Logstore xAPI
 
-- Runs on Moodle 4.5 to 5.3, and is tested on PostgreSQL and MariaDB. Oracle isn't supported.
-- Install the plugin using [our zip installation guide](/docs/install-with-zip.md).
-- Process events before the plugin was installed using [our historical events guide](/docs/historical-events.md).
-- Ask questions via the [Github issue tracker](https://github.com/xAPI-vle/moodle-logstore_xapi/issues).
-- Report bugs and suggest features with the [Github issue tracker](https://github.com/xAPI-vle/moodle-logstore_xapi/issues).
-- View the supported events in [our `get_event_function_map` function](/src/transformer/get_event_function_map.php).
-- Change existing statements for the supported events using [our change statements guide](/docs/change-statements.md).
-- Create statements using [our new statements guide](/docs/new-statements.md).
+A Moodle log store that turns Moodle events into [xAPI](https://github.com/adlnet/xAPI-Spec/blob/master/xAPI.md) statements and sends them to a Learning Record Store (LRS).
+
+**Get it from [CAMP](https://camp-registry.org/plugin/logstore_xapi)**, the Moodle community plugin registry, where every release is published first. It reaches the [Moodle Marketplace](https://marketplace.moodle.com/plugins/logstore_xapi) once Moodle has reviewed it.
+
+- Supports Moodle 4.5 to 5.3, and is tested on PostgreSQL and MariaDB. Oracle isn't supported.
+- Each release's changes are in [CHANGES.md](CHANGES.md).
+
+## Documentation
+
+- [Admin guide](docs/admin-guide.md): install, connect to the LRS, choose what is sent, handle failures, send past events
+- [How it works](docs/how-it-works.md): the path from event to statement, the tasks and the tables
+- [Develop the plugin](docs/developing.md): change a statement, support a new event, run the tests
+- [Supported events](docs/supported-events.md)
+
+Report bugs, suggest features and ask questions in the [issue tracker](https://github.com/davidpesce/moodle-logstore_xapi/issues).
