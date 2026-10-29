@@ -4,6 +4,16 @@ A summary of each release. The full notes, including upgrade instructions, are o
 [GitHub releases page](https://github.com/davidpesce/moodle-logstore_xapi/releases), which is
 the authoritative record.
 
+## 5.4.0 (unreleased)
+
+### Development
+
+- **The code checker fails the CI build** on any error or warning (#1000); it only reported them.
+  The copy/paste detector and mess detector still only report. The workflow checks the code out
+  with `actions/checkout@v7`.
+- **Forum test fixtures use the object tables core logs** (#1000): `forum_posts`,
+  `forum_discussions`, `forum_subscriptions` and `forum_discussion_subs`, not `forum`.
+
 ## 5.3.0 (2026-10-29)
 
 Feature release. Supports Moodle 4.5 to 5.3. Statements use the site proxy, can authenticate with

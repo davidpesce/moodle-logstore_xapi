@@ -5,6 +5,6 @@
   "objectid": 1,
   "userid": 1,
   "eventname": "\\mod_forum\\event\\discussion_created",
-  "objecttable": "forum",
+  "objecttable": "forum_discussions",
   "timecreated": 1433946701
 }
