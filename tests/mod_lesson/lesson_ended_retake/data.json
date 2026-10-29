@@ -1,0 +1,54 @@
+{
+  "grade_grades": [
+    {
+      "itemid": 1,
+      "userid": 1,
+      "rawgrade": 90,
+      "rawgrademax": 100,
+      "rawgrademin": 0,
+      "timemodified": 1731595610
+    }
+  ],
+  "grade_items": [
+    {
+      "id": 1,
+      "gradepass": 50,
+      "iteminstance": 1,
+      "itemmodule": "lesson",
+      "itemtype": "mod",
+      "itemnumber": 0
+    }
+  ],
+  "lesson": [
+    {
+      "id": 1,
+      "name": "test_lesson",
+      "intro": "test_lesson_intro",
+      "grade": 100
+    }
+  ],
+  "lesson_grades": [
+    {
+      "id": 1,
+      "lessonid": 1,
+      "userid": 1,
+      "grade": 90,
+      "late": 0,
+      "completed": 1433940000
+    },
+    {
+      "id": 2,
+      "lessonid": 1,
+      "userid": 1,
+      "grade": 40,
+      "late": 0,
+      "completed": 1433946702
+    }
+  ],
+  "modules": [
+    {
+      "id": 1,
+      "name": "lesson"
+    }
+  ]
+}

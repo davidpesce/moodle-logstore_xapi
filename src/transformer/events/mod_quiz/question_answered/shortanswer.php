@@ -48,6 +48,7 @@ function shortanswer(array $config, \stdClass $event, \stdClass $questionattempt
     $lang = utils\get_course_lang($course);
     // Moodle stores NULL for a question the learner didn't answer.
     $responsesummary = $questionattempt->responsesummary ?? '';
+    $success = utils\quiz_question\get_question_attempt_success($config, $questionattempt, $event);
 
     return [[
         'actor' => utils\get_user($config, $user),
@@ -65,6 +66,7 @@ function shortanswer(array $config, \stdClass $event, \stdClass $questionattempt
         'result' => [
             'response' => $responsesummary,
             'completion' => $responsesummary !== '',
+            ...(is_null($success) ? [] : ['success' => $success]),
         ],
         'context' => [
             ...utils\get_context_base($config, $event, $lang, $course),
