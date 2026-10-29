@@ -70,11 +70,5 @@ function calendar_subscription_updated(array $config, \stdClass $event) {
         $statement = utils\add_parent($config, $statement, $course);
     }
 
-    if (isset($subscription->url) && !is_null($subscription->url)) {
-        $statement['context']['contextActivities']['other'] = [
-            utils\get_activity\web_calendar($subscription->url),
-        ];
-    }
-
     return [$statement];
 }

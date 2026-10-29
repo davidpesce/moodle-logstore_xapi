@@ -1,0 +1,23 @@
+{
+  "assign": [
+    {
+      "id": 1,
+      "name": "test_name"
+    }
+  ],
+  "assign_submission": [
+    {
+      "id": 1,
+      "assignment": 1,
+      "userid": 2,
+      "status": "submitted",
+      "attemptnumber": 0
+    }
+  ],
+  "modules": [
+    {
+      "id": 1,
+      "name": "assign"
+    }
+  ]
+}

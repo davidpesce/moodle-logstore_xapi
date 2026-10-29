@@ -70,7 +70,8 @@ function textfield(
             ),
         ],
         'result' => [
-            'response' => $feedbackvalue->value,
+            // Core stores the answer HTML-escaped, through s().
+            'response' => htmlspecialchars_decode($feedbackvalue->value, ENT_QUOTES | ENT_HTML401),
             'completion' => $feedbackvalue->value !== '',
         ],
         'context' => [

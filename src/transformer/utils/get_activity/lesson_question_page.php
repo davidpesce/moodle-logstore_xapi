@@ -55,13 +55,19 @@ function lesson_question_page(array $config, \stdClass $course, \stdClass $lesso
     switch ($page->qtype) {
         case 1: // LESSON_PAGE_SHORTANSWER.
             // With qoption set the answers are regular expressions, not responses, so no correct
-            // response is sent. Otherwise each correct answer is an alternative.
+            // response is sent. Otherwise each correct answer is an alternative, except answers
+            // with a *, which core matches as a wildcard: they are patterns, not responses.
             $correctresponses = !empty($page->qoption) ? null : array_values(
-                array_map(
+                array_filter(
+                    array_map(
+                        function ($answer) {
+                            return utils\get_string_html_removed($answer->answer);
+                        },
+                        $correctanswers
+                    ),
                     function ($answer) {
-                        return utils\get_string_html_removed($answer->answer);
-                    },
-                    $correctanswers
+                        return strpos($answer, '*') === false;
+                    }
                 )
             );
             $activity['definition'] = utils\get_activity\definition\cmi\fill_in(

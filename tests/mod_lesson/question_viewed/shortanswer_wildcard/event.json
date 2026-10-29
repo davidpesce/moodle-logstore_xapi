@@ -1,0 +1,10 @@
+{
+  "contextinstanceid": 1,
+  "courseid": 2,
+  "id": 1,
+  "objectid": 1,
+  "userid": 1,
+  "eventname": "\\mod_lesson\\event\\question_viewed",
+  "objecttable": "lesson_pages",
+  "timecreated": 1433946701
+}

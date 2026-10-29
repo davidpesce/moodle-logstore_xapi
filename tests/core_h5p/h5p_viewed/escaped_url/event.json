@@ -1,0 +1,12 @@
+{
+  "contextinstanceid": 1,
+  "contextlevel": 30,
+  "courseid": 0,
+  "id": 1,
+  "objectid": 1,
+  "objecttable": "h5p",
+  "userid": 1,
+  "eventname": "\\core_h5p\\event\\h5p_viewed",
+  "other": "{\"url\":\"http://www.example.org/pluginfile.php/9/user/private/0/flashcards.h5p?forcedownload=1&amp;preview=1\",\"time\":1433946701}",
+  "timecreated": 1433946701
+}

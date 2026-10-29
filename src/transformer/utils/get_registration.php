@@ -139,7 +139,10 @@ function get_assign_attempt_name(array $config, string $eventname, \stdClass $ev
     $repo = $config['repo'];
     if ($eventname === 'assessable_submitted') {
         $submission = $repo->read_record_by_id('assign_submission', $event->objectid);
-        return '/mod/assign/' . $submission->assignment . '/user/' . $event->userid
+        // A teacher can submit for a student. The event's user is then the teacher and core puts
+        // the student in relateduserid, whose grade names the attempt.
+        $userid = !empty($event->relateduserid) ? $event->relateduserid : $event->userid;
+        return '/mod/assign/' . $submission->assignment . '/user/' . $userid
             . '/attempt/' . $submission->attemptnumber;
     }
     if ($eventname === 'submission_graded') {

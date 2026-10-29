@@ -37,7 +37,9 @@ use src\transformer\utils\get_activity as activity;
 function badge_viewed(array $config, \stdClass $event) {
     global $CFG;
     $repo = $config['repo'];
-    $badge = $repo->read_record_by_id('badge', $event->objectid);
+    // The event has no objectid: core puts the badge id in other.
+    $other = (array) utils\decode_other($event->other);
+    $badge = $repo->read_record_by_id('badge', (int) $other['badgeid']);
 
     // All three here may not exist.
     $user = $repo->read_record_by_id('user', $event->userid);

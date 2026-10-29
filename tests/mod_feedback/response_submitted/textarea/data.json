@@ -25,7 +25,7 @@
       "id": 1,
       "completed": 1,
       "item": 1,
-      "value": "test_long_text_answer"
+      "value": "test_long_text_answer: Tom &amp; Jerry&#039;s &quot;show&quot;"
     }
   ],
   "modules": [

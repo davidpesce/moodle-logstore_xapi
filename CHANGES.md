@@ -26,13 +26,19 @@ the authoritative record.
 - **Search events are off by default on new sites.** Their statements carry the user's search
   query, which can hold names, health or other personal details. Sites upgrading keep their
   routes; turn off `\core\event\search_results_viewed` if you don't want queries in the LRS.
+- **Calendar subscription statements no longer send the subscription's URL** (#985). It was sent
+  as a "Web Calendar" activity, but the URL of a private calendar (Google's secret address,
+  Outlook published calendars, Moodle's own export link) gives access to the whole calendar, and
+  it was sent again each time cron refreshed the subscription. A calendar imported from a file
+  sent an activity with an empty id, which strict LRSs reject.
 
 ### Registration per attempt
 
 - **Statements about an attempt carry a `context.registration` again**, one per attempt: quiz
   attempts (including each question answered and manually graded questions), SCORM attempts
   (status and score), lesson retakes (pages, start, resume, restart, end and essay grading) and
-  assignment attempts (submitted and graded; a reopened submission is a new attempt). Every
+  assignment attempts (submitted and graded; a reopened submission is a new attempt, and a
+  submission a teacher makes for a student is the student's attempt). Every
   statement with the same registration is about the same attempt. It is a version 5 UUID of a
   site-specific name for the attempt, so the historic report and retries give the same value.
   5.2.0 removed the old registration, which came from the session key and linked unrelated
@@ -45,7 +51,8 @@ the authoritative record.
   They were joined into one pattern, which in xAPI means "all of these together", for
   short-answer, numerical and single-answer multiple-choice pages. Multiple-answer pages still
   need all their right answers together. Short-answer pages that use regular expressions no
-  longer send the expressions as correct responses.
+  longer send the expressions as correct responses, and answers with a `*` wildcard are left
+  out, as they are patterns too.
 - **Quiz numerical answers typed with a unit** ("5 m"), a decimal comma ("12,5") or an
   exponent as Moodle accepts it ("1.5x10^3") send the number alone as the response, which a
   numeric interaction requires. `success` is now right for them too; they were always reported
@@ -65,6 +72,12 @@ the authoritative record.
   every question.
 - **`success` is left out when no pass grade is set.** Quiz attempts, lessons and assignment
   grades sent `success: true` for any grade, including 0, when the pass grade was 0.
+- **Assignment feedback without a grade is sent without a score or success** (#984). When a
+  teacher only gives feedback, Moodle saves the grade as -1 or leaves it empty. The statement
+  said the student failed when the assignment has a pass grade, or sent a score of 0.
+- **Feedback text answers are sent as typed** (#986). Moodle stores "Short text answer" and
+  "Longer text answer" responses HTML-escaped, and they were sent that way
+  (`Tom &amp; Jerry&#039;s`).
 - **Grade items are looked up by item number**, so an activity with outcomes uses its own grade
   item rather than whichever item the database returned first.
 - **SCORM statuses are no longer all sent as "completed".** Only `completed` is sent as
@@ -116,6 +129,8 @@ the authoritative record.
     is sent without an instructor.
   - Question created and questions imported in a system or course category question bank
     (Moodle 4.5) are sent without a course.
+- **Badge viewed is sent** (#983). It read the badge from the event's object id, which Moodle
+  doesn't set for this event, so every badge view went to the failed log.
 - **Events from users who aren't logged in no longer fail every time** (#972). Moodle logs them
   with user id 0: mostly visits to the site home when users don't have to log in, and CLI
   scripts that set no user. "Log guest actions" now covers them, as it does in the standard log:

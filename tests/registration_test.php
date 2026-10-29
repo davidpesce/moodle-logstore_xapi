@@ -113,7 +113,7 @@ final class registration_test extends \basic_testcase {
 
     /**
      * A reopened assignment submission is a new attempt; the grade of an attempt shares its
-     * registration.
+     * registration, also when a teacher submitted it for the student.
      *
      * @return void
      */
@@ -133,6 +133,15 @@ final class registration_test extends \basic_testcase {
 
         $this->assertNotSame(utils\get_registration($config, $first), utils\get_registration($config, $second));
         $this->assertSame(utils\get_registration($config, $second), utils\get_registration($config, $graded));
+
+        // A teacher (9) submitting for the student: core puts the student in relateduserid.
+        $forstudent = (object) [
+            'eventname' => '\mod_assign\event\assessable_submitted',
+            'objectid' => 2,
+            'userid' => 9,
+            'relateduserid' => 5,
+        ];
+        $this->assertSame(utils\get_registration($config, $forstudent), utils\get_registration($config, $graded));
     }
 
     /**
