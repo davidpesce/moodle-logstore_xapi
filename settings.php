@@ -185,6 +185,19 @@ if ($hassiteconfig) {
         0
     ));
 
+    // The same choices as the standard log's "Keep logs for".
+    $lifetimes = [0 => new lang_string('neverdeletelogs')];
+    foreach ([1000, 365, 180, 150, 120, 90, 60, 35, 10, 5, 2] as $days) {
+        $lifetimes[$days] = new lang_string('numdays', '', $days);
+    }
+    $settings->add(new admin_setting_configselect(
+        'logstore_xapi/failedloglifetime',
+        get_string('failedloglifetime', 'logstore_xapi'),
+        get_string('failedloglifetime_desc', 'logstore_xapi'),
+        0,
+        $lifetimes
+    ));
+
     // Actor identification.
     $settings->add(new admin_setting_heading(
         'actoridentification',

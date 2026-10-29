@@ -283,5 +283,16 @@ function xmldb_logstore_xapi_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026102601, 'logstore', 'xapi');
     }
 
+    if ($oldversion < 2026102900) {
+        // The runs in which the LRS failed on a queued event with a server error, so that a batch
+        // it keeps failing on can be split to find the events at fault.
+        $table = new xmldb_table('logstore_xapi_log');
+        $field = new xmldb_field('attempts', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'type');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+        upgrade_plugin_savepoint(true, 2026102900, 'logstore', 'xapi');
+    }
+
     return true;
 }

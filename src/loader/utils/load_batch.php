@@ -60,15 +60,21 @@ function load_batch(array $config, array $transformedevents, callable $loader) {
         $loginfo($e->getTraceAsString());
         set_load_error($transformedevents, $e);
 
-        // The LRS can't take statements now: leave the batch in the queue for a later run.
         if ($e instanceof retry_later) {
-            return construct_loaded_events($transformedevents, XAPI_LOADED_RETRY);
+            // The LRS can't take statements now: leave the batch in the queue for a later run.
+            // A batch it has failed on before (a server error) is split instead, to find the
+            // events it fails on; an event it fails on alone is stuck.
+            if (!is_server_error_to_split($config, $e)) {
+                return construct_loaded_events($transformedevents, XAPI_LOADED_RETRY);
+            }
+            if ($batchsize === 1) {
+                return construct_loaded_events($transformedevents, XAPI_LOADED_STUCK);
+            }
+        } else if ($batchsize === 1 || !is_split_error($config, $e)) {
+            return construct_loaded_events($transformedevents, false);
         }
 
         // Split the batch in half and send each half, down to the events that fail.
-        if ($batchsize === 1 || !is_split_error($config, $e)) {
-            return construct_loaded_events($transformedevents, false);
-        }
         $newconfig = $config;
         $newconfig['lrs_max_batch_size'] = round($batchsize / 2);
         return load_batches($newconfig, get_event_batches($newconfig, $transformedevents), $loader);
@@ -113,6 +119,21 @@ function set_load_error(array $transformedevents, \Throwable $e): void {
             $event['event']->errortype = $e->getCode();
         }
     }
+}
+
+/**
+ * Should a batch the LRS can't take now be split, to find the events it fails on?
+ *
+ * Only for a server error (5xx), and only when the batch has failed with one in the runs before
+ * (see logstore_xapi_send_queued_events()): an LRS that is down fails every batch, and splitting
+ * would only send it more requests.
+ *
+ * @param array $config An array of configuration settings.
+ * @param \Throwable $e The error.
+ * @return bool
+ */
+function is_server_error_to_split(array $config, \Throwable $e): bool {
+    return !empty($config['split_server_errors']) && $e->getCode() >= 500 && $e->getCode() < 600;
 }
 
 /**

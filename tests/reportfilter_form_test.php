@@ -50,7 +50,7 @@ final class reportfilter_form_test extends \advanced_testcase {
             'courseid' => XAPI_REPORT_COURSEID_DEFAULT,
             'activity' => XAPI_REPORT_ACTIVITY_DEFAULT,
             'eventnames' => XAPI_REPORT_EVENTNAMES_DEFAULT,
-            'errortype' => XAPI_REPORT_ERROTYPE_DEFAULT,
+            'errortype' => XAPI_REPORT_ERRORTYPE_DEFAULT,
             'resend' => XAPI_REPORT_RESEND_FALSE,
             'response' => XAPI_REPORT_RESPONSE_DEFAULT,
             'userfullname' => XAPI_REPORT_USERNAME_DEFAULT,

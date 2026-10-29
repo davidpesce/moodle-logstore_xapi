@@ -52,7 +52,19 @@ function handler(array $config, array $events) {
 
         return $loadedevents;
     } catch (\Throwable $e) {
+        // Something failed outside the handling of each event and batch, for example while
+        // building the LRS client. Nothing was sent, so the events stay in the queue for a later
+        // run, with the error to show in the status check.
         $logerror($e);
-        return [];
+        return array_values(array_map(function ($event) use ($e) {
+            $event->response = $e->getMessage();
+            $event->errortype = $e->getCode();
+            return [
+                'event' => $event,
+                'statements' => [],
+                'transformed' => false,
+                'loaded' => XAPI_LOADED_RETRY,
+            ];
+        }, $events));
     }
 }

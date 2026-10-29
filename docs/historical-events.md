@@ -12,7 +12,7 @@ The plugin can send events from before it was installed, or from a time when it 
 
 1. Go to Site administration > Plugins > Logging > Logstore xAPI > Logstore xAPI Historic Log. You need the "Manage historic data" capability (`logstore/xapi:managehistoric`).
 2. Choose a start date, and optionally an end date, a course (and one of its activities), a user or event names. Select "Search". The report lists the matching events that haven't been sent.
-3. Select "Resend" to move them to the queue.
+3. Select "Resend". A background task, "Queue xAPI events to be sent again", moves them to the queue at the next cron run, a chunk at a time.
 
 The "Emit historical records to LRS" scheduled task sends the queue every hour, in batches of "Maximum batch size for historical requests", until the queue is empty or the "Time limit for each run" has passed. To send them sooner, run the task from the command line in the Moodle directory:
 
@@ -24,7 +24,7 @@ The plugin records each event it sends, live or historic, so sent events drop ou
 
 ## Large date ranges
 
-Moving events to the queue happens in the page request. On a busy site, send a few weeks or months at a time rather than several years at once.
+Events are moved to the queue in the background, so a large date range doesn't time out. The queue still holds every event until it is sent, so on a busy site, send a few weeks or months at a time rather than several years at once.
 
 ## Don't copy the standard log into the queue
 

@@ -58,7 +58,9 @@ The core flow is: **Moodle Event → Logstore Queue → Scheduled Task → Trans
 | `src/transformer/repos/Repository.php` | Abstract DB interface; `MoodleRepository.php` for production, `TestRepository.php` for tests |
 | `classes/task/emit_task.php` | Scheduled task: live event emission |
 | `classes/task/historical_task.php` | Scheduled task: historical event backfill |
-| `classes/task/failed_task.php` | Scheduled task: retry failed events |
+| `classes/task/failed_task.php` | Scheduled task: send the failed events a report resent |
+| `classes/task/resend_task.php` | Ad-hoc task: queue the events a report's filters match, for "Resend" |
+| `classes/task/cleanup_task.php` | Scheduled task: delete sent log, notification and old failed rows |
 | `classes/log/store.php` | Core logstore integration with Moodle |
 
 #### Adding Support for a New Event

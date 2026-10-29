@@ -60,6 +60,14 @@ define('XAPI_REPORT_ERRORTYPE_TRANSFORM', 10000); // This high number has been s
 // ones null.
 define('XAPI_LOADED_RETRY', 'retry');
 
+// The "loaded" state of an event the LRS fails on (a server error) when it is sent alone, found
+// by splitting a batch that keeps failing (see logstore_xapi_finish_batch()).
+define('XAPI_LOADED_STUCK', 'stuck');
+
+// The number of runs in a row the LRS may fail on (a server error) the batch at the head of the
+// queue before the batch is split to find the events it fails on.
+define('XAPI_MAX_SEND_ATTEMPTS', 5);
+
 // The default time limit, in seconds, for each run of the tasks that send queued events.
 define('XAPI_MAX_RUNTIME_DEFAULT', 5 * MINSECS);
 
@@ -75,7 +83,7 @@ define('XAPI_REPORT_ONPAGE_DEFAULT', '');
 define('XAPI_REPORT_COURSEID_DEFAULT', 0);
 define('XAPI_REPORT_ACTIVITY_DEFAULT', 0);
 define('XAPI_REPORT_EVENTNAMES_DEFAULT', []);
-define('XAPI_REPORT_ERROTYPE_DEFAULT', '0');
+define('XAPI_REPORT_ERRORTYPE_DEFAULT', '0');
 define('XAPI_REPORT_RESPONSE_DEFAULT', '0');
 define('XAPI_REPORT_USERNAME_DEFAULT', '');
 define('XAPI_REPORT_DATEFROM_DEFAULT', 0);
@@ -505,10 +513,83 @@ function logstore_xapi_get_info_string($row) {
             default:
                 // Generic error catch all.
                 return get_string('unknownerror', 'logstore_xapi', $row->errortype);
-                break;
         }
     }
     return ''; // Return blank if no errortype captured.
+}
+
+/**
+ * The conditions of the error or historic report, from its filters.
+ *
+ * The conditions are on the report's table, aliased x, joined to the user table, aliased u.
+ *
+ * @param int $reportid XAPI_REPORT_ID_ERROR or XAPI_REPORT_ID_HISTORIC.
+ * @param \stdClass|null $filters The report's filters, as the filter form returns them.
+ * @param array $eventnames The events to include when the filters don't choose any.
+ * @return array The SQL conditions, and their parameters.
+ */
+function logstore_xapi_get_report_where(int $reportid, ?\stdClass $filters, array $eventnames): array {
+    global $DB;
+
+    $where = ['1 = 1'];
+    $params = [];
+    $filters = $filters ?? new \stdClass();
+
+    if (!empty($filters->userfullname)) {
+        $userfullname = $DB->sql_fullname('u.firstname', 'u.lastname');
+        $where[] = $DB->sql_like($userfullname, ':userfullname', false, false);
+        $params['userfullname'] = '%' . $DB->sql_like_escape($filters->userfullname) . '%';
+    }
+
+    if (!empty($filters->errortype)) {
+        $where[] = 'x.errortype = :errortype';
+        $params['errortype'] = $filters->errortype;
+    }
+
+    if (!empty($filters->courseid)) {
+        // Course-wide: events in the course and its activities (indexed in core by courseid).
+        $where[] = 'x.courseid = :courseid';
+        $params['courseid'] = $filters->courseid;
+    }
+
+    if (!empty($filters->activity)) {
+        $where[] = 'x.contextid = :activity';
+        $params['activity'] = $filters->activity;
+    }
+
+    if (!empty($filters->eventnames)) {
+        $eventnames = (array) $filters->eventnames;
+    }
+
+    if (!empty($filters->response)) {
+        $where[] = 'x.responsehash = :response';
+        $params['response'] = $filters->response;
+    }
+
+    if (!empty($filters->datefrom)) {
+        $where[] = 'x.timecreated >= :datefrom';
+        $params['datefrom'] = $filters->datefrom;
+    }
+
+    if (!empty($filters->dateto)) {
+        // Set it to end of the day.
+        $where[] = 'x.timecreated <= :dateto';
+        $params['dateto'] = $filters->dateto + (DAYSECS - 1);
+    }
+
+    // With no events to offer (no routes enabled), match nothing rather than throw.
+    [$insql, $inparams] = $DB->get_in_or_equal(array_values($eventnames), SQL_PARAMS_NAMED, 'evt', true, '');
+    $where[] = "x.eventname $insql";
+    $params = array_merge($params, $inparams);
+
+    if ($reportid == XAPI_REPORT_ID_HISTORIC) {
+        $where[] = "NOT EXISTS (SELECT 1 FROM {logstore_xapi_sent_log} lxsl WHERE lxsl.logstorestandardlogid = x.id)";
+        [$skipwhere, $skipparams] = logstore_xapi_get_historic_skip_conditions('x');
+        $where = array_merge($where, $skipwhere);
+        $params = array_merge($params, $skipparams);
+    }
+
+    return [implode(' AND ', $where), $params];
 }
 
 /**
@@ -575,7 +656,8 @@ function logstore_xapi_delete_processed_events($events) {
 }
 
 /**
- * The events the LRS couldn't take now, left in the queue for a later run.
+ * The events the LRS couldn't take now, left in the queue for a later run, and the stuck events
+ * moved to the end of the queue.
  *
  * @param array $events Loaded events.
  * @return array The events.
@@ -584,8 +666,75 @@ function logstore_xapi_get_retry_events(array $events): array {
     return array_values(array_map(function ($loadedevent) {
         return $loadedevent['event'];
     }, array_filter($events, function ($loadedevent) {
-        return $loadedevent['loaded'] === XAPI_LOADED_RETRY;
+        return in_array($loadedevent['loaded'], [XAPI_LOADED_RETRY, XAPI_LOADED_STUCK], true);
     })));
+}
+
+/**
+ * Decide what happens to the events the LRS fails on alone (a server error), found by splitting a
+ * batch it kept failing on.
+ *
+ * When the LRS took other statements in the same run, it works, and the fault is in these
+ * events: they fail, and go to the failed log. Otherwise the LRS may be down, and they stay
+ * stuck, to be moved to the end of the queue (see logstore_xapi_requeue_stuck_events()), so the
+ * events behind them can be sent.
+ *
+ * @param array $loadedevents Loaded events.
+ * @param bool $sentbefore Whether events were sent earlier in the same run.
+ * @return array The loaded events.
+ */
+function logstore_xapi_resolve_stuck_events(array $loadedevents, bool $sentbefore): array {
+    if ($sentbefore || !empty(logstore_xapi_get_successful_events($loadedevents))) {
+        foreach ($loadedevents as $key => $loadedevent) {
+            if ($loadedevent['loaded'] === XAPI_LOADED_STUCK) {
+                $loadedevents[$key]['loaded'] = false;
+            }
+        }
+    }
+    return $loadedevents;
+}
+
+/**
+ * Move stuck events to the end of the queue, where they are tried again after the events behind
+ * them. Their queue rows are deleted with the processed events.
+ *
+ * @param array $loadedevents Loaded events.
+ * @return void
+ */
+function logstore_xapi_requeue_stuck_events(array $loadedevents): void {
+    global $DB;
+    foreach ($loadedevents as $loadedevent) {
+        if ($loadedevent['loaded'] === XAPI_LOADED_STUCK) {
+            $event = clone $loadedevent['event'];
+            unset($event->id);
+            $event->attempts = (int) ($event->attempts ?? 0) + 1;
+            $DB->insert_record('logstore_xapi_log', $event);
+        }
+    }
+}
+
+/**
+ * Count a run in which the LRS failed on these events with a server error (5xx), for the events
+ * left in the queue. Errors that say nothing about the events (no connection, refused
+ * credentials, too many requests) aren't counted.
+ *
+ * @param array $loadedevents Loaded events.
+ * @return void
+ */
+function logstore_xapi_count_send_attempts(array $loadedevents): void {
+    global $DB;
+    $left = array_filter($loadedevents, function ($loadedevent) {
+        return $loadedevent['loaded'] === XAPI_LOADED_RETRY;
+    });
+    $servererror = array_filter($loadedevents, function ($loadedevent) {
+        $code = (int) ($loadedevent['event']->errortype ?? 0);
+        return $code >= 500 && $code < 600;
+    });
+    if (empty($left) || empty($servererror)) {
+        return;
+    }
+    [$insql, $params] = $DB->get_in_or_equal(logstore_xapi_get_event_ids($left));
+    $DB->execute("UPDATE {logstore_xapi_log} SET attempts = attempts + 1 WHERE id $insql", $params);
 }
 
 /**
@@ -675,17 +824,24 @@ function logstore_xapi_save_sent_events(array $events) {
  * ignores the statements it already has, as they are sent with the same ids (see
  * \src\transformer\utils\set_statement_ids()). Events the LRS couldn't take now stay queued.
  *
+ * Events the LRS fails on alone are resolved first (see logstore_xapi_resolve_stuck_events()),
+ * and a server error is counted against the events left in the queue.
+ *
  * @param array $loadedevents Loaded events, as returned by store::process_events().
+ * @param bool $sentbefore Whether events were sent earlier in the same run.
  * @return array The number of events sent, failed and left for a later run (sent, failed,
  *     retry), and the LRS's error when events were left (error), or null.
  */
-function logstore_xapi_finish_batch(array $loadedevents): array {
+function logstore_xapi_finish_batch(array $loadedevents, bool $sentbefore = false): array {
     global $DB;
 
+    $loadedevents = logstore_xapi_resolve_stuck_events($loadedevents, $sentbefore);
     $transaction = $DB->start_delegated_transaction();
     try {
         logstore_xapi_store_failed_events($loadedevents, false);
+        logstore_xapi_requeue_stuck_events($loadedevents);
         logstore_xapi_delete_processed_events($loadedevents);
+        logstore_xapi_count_send_attempts($loadedevents);
         $transaction->allow_commit();
     } catch (\Throwable $e) {
         $transaction->rollback($e);
@@ -706,6 +862,9 @@ function logstore_xapi_finish_batch(array $loadedevents): array {
  * nothing from the queue, which would otherwise send the same events again. A summary is
  * printed at the end.
  *
+ * A batch the LRS has failed on with a server error in XAPI_MAX_SEND_ATTEMPTS runs is split, to
+ * find the events it fails on, so that one event can't hold up the queue for good.
+ *
  * @param \logstore_xapi\log\store $store The store.
  * @param int $type The events' type: XAPI_IMPORT_TYPE_LIVE, _FAILED or _HISTORIC.
  * @param int $batchsize The number of events to take from the queue at a time, or 0 for all.
@@ -721,8 +880,9 @@ function logstore_xapi_send_queued_events(\logstore_xapi\log\store $store, int $
         if (empty($events)) {
             break;
         }
-        $loadedevents = $store->process_events($events, $type);
-        $counts = logstore_xapi_finish_batch($loadedevents);
+        $split = (int) (reset($events)->attempts ?? 0) >= XAPI_MAX_SEND_ATTEMPTS;
+        $loadedevents = $store->process_events($events, $type, $split);
+        $counts = logstore_xapi_finish_batch($loadedevents, $totals['sent'] > 0);
         foreach (['sent', 'failed', 'retry'] as $outcome) {
             $totals[$outcome] += $counts[$outcome];
         }

@@ -35,21 +35,6 @@ use logstore_xapi\log\store;
  */
 class sendfailednotifications_task extends \core\task\scheduled_task {
     /**
-     * Default mail sender.
-     */
-    const DEFAULT_SENDER = -99;
-
-    /**
-     * Default mail sender name.
-     */
-    const DEFAULT_SENDER_NAME = "";
-
-    /**
-     * Default mail sender email address.
-     */
-    const DEFAULT_SENDER_EMAIL = "";
-
-    /**
      * Get a descriptive name for this task (shown to admins).
      *
      * @return string
@@ -143,14 +128,7 @@ class sendfailednotifications_task extends \core\task\scheduled_task {
             $user->emailstop = 0;
         }
 
-        $from = new \stdClass();
-        $from->id = self::DEFAULT_SENDER;
-        $from->username = self::DEFAULT_SENDER_NAME;
-        $from->email = self::DEFAULT_SENDER_EMAIL;
-        $from->deleted = 0;
-        $from->mailformat = FORMAT_HTML;
-
-        return (bool) email_to_user($user, $from, $subject, html_to_text($message), $message);
+        return (bool) email_to_user($user, \core_user::get_noreply_user(), $subject, html_to_text($message), $message);
     }
 
     /**

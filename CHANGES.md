@@ -4,6 +4,39 @@ A summary of each release. The full notes, including upgrade instructions, are o
 [GitHub releases page](https://github.com/davidpesce/moodle-logstore_xapi/releases), which is
 the authoritative record.
 
+## 5.4.0 (unreleased)
+
+### Sending
+
+- **A batch the LRS keeps failing on no longer holds up the queue** (#932). Since 5.3.0, a batch
+  the LRS answers with a server error (5xx) stays at the head of the queue, so an event that makes
+  the LRS fail every time stopped everything behind it. Once the LRS has failed on the same
+  batch in five runs, the batch is split to find the events it fails on. An event it fails on
+  alone goes to the error report when the LRS took the rest, and to the end of the queue when it
+  took nothing, as the LRS may be down: an outage never moves events to the error report. Other
+  errors (no connection, refused credentials, too many requests) aren't counted. One database
+  change: a column in the queue table.
+- **An error outside the sending of each batch is shown in the status check** (#999), for
+  example one while connecting to the LRS. The batch stayed in the queue with only a debugging
+  message saying why; the check "xAPI statements sent to the LRS" now shows the error.
+
+### Error and historic reports
+
+- **"Resend" works for any number of events** (#932). It moved every matching event in the page
+  request, one at a time, which timed out with tens of thousands of failures, or a wide date
+  range in the historic report. It now queues a background task, "Queue xAPI events to be sent
+  again", which moves them a chunk at a time.
+- **Old rows are deleted** (#932). A new daily task, "Delete old xAPI log rows", deletes the
+  record of sent events once the standard log has deleted the events (its "Keep logs for"
+  setting), and old rows of the notification log. A new setting, "Keep failed events for",
+  deletes failed events after a number of days; by default they are kept, as before.
+
+### Fixes
+
+- **Failure notifications are sent from the site's no-reply address** (#999). They were sent
+  from a made-up user with no name or address, which raised debugging messages.
+- Smaller cleanups in the reports and the code (#999).
+
 ## 5.3.0 (2026-10-29)
 
 Feature release. Supports Moodle 4.5 to 5.3. Statements use the site proxy, can authenticate with
