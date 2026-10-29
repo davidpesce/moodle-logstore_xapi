@@ -1,11 +1,19 @@
 # Configure the plugin
 
-**Note that by default the plugin now runs in background mode via a cron task to avoid blocking page responses. This can be changed on the configuration page.**
+Go to Site administration > Plugins > Logging > Logstore xAPI > General Settings (`/admin/settings.php?section=logsettingxapi`).
 
-1. Set your “endpoint” to your LRS endpoint (e.g. “<http://your.lrs/xAPI>”).
-1. Set your “username” to your LRS basic auth key/username (e.g. “d416e6220812740d3922eb09813ebb4163e8eb3e”).
-1. Set your “password” to your LRS basic auth secret/password (e.g. “bc7e0a2edd5d1969b6d774e679d4eb4e7a35be13”).
-1. Click “Save changes”.
+1. Set "LRS endpoint" to your LRS's xAPI endpoint, for example `https://lrs.example.com/xapi`. Use `https://`: over plain `http://` the LRS credentials and learner data are not encrypted, and the security report warns about it.
+1. Choose the "LRS authentication":
+   - **Basic (key and secret)**, the default: set "LRS auth key" and "LRS auth secret" to the key and secret from your LRS.
+   - **OAuth2 client credentials**: set "LRS auth key" and "LRS auth secret" to the client ID and client secret, and "OAuth2 token endpoint" to your identity provider's token endpoint. Set "OAuth2 scope" if your provider needs one.
+1. Click "Save changes".
 
-You can change this configuration anytime by navigating to "http://your.moodle/admin/settings.php?section=logsettingxapi".
+By default the plugin sends statements from a scheduled task every minute ("Send statements by scheduled task?"), so pages don't wait for the LRS. Make sure [cron](https://docs.moodle.org/en/Cron) is running.
 
+## Proxy
+
+Statements are sent through the proxy set in Site administration > Server > HTTP. If your site has a proxy but reaches the LRS directly, for example on your internal network, add the LRS host to "Proxy bypass hosts".
+
+## When the LRS is unavailable
+
+Events wait in the queue and are sent once the LRS works again. The check "xAPI statements sent to the LRS", in Site administration > Reports > System status, warns when an event has been waiting more than an hour, and shows the last error from the LRS.

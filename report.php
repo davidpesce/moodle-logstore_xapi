@@ -99,7 +99,7 @@ $defaults = [
 
 // Reread submitted params.
 if (!empty($onpage)) {
-    $formelements = logstore_xapi_clean_report_filters($onpage, $eventnames);
+    $formelements = logstore_xapi_clean_report_filters($onpage, $eventnames, $id);
 
     foreach (array_keys($defaults) as $element) {
         if (isset($formelements->$element) && !empty($formelements->$element)) {

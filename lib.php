@@ -373,27 +373,35 @@ function logstore_xapi_get_event_names_array() {
  *
  * The parameter is JSON from the URL, so only the known filters are kept, each
  * with the type the report expects, and event names must be supported events.
+ * The error type and response filters are kept only for the error report: the
+ * historic report's table has neither column.
  *
  * @param string $onpage The JSON-encoded filters.
  * @param array $eventnames The supported event names, as keys.
+ * @param int $reportid The report the filters are for (XAPI_REPORT_ID_ERROR or XAPI_REPORT_ID_HISTORIC).
  * @return \stdClass The filters that were valid.
  */
-function logstore_xapi_clean_report_filters(string $onpage, array $eventnames) {
+function logstore_xapi_clean_report_filters(string $onpage, array $eventnames, int $reportid = XAPI_REPORT_ID_ERROR) {
     $filters = new \stdClass();
     $decoded = json_decode($onpage, true);
     if (!is_array($decoded)) {
         return $filters;
     }
+    $errorreport = $reportid == XAPI_REPORT_ID_ERROR;
 
     if (isset($decoded['userfullname']) && is_string($decoded['userfullname'])) {
         $filters->userfullname = $decoded['userfullname'];
     }
     // The response filter's value is a response hash.
-    if (isset($decoded['response']) && is_string($decoded['response']) && preg_match('/^[0-9a-f]{40}$/', $decoded['response'])) {
+    if (
+        $errorreport && isset($decoded['response']) && is_string($decoded['response'])
+        && preg_match('/^[0-9a-f]{40}$/', $decoded['response'])
+    ) {
         $filters->response = $decoded['response'];
     }
 
-    foreach (['errortype', 'courseid', 'activity', 'datefrom', 'dateto'] as $name) {
+    $numeric = $errorreport ? ['errortype'] : [];
+    foreach ([...$numeric, 'courseid', 'activity', 'datefrom', 'dateto'] as $name) {
         if (isset($decoded[$name]) && is_numeric($decoded[$name]) && (int) $decoded[$name] >= 0) {
             $filters->$name = (int) $decoded[$name];
         }

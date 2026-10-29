@@ -341,6 +341,28 @@ final class lib_test extends advanced_testcase {
     }
 
     /**
+     * The historic report has no error type or response column, so those filters are dropped.
+     *
+     * @return void
+     */
+    public function test_clean_report_filters_historic_report(): void {
+        $onpage = json_encode([
+            'response' => sha1('{"error":"x"}'),
+            'errortype' => '400',
+            'courseid' => '3',
+        ]);
+
+        $this->assertEquals(
+            (object) ['courseid' => 3],
+            logstore_xapi_clean_report_filters($onpage, [], XAPI_REPORT_ID_HISTORIC)
+        );
+        $this->assertEquals(
+            (object) ['response' => sha1('{"error":"x"}'), 'errortype' => 400, 'courseid' => 3],
+            logstore_xapi_clean_report_filters($onpage, [], XAPI_REPORT_ID_ERROR)
+        );
+    }
+
+    /**
      * Malformed or wrongly typed report filters are ignored.
      *
      * @return void

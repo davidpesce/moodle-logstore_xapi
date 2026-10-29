@@ -229,6 +229,12 @@ the authoritative record.
 - **Events that are never sent are no longer listed.** Events from guests and users who aren't
   logged in (when "Log guest actions" is off) and anonymous events (when they are set not to be
   sent) were listed on every visit, as sending them skips them without recording them as sent.
+- **A link with the error report's filters no longer breaks the historic report** (#990). Error
+  type and response filters in the page's URL were applied to the standard log, which has
+  neither column, and the page showed a database error.
+- **The historical events guide describes the historic report** (#991). It said sending past
+  events wasn't built in, and suggested copying the standard log into the queue with SQL, which
+  fails and would skip the plugin's checks.
 
 ### Removed
 
