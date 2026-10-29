@@ -138,6 +138,8 @@ new settings.
   supported events, which a unit test keeps in step with the event map. The install guides no
   longer point to a ZIP file on GitHub releases, which have none, and links point to this
   repository rather than `xAPI-vle`.
+- **An unused screenshot is removed** (`xapi-config.png`). It showed the settings page of an old
+  version, and every release ZIP included it.
 
 ## 5.3.0 (2026-10-29)
 
