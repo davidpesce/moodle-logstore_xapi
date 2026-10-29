@@ -76,8 +76,11 @@ class hash_failed_responses extends \core\task\adhoc_task {
 
         mtrace("Hashed $hashed failed event responses.");
 
+        // Not checked for an existing task: under cron, this task's own row is still in the queue
+        // while it runs, and is deleted once it ends, so the check would always find it and the
+        // rest would never be hashed.
         if ($DB->record_exists_select('logstore_xapi_failed_log', $select)) {
-            \core\task\manager::queue_adhoc_task(new self(), true);
+            \core\task\manager::queue_adhoc_task(new self());
         }
     }
 

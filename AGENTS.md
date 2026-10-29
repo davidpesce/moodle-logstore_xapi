@@ -25,12 +25,11 @@ make phpunit SUITE=logstore_xapi_testsuite              # run all plugin tests
 make phpunit-filter FILTER=multichoice_test             # run a single test class
 ```
 
-#### Release Scripts
+#### Releases
 
-```bash
-./scripts/generateVersionFile.sh   # Generate version.php from template
-./scripts/generateZipFile.sh       # Package plugin for distribution
-```
+Set `version` and `release` in `version.php` and date the CHANGES.md section, then push a
+`vX.Y.Z` tag. `.github/workflows/moodle-release.yml` builds the zip and submits it to the Moodle
+Plugins directory, and `camp-release.yml` publishes it to camp.
 
 ### Architecture
 
