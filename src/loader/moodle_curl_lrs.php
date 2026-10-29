@@ -255,6 +255,20 @@ function get_oauth2_token(\core\http_client $client, array $config, string $basi
 }
 
 /**
+ * Does this HTTP status from the LRS mean "try again later", rather than a problem with the
+ * statements?
+ *
+ * A redirect, refused credentials, a wrong endpoint, a request to wait, or the LRS failing say
+ * nothing about the statements. Other errors (400 and the like) are about them.
+ *
+ * @param int $status The HTTP status.
+ * @return bool
+ */
+function is_retry_status(int $status): bool {
+    return ($status >= 300 && $status < 400) || in_array($status, [401, 403, 404, 408, 429], true) || $status >= 500;
+}
+
+/**
  * The client for the LRS: one for the whole process, so its connection is reused by every batch
  * of a run.
  *
@@ -326,10 +340,7 @@ function load(array $config, array $events) {
         if ($status === 200) {
             return;
         }
-        // A redirect, refused credentials, a wrong endpoint, a request to wait, or the LRS failing
-        // say nothing about the statements: try again later. Other errors (400 and the like) are
-        // about them.
-        if (($status >= 300 && $status < 400) || in_array($status, [401, 403, 404, 408, 429], true) || $status >= 500) {
+        if (is_retry_status($status)) {
             throw new utils\retry_later((string) $response->getBody(), $status);
         }
         throw new \Exception((string) $response->getBody(), $status);
