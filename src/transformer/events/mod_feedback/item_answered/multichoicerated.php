@@ -63,6 +63,10 @@ function multichoicerated(
     }, $options, array_keys($options));
     // An index outside the list gives no selection rather than an error.
     $selectedchoice = $choices[intval($feedbackvalue->value) - 1] ?? null;
+    $choicenames = array_map(function ($choice) {
+        return $choice->name;
+    }, $choices);
+    $ids = utils\get_activity\definition\cmi\get_choice_ids($choicenames);
 
     return [[
         'actor' => $actor,
@@ -79,19 +83,14 @@ function multichoicerated(
                 $config,
                 $feedbackitem->name,
                 null,
-                array_map(
-                    function ($choice) {
-                        return $choice->name;
-                    },
-                    $choices
-                ),
+                $choicenames,
                 $lang
             ),
         ],
         'result' => [
             // The response is the selected choice's id, as xAPI defines for choice interactions;
             // the readable text goes in the extension.
-            'response' => $selectedchoice ? utils\slugify($selectedchoice->name) : '',
+            'response' => $selectedchoice ? $ids[$selectedchoice->id] : '',
             'completion' => $feedbackvalue->value !== '',
             'extensions' => $selectedchoice ? [
                 'http://learninglocker.net/xapi/moodle/feedback_item_rating' => $selectedchoice->rating,

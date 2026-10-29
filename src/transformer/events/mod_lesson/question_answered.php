@@ -61,7 +61,7 @@ function question_answered(array $config, \stdClass $event) {
             $config,
             $lesson,
             $lessonpage,
-            $event->userid,
+            $event,
         ),
         'context' => [
             ...utils\get_context_base($config, $event, $lang, $course),

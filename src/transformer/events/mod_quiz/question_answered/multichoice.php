@@ -27,6 +27,7 @@
 namespace src\transformer\events\mod_quiz\question_answered;
 
 use src\transformer\utils;
+use src\transformer\utils\get_activity\definition\cmi;
 use src\transformer\utils\get_activity\definition\question;
 
 /**
@@ -46,9 +47,18 @@ function multichoice(array $config, \stdClass $event, \stdClass $questionattempt
     $quiz = $repo->read_record_by_id('quiz', $attempt->quiz);
     $coursemodule = $repo->read_record_by_id('course_modules', $event->contextinstanceid);
     $lang = utils\get_course_lang($course);
+    // The response is the ids of the selected answers, in the definition's order, made from the
+    // same answers as the definition's choices.
+    $answers = $repo->read_records('question_answers', ['question' => $question->id], 'id ASC');
+    $ids = cmi\get_choice_ids(question\get_multichoice_choices($answers));
+    $selected = array_values(array_intersect_key(
+        $ids,
+        array_flip(utils\quiz_question\get_multichoice_selection($config, $questionattempt))
+    ));
+    $success = utils\quiz_question\get_question_attempt_success($config, $questionattempt, $event);
     // Moodle stores NULL for a question the learner didn't answer.
     $responsesummary = $questionattempt->responsesummary ?? '';
-    $selections = explode('; ', utils\get_string_html_removed($responsesummary));
+
     return [[
         'actor' => utils\get_user($config, $user),
         'verb' => [
@@ -60,22 +70,12 @@ function multichoice(array $config, \stdClass $event, \stdClass $questionattempt
         'object' => [
             ...utils\get_activity\base(),
             'id' => utils\get_quiz_question_id($config, $coursemodule->id, $question->id),
-            'definition' => question\get_multichoice_definition(
-                $config,
-                $question,
-                $lang,
-                $questionattempt->rightanswer,
-            ),
+            'definition' => question\get_multichoice_definition($config, $question, $lang),
         ],
         'result' => [
-            'response' => implode('[,]', array_map(
-                function ($selection) {
-                    return utils\slugify($selection);
-                },
-                $selections
-            )),
-            'success' => $questionattempt->rightanswer == $responsesummary,
-            'completion' => $responsesummary !== '',
+            'response' => implode('[,]', $selected),
+            ...(is_null($success) ? [] : ['success' => $success]),
+            'completion' => !empty($selected),
             'extensions' => [
                 'http://learninglocker.net/xapi/cmi/choice/response' =>
                     utils\get_string_html_removed($responsesummary),

@@ -49,11 +49,7 @@ function lesson_ended(array $config, \stdClass $event) {
                 'en' => 'Completed',
             ],
         ],
-        'result' => utils\get_lesson_result(
-            $config,
-            $lesson,
-            $event->userid
-        ),
+        'result' => utils\get_lesson_result($config, $lesson, $event),
         'object' => utils\get_activity\lesson(
             $config,
             $course,
