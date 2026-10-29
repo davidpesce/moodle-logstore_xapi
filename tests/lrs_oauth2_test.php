@@ -134,6 +134,24 @@ final class lrs_oauth2_test extends \advanced_testcase {
     }
 
     /**
+     * A token without expires_in (which is optional) is kept for a few minutes, not requested
+     * again for every batch.
+     *
+     * @return void
+     */
+    public function test_token_without_expiry_is_reused(): void {
+        $this->answer(new Response(200, [], json_encode(['access_token' => 'abc123', 'token_type' => 'Bearer'])));
+        $this->answer(new Response(200));
+        $this->answer(new Response(200));
+
+        $this->send($this->events(1), $this->oauth2());
+        $this->send($this->events(1), $this->oauth2());
+
+        $this->assertCount(3, $this->requests);
+        $this->assertSame('Bearer abc123', $this->requests[2]['request']->getHeaderLine('Authorization'));
+    }
+
+    /**
      * When the LRS refuses the token (401), a new one is requested and the batch sent again, once.
      *
      * @return void

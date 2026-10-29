@@ -218,4 +218,38 @@ final class load_batch_test extends \basic_testcase {
         $this->assertSame([1 => true, 2 => true, 3 => false], $this->loaded($loaded));
         $this->assertEquals(413, $loaded[2]['event']->errortype);
     }
+
+    /**
+     * A 409 for an event with several statements sends them one at a time: the ones the LRS
+     * already has count as sent, and the new ones are stored.
+     *
+     * @return void
+     */
+    public function test_conflict_sends_an_events_statements_one_by_one(): void {
+        $event = ['event' => (object) ['id' => 1], 'statements' => [['id' => 'a'], ['id' => 'b']], 'transformed' => true];
+
+        $loaded = load_batch($this->get_config(), [$event], $this->lrs(['a']));
+
+        $this->assertSame([['a', 'b'], ['a'], ['b']], $this->requests);
+        $this->assertSame([1 => true], $this->loaded($loaded));
+    }
+
+    /**
+     * While sending an event's statements one at a time, any other error is handled as usual.
+     *
+     * @return void
+     */
+    public function test_conflict_then_unavailable_lrs(): void {
+        $event = ['event' => (object) ['id' => 1], 'statements' => [['id' => 'a'], ['id' => 'b']], 'transformed' => true];
+        $lrs = $this->scripted_lrs([
+            new \Exception('Conflict', 409),
+            new \Exception('Conflict', 409),
+            new retry_later('Service Unavailable', 503),
+        ]);
+
+        $loaded = load_batch($this->get_config(), [$event], $lrs);
+
+        $this->assertSame([1 => XAPI_LOADED_RETRY], $this->loaded($loaded));
+        $this->assertEquals(503, $loaded[0]['event']->errortype);
+    }
 }

@@ -58,6 +58,10 @@ function get_client_settings(array $config): array {
         'verify' => $verify,
         // The status is checked by the caller, so an error response is not an exception.
         'http_errors' => false,
+        // Guzzle follows redirects by default, and turns the POST into a GET on a 301 or 302: the
+        // LRS would answer the GET with 200, and the statements would be counted as sent. A
+        // redirect means the endpoint is wrong, so the caller sees the 3xx instead.
+        'allow_redirects' => false,
     ];
     // Tests replace the network with a Guzzle mock handler.
     if (isset($config['lrs_mock_handler'])) {
@@ -122,6 +126,10 @@ function post(\core\http_client $client, string $url, array $options) {
         // has no response, so report cURL's own error and error number, and try again later.
         $context = method_exists($e, 'getHandlerContext') ? $e->getHandlerContext() : [];
         throw new utils\retry_later('cURL error: ' . ($context['error'] ?? $e->getMessage()), $context['errno'] ?? 0);
+    } catch (\Throwable $e) {
+        // Anything else that stops the request (such as a CA bundle file that isn't there) says
+        // nothing about the statements either: try again once it is fixed.
+        throw new utils\retry_later($e->getMessage());
     }
 }
 
@@ -238,11 +246,48 @@ function get_oauth2_token(\core\http_client $client, array $config, string $basi
             401
         );
     }
-    // Without expires_in (it is optional), the token is used for this run only.
+    // Without expires_in (it is optional), the token is kept for five minutes. If the LRS refuses
+    // it before then, a new one is fetched (see load()).
     return [
         'access_token' => $token,
-        'expires' => time() + (int) ($data['expires_in'] ?? 0),
+        'expires' => time() + (int) ($data['expires_in'] ?? 5 * MINSECS),
     ];
+}
+
+/**
+ * Does this HTTP status from the LRS mean "try again later", rather than a problem with the
+ * statements?
+ *
+ * A redirect, refused credentials, a wrong endpoint, a request to wait, or the LRS failing say
+ * nothing about the statements. Other errors (400 and the like) are about them.
+ *
+ * @param int $status The HTTP status.
+ * @return bool
+ */
+function is_retry_status(int $status): bool {
+    return ($status >= 300 && $status < 400) || in_array($status, [401, 403, 404, 408, 429], true) || $status >= 500;
+}
+
+/**
+ * The client for the LRS: one for the whole process, so its connection is reused by every batch
+ * of a run.
+ *
+ * @param array $config An array of configuration settings.
+ * @return \core\http_client
+ */
+function get_client(array $config): \core\http_client {
+    static $clients = [];
+
+    $settings = get_client_settings($config);
+    // Tests each have their own mock LRS.
+    if (isset($settings['mock'])) {
+        return new \core\http_client($settings);
+    }
+    $key = json_encode($settings);
+    if (!isset($clients[$key])) {
+        $clients[$key] = new \core\http_client($settings);
+    }
+    return $clients[$key];
 }
 
 /**
@@ -253,8 +298,7 @@ function get_oauth2_token(\core\http_client $client, array $config, string $basi
  * @return array
  */
 function load(array $config, array $events) {
-    // One client for all the batches, so the connection to the LRS is reused.
-    $client = new \core\http_client(get_client_settings($config));
+    $client = get_client($config);
     $url = utils\correct_endpoint($config['lrs_endpoint']) . '/statements';
     $authorization = null;
 
@@ -296,9 +340,7 @@ function load(array $config, array $events) {
         if ($status === 200) {
             return;
         }
-        // Refused credentials, a wrong endpoint, a request to wait, or the LRS failing say nothing
-        // about the statements: try again later. Other errors (400 and the like) are about them.
-        if (in_array($status, [401, 403, 404, 408, 429], true) || $status >= 500) {
+        if (is_retry_status($status)) {
             throw new utils\retry_later((string) $response->getBody(), $status);
         }
         throw new \Exception((string) $response->getBody(), $status);

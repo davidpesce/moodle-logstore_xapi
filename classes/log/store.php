@@ -84,8 +84,8 @@ class store extends php_obj implements log_writer {
      * The event is matched on every column the two logs share, except the TEXT column "other",
      * which cannot be compared in SQL on every database. These include the columns of the
      * standard log's user-module index, so the lookup can use it. Identical events in the same
-     * second match several rows: the latest one that hasn't been given to another event is
-     * returned (see get_persistent_eventids()).
+     * second match several rows: the latest one that hasn't been given to another event, in this
+     * run (see get_persistent_eventids()) or an earlier one (the sent log), is returned.
      *
      * @param \stdClass $event The event, as stored in logstore_xapi_log.
      * @return int The row id, or 0 when no free row matches.
@@ -100,14 +100,16 @@ class store extends php_obj implements log_writer {
         $params = [];
         foreach ($fields as $field) {
             if (isset($event->$field)) {
-                $where[] = "$field = :$field";
+                $where[] = "l.$field = :$field";
                 $params[$field] = $event->$field;
             } else {
-                $where[] = "$field IS NULL";
+                $where[] = "l.$field IS NULL";
             }
         }
+        // A row already sent belongs to another event: one sent in an earlier run.
+        $where[] = 'NOT EXISTS (SELECT 1 FROM {logstore_xapi_sent_log} s WHERE s.logstorestandardlogid = l.id)';
 
-        $sql = 'SELECT id FROM {logstore_standard_log} WHERE ' . implode(' AND ', $where) . ' ORDER BY id DESC';
+        $sql = 'SELECT l.id FROM {logstore_standard_log} l WHERE ' . implode(' AND ', $where) . ' ORDER BY l.id DESC';
         foreach ($DB->get_fieldset_sql($sql, $params) as $id) {
             if (!isset($this->usedlogids[$id])) {
                 return (int) $id;

@@ -147,12 +147,13 @@ the authoritative record.
 ### When the LRS can't take statements
 
 - **Events wait in the queue while the LRS is unavailable** (#910). When the LRS can't be
-  reached (no connection, a timeout, a TLS error), refuses the credentials (401, 403, or a failed
-  OAuth2 token request), isn't at the endpoint (404), asks to wait (408, 429) or fails (5xx), the
-  batch stays in the queue and is sent on a later run, and the rest of the run is not sent. Before,
-  every run moved another batch to the failed log, to be resent by hand. Other errors, such as a
-  400 for bad data, still go to the failed log. In real-time mode, these events go to the queue
-  for the emit task. An endpoint that isn't set is treated the same way.
+  reached (no connection, a timeout, a TLS error, a missing CA bundle file), redirects (3xx),
+  refuses the credentials (401, 403, or a failed OAuth2 token request), isn't at the endpoint
+  (404), asks to wait (408, 429) or fails (5xx), the batch stays in the queue and is sent on a
+  later run, and the rest of the run is not sent. Before, every run moved another batch to the
+  failed log, to be resent by hand. Other errors, such as a 400 for bad data, still go to the
+  failed log. In real-time mode, these events go to the queue for the emit task. An endpoint that
+  isn't set is treated the same way.
 - **Each run sends the whole queue** (#930). The live, failed and historic tasks used to send
   one batch per run, so the live task sent at most 30 events a minute (about 43,000 a day), and a
   busier site fell behind for good. Each run now sends batch after batch until the queue is

@@ -45,24 +45,20 @@ function load_batch(array $config, array $transformedevents, callable $loader) {
         $loginfo = $config['log_info'];
 
         // A 409 means the LRS already has a statement with one of these ids, and it rejects the
-        // whole batch. The ids come from the statements' content, so for a single event this
-        // means its statements are already stored (an LRS may answer 409 to an exact resend).
+        // whole batch. The ids come from the statements' content, so a 409 for a statement means
+        // it is already stored (an LRS may answer 409 to an exact resend). An event with several
+        // statements may have some new ones, so they are sent one at a time.
         if ($e->getCode() === 409 && $batchsize === 1) {
-            $loginfo('The LRS already has the statements of this event: ' . $e->getMessage());
-            return construct_loaded_events($transformedevents, true);
+            $statementerror = load_statements_one_by_one($config, get_batch_statements($transformedevents), $loader);
+            if (is_null($statementerror)) {
+                $loginfo('The LRS already has the statements of this event: ' . $e->getMessage());
+                return construct_loaded_events($transformedevents, true);
+            }
+            $e = $statementerror;
         }
         $logerror("Failed load batch (" . $batchsize . " events)" . $e->getMessage());
         $loginfo($e->getTraceAsString());
-
-        // Add error code.
-        $errorcode = $e->getCode();
-        $errormessage = $e->getMessage();
-        foreach ($transformedevents as $event) {
-            if ($event["transformed"] == true) {
-                $event["event"]->response = $errormessage;
-                $event["event"]->errortype = $errorcode;
-            }
-        }
+        set_load_error($transformedevents, $e);
 
         // The LRS can't take statements now: leave the batch in the queue for a later run.
         if ($e instanceof retry_later) {
@@ -76,6 +72,46 @@ function load_batch(array $config, array $transformedevents, callable $loader) {
         $newconfig = $config;
         $newconfig['lrs_max_batch_size'] = round($batchsize / 2);
         return load_batches($newconfig, get_event_batches($newconfig, $transformedevents), $loader);
+    }
+}
+
+/**
+ * Send statements one at a time, counting a 409 (already stored) as sent.
+ *
+ * @param array $config An array of configuration settings.
+ * @param array $statements The statements.
+ * @param callable $loader
+ * @return \Throwable|null The first error other than a 409, or null when every statement is stored.
+ */
+function load_statements_one_by_one(array $config, array $statements, callable $loader): ?\Throwable {
+    if (count($statements) < 2) {
+        return null;
+    }
+    foreach ($statements as $statement) {
+        try {
+            $loader($config, [$statement]);
+        } catch (\Throwable $e) {
+            if ($e->getCode() !== 409) {
+                return $e;
+            }
+        }
+    }
+    return null;
+}
+
+/**
+ * Keep the error on the transformed events, for the failed log and the task's output.
+ *
+ * @param array $transformedevents The transformed events.
+ * @param \Throwable $e The error.
+ * @return void
+ */
+function set_load_error(array $transformedevents, \Throwable $e): void {
+    foreach ($transformedevents as $event) {
+        if ($event['transformed'] == true) {
+            $event['event']->response = $e->getMessage();
+            $event['event']->errortype = $e->getCode();
+        }
     }
 }
 
