@@ -1,21 +1,31 @@
-# Guide to Historical Events
-Hey there 👋  so you want to process some events from the past 🕓, probably a time when this plugin wasn't installed on your Moodle. That's awesome and we really want to help with that. Unfortunately, we've [not built this into the plugin natively yet](https://github.com/xAPI-vle/moodle-logstore_xapi/issues/42), but we do have a recommended process for inserting these events.
+# Sending past events
 
-Our process leverages the plugin's existing "background mode" (which is enabled by default in the plugin settings). In background mode, the plugin receives events from Moodle as they happen and stores them into the "mdl_logstore_xapi_log" table to be processed later by the [Moodle Cron](https://docs.moodle.org/35/en/Cron) (which you should have setup already on your server). When the Moodle Cron script is executed, the plugin extracts, transforms, and loads the events from the "mdl_logstore_xapi_log" table into the Learning Record Store and then deletes the events from the "mdl_logstore_xapi_log" table.
+The plugin can send events from before it was installed, or from a time when it was disabled. It reads them from Moodle's standard log, through the historic report.
 
-To leverage this for events that happened before the plugin was installed, you'll need to move events from the "mdl_logstore_standard_log" table into the "mdl_logstore_xapi_log" table. This can be done by running an SQL query like the one below.
+## Before you start
 
-```SQL
-INSERT INTO mdl_logstore_xapi_log
-SELECT * FROM mdl_logstore_standard_log
+- The events must be in the standard log. The "Standard log" store must have been enabled when they happened, and must still hold them: its "Keep logs for" setting deletes older ones.
+- Only events whose routes are selected in "Include actions with these routes" are listed and sent.
+- Events from guests and users who aren't logged in are left out unless "Log guest actions" is on, and anonymous events follow the "Anonymous events" setting, as for live events.
+
+## Send them
+
+1. Go to Site administration > Plugins > Logging > Logstore xAPI > Logstore xAPI Historic Log. You need the "Manage historic data" capability (`logstore/xapi:managehistoric`).
+2. Choose a start date, and optionally an end date, a course (and one of its activities), a user or event names. Select "Search". The report lists the matching events that haven't been sent.
+3. Select "Resend" to move them to the queue.
+
+The "Emit historical records to LRS" scheduled task sends the queue every hour, in batches of "Maximum batch size for historical requests", until the queue is empty or the "Time limit for each run" has passed. To send them sooner, run the task from the command line in the Moodle directory:
+
+```bash
+php admin/cli/scheduled_task.php --execute='\logstore_xapi\task\historical_task'
 ```
 
-Note that you may want to add a `WHERE` clause to this SQL query if you only want to process some past events. For example, if you only wanted to process past events between `2018-01-01T00:00Z` and `2018-01-02T00:00Z` you would use the `WHERE` clause below, where the dates have been [converted to Unix timestamp integers](http://www.4webhelp.net/us/timestamp.php?action=date&day=01&month=01&year=2018&hour=00&minute=00&second=00&timezone=0). 
+The plugin records each event it sends, live or historic, so sent events drop out of the report. Each statement's id is built from the event and the statement's content, so if the same statement is sent twice, the LRS keeps one copy.
 
-```sql
-WHERE timecreated BETWEEN 1514764800 AND 1514851200
-```
+## Large date ranges
 
-Once this SQL query has been executed, the plugin will start processing the events each time the Moodle Cron script is executed. Note that you can [run the Moodle Cron script manually](https://docs.moodle.org/20/en/Cron#Testing_cron_and_manual_trigger) if you want to and you can change the "Maximum batch size" in the plugin settings (which defaults to 30) in order to speed things up.
+Moving events to the queue happens in the page request. On a busy site, send a few weeks or months at a time rather than several years at once.
 
-If you have a quick question about this process, please ask in [our Gitter chat room](https://gitter.im/LearningLocker/learninglocker) 💬, if you think there's a problem with this guide, please create a new issue in [our Github issue tracker](https://github.com/xAPI-vle/moodle-logstore_xapi/issues).
+## Don't copy the standard log into the queue
+
+Earlier versions of this guide suggested copying rows from `logstore_standard_log` into `logstore_xapi_log` with SQL. Don't: the tables have different columns, and copied rows skip the checks above, the record of sent events and the link to the standard log row.
