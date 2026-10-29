@@ -35,7 +35,8 @@ namespace src\transformer\utils\get_activity;
  * @return array
  */
 function h5p_content(string $url, string $lang) {
-    $url = get_h5p_content_url($url);
+    // Core logs the URL HTML-escaped (moodle_url::out()), so query parameters are joined by &amp;.
+    $url = get_h5p_content_url(str_replace('&amp;', '&', $url));
     $filename = rawurldecode(basename((string) parse_url($url, PHP_URL_PATH)));
     $name = preg_replace('/\.h5p$/i', '', $filename);
     return [

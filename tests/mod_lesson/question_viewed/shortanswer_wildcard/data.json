@@ -1,0 +1,50 @@
+{
+  "lesson": [
+    {
+      "id": 1,
+      "name": "test_lesson",
+      "intro": "test_lesson_intro",
+      "custom": 1
+    }
+  ],
+  "lesson_answers": [
+    {
+      "id": 1,
+      "pageid": 1,
+      "answer": "Thing",
+      "response": "Feedback: Thing",
+      "score": 1
+    },
+    {
+      "id": 2,
+      "pageid": 1,
+      "answer": "*some*",
+      "response": "Feedback: *some*",
+      "score": 1
+    },
+    {
+      "id": 3,
+      "pageid": 1,
+      "answer": "Nothing",
+      "response": "Feedback: Nothing",
+      "score": 0
+    }
+  ],
+  "lesson_grades": [],
+  "lesson_pages": [
+    {
+      "id": 1,
+      "lessonid": 1,
+      "contents": "lesson_question_page_contents",
+      "qtype": 1,
+      "title": "lesson_question_page_title",
+      "qoption": 0
+    }
+  ],
+  "modules": [
+    {
+      "id": 1,
+      "name": "lesson"
+    }
+  ]
+}

@@ -37,18 +37,6 @@
             "objectType": "Activity"
           }
         ],
-        "other": [
-          {
-            "id": "http://example-cal.com/HASH",
-            "definition": {
-              "name": {
-                "en": "Web Calendar"
-              },
-              "type": "https://xapi.edlm/profiles/edlm-lms/concepts/activity-types/calendar"
-            },
-            "objectType": "Activity"
-          }
-        ],
         "parent": [
           {
             "id": "http://www.example.org/course/view.php?id=2",

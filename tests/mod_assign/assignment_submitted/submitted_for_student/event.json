@@ -1,0 +1,11 @@
+{
+  "contextinstanceid": 1,
+  "courseid": 2,
+  "id": 1,
+  "objectid": 1,
+  "userid": 1,
+  "relateduserid": 2,
+  "eventname": "\\mod_assign\\event\\assessable_submitted",
+  "objecttable": "assignment_submissions",
+  "timecreated": 1433946701
+}

@@ -57,11 +57,14 @@ function assignment_graded(array $config, \stdClass $event) {
 
     $gradeitem = utils\get_module_grade_item($config, 'assign', $grade->assignment);
 
-    $scoreraw = (float) ($grade->grade ?: 0);
+    // Core saves the grade as -1 (ASSIGN_GRADE_NOT_SET), or leaves it null, when a teacher gives
+    // feedback without a grade. There is then no score, and no pass or fail, to report.
+    $graded = !is_null($grade->grade) && (float) $grade->grade >= 0;
+    $scoreraw = (float) ($grade->grade ?? 0);
     $scoremin = (float) ($gradeitem->grademin ?? 0);
     $scoremax = (float) ($gradeitem->grademax ?? 0);
-    $validscore = ($scoremin <= $scoreraw && $scoreraw <= $scoremax) ? true : false;
-    $success = utils\get_success($scoreraw, $gradeitem);
+    $validscore = $graded && $scoremin <= $scoreraw && $scoreraw <= $scoremax;
+    $success = $graded ? utils\get_success($scoreraw, $gradeitem) : null;
 
     $statement = [
         'actor' => utils\get_user($config, $user),

@@ -1,9 +1,8 @@
 {
   "courseid": 2,
   "id": 1,
-  "objectid": 1,
   "userid": 1,
   "eventname": "\\core\\event\\badge_viewed",
-  "objecttable": "badge",
+  "other": "{\"badgeid\":1,\"badgehash\":\"5d1cbd8a3dc1e1a3b8f1b0b4a0f3c9e2\"}",
   "timecreated": 1433946701
 }
