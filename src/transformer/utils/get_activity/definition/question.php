@@ -47,47 +47,64 @@ function get_essay_definition(array $config, \stdClass $question, string $lang) 
 }
 
 /**
+ * The choices of a multiple-choice question: the text of each answer, keyed by answer id.
+ *
+ * Responses take their ids from these, through cmi\get_choice_ids(), as the definition does.
+ *
+ * @param array $answers The question's answers, from question_answers in id order.
+ * @return array
+ */
+function get_multichoice_choices(array $answers): array {
+    return array_map(function ($answer) {
+        return utils\get_string_html_removed($answer->answer);
+    }, $answers);
+}
+
+/**
  * Transformer util for creating multichoice definitions.
+ *
+ * The correct responses come from the answers' grades, as the question engine's own correct
+ * response does. In a single-answer question each answer with full marks is right on its own; in
+ * a multiple-answer question (and qtype_multichoiceset) every answer with a positive grade must
+ * be chosen, together.
  *
  * @param array $config The transformer config settings.
  * @param \stdClass $question The question object.
  * @param string $lang The language.
- * @param ?string $rightanswer The correct answer, not always available.
  * @return array
  */
-function get_multichoice_definition(
-    array $config,
-    \stdClass $question,
-    string $lang,
-    ?string $rightanswer = null
-) {
+function get_multichoice_definition(array $config, \stdClass $question, string $lang) {
     $repo = $config['repo'];
-    $answers = $repo->read_records('question_answers', [
-        'question' => $question->id,
-    ]);
+    $answers = $repo->read_records('question_answers', ['question' => $question->id], 'id ASC');
 
-    $choices = array_values(
-        array_map(
-            function ($answer) {
-                return utils\get_string_html_removed($answer->answer);
-            },
-            $answers
-        )
-    );
+    $single = false;
+    if ($question->qtype === 'multichoice') {
+        $options = $repo->read_records('qtype_multichoice_options', ['questionid' => $question->id]);
+        $option = reset($options);
+        $single = !$option || !empty($option->single);
+    }
+
+    if ($single) {
+        $correctresponses = array_map(function ($answerid) {
+            return [$answerid];
+        }, array_keys(array_filter($answers, function ($answer) {
+            return (float) $answer->fraction >= 1.0;
+        })));
+    } else {
+        $correctresponses = [array_keys(array_filter($answers, function ($answer) {
+            return (float) $answer->fraction > 0;
+        }))];
+    }
 
     return cmi\choice(
         $config,
         $question->name,
         utils\get_string_html_removed($question->questiontext),
-        $choices,
+        get_multichoice_choices($answers),
         $lang,
-        // The right answer lists every option that must be chosen, together.
-        (!is_null($rightanswer))
-            ? [explode('; ', utils\get_string_html_removed($rightanswer))]
-            : null
+        $correctresponses
     );
 }
-
 
 /**
  * Transformer util for creating matching (match and randomsamatch) definitions.
@@ -179,32 +196,27 @@ function get_gap_name(int $number): string {
 }
 
 /**
- * Transformer util for creating numerical definitions
+ * Transformer util for creating numerical definitions. Each answer with full marks is a correct
+ * response.
  *
  * @param array $config The transformer config settings.
  * @param \stdClass $question The question object.
  * @param string $lang The language.
  */
 function get_numerical_definition(array $config, \stdClass $question, string $lang) {
-    [
-        'min' => $min,
-        'max' => $max,
-        'target' => $target
-    ] = utils\quiz_question\get_numerical_answer($config, $question->id);
-
     return cmi\numeric(
         $config,
         $question->name,
         utils\get_string_html_removed($question->questiontext),
         $lang,
-        [
-            cmi\numeric_pattern(
-                $min,
-                $max,
+        array_map(function ($range) {
+            return cmi\numeric_pattern(
+                $range['min'],
+                $range['max'],
                 // If we have an exact match, send that.
-                ($min === $target && $max === $target) ? $target : null
-            ),
-        ]
+                ($range['min'] === $range['target'] && $range['max'] === $range['target']) ? $range['target'] : null
+            );
+        }, utils\quiz_question\get_numerical_answers($config, $question->id))
     );
 }
 

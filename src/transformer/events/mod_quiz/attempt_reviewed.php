@@ -37,18 +37,27 @@ use src\transformer\utils;
  */
 function attempt_reviewed(array $config, \stdClass $event) {
     $repo = $config['repo'];
-    $learner = $repo->read_record_by_id('user', $event->relateduserid);
-    $instructor = $repo->read_record_by_id('user', $event->userid);
+    // Core fires this event each time anyone loads the review page: userid is the viewer, and
+    // relateduserid the student whose attempt it is.
+    $viewer = $repo->read_record_by_id('user', $event->userid);
     $course = $repo->read_record_by_id('course', $event->courseid);
     $lang = utils\get_course_lang($course);
+    $for = ((int) $event->relateduserid !== (int) $event->userid)
+        ? utils\get_user($config, $repo->read_record_by_id('user', $event->relateduserid))
+        : null;
 
     return [[
-        'actor' => utils\get_user($config, $learner),
-        'verb' => utils\get_verb('received', $config, $lang),
+        'actor' => utils\get_user($config, $viewer),
+        'verb' => utils\get_verb('viewed', $config, $lang),
         'object' => utils\get_activity\quiz_review($config, $event->objectid),
         'context' => [
             ...utils\get_context_base($config, $event, $lang, $course),
-            'instructor' => utils\get_user($config, $instructor),
+            ...(is_null($for) ? [] : [
+                'extensions' => [
+                    'https://yetanalytics.com/profiles/prepositions/concepts/context-extensions/for' => $for,
+                    ...utils\extensions\base($config, $event, $course),
+                ],
+            ]),
             'contextActivities' => [
                 'parent' => [
                     utils\get_activity\quiz_attempt(

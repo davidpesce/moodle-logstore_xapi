@@ -49,6 +49,7 @@ function matching(array $config, \stdClass $event, \stdClass $questionattempt, \
 
     // The response and the stems and choices shown come from the attempt's steps.
     $matching = utils\quiz_question\get_matching_attempt($config, $questionattempt, $question);
+    $success = utils\quiz_question\get_question_attempt_success($config, $questionattempt, $event);
     $pairs = [];
     $extension = [];
     foreach ($matching['response'] as $stemkey => $choicekey) {
@@ -63,11 +64,10 @@ function matching(array $config, \stdClass $event, \stdClass $questionattempt, \
     }
 
     $result = empty($pairs)
-        ? ['response' => '', 'completion' => false, 'success' => false]
+        ? ['response' => '', 'completion' => false]
         : [
             'response' => implode('[,]', $pairs),
             'completion' => true,
-            'success' => $matching['response'] == $matching['right'],
             'extensions' => [
                 'http://learninglocker.net/xapi/cmi/matching/response' => (object) $extension,
             ],
@@ -86,7 +86,10 @@ function matching(array $config, \stdClass $event, \stdClass $questionattempt, \
             'id' => utils\get_quiz_question_id($config, $coursemodule->id, $question->id),
             'definition' => question\get_match_definition($config, $question, $lang, $matching),
         ],
-        'result' => $result,
+        'result' => [
+            ...$result,
+            ...(is_null($success) ? [] : ['success' => $success]),
+        ],
         'context' => [
             ...utils\get_context_base($config, $event, $lang, $course),
             'contextActivities' => [

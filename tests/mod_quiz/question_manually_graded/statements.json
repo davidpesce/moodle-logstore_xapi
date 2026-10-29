@@ -110,9 +110,9 @@
     },
     "result": {
       "score": {
-        "max": 1,
+        "max": 10,
         "min": 0,
-        "raw": 0.5,
+        "raw": 5,
         "scaled": 0.5
       }
     }

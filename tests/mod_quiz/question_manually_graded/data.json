@@ -25,14 +25,16 @@
       "questionusageid": 1,
       "slot": 1,
       "maxfraction": 1.0,
-      "minfraction": 0.0
+      "minfraction": 0.0,
+      "maxmark": 10.0
     },
     {
       "id": 2,
       "questionusageid": 1,
       "slot": 2,
       "maxfraction": 1.0,
-      "minfraction": 0.0
+      "minfraction": 0.0,
+      "maxmark": 10.0
     }
   ],
   "quiz": [
