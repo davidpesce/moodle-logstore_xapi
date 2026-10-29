@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-namespace logstore_xapi\core\user_enrolment_updated\user_suspended_course;
+namespace logstore_xapi\core\user_enrolment_updated\enrolment_deleted_since;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -23,13 +23,14 @@ global $CFG;
 require_once($CFG->dirroot . '/admin/tool/log/store/xapi/tests/xapi_test_case.php');
 
 /**
- * Unit test for user enrolment updated event.
+ * Unit test for user enrolment updated event, when the enrolment was deleted before the queue was
+ * sent.
  *
  * @package   logstore_xapi
- * @copyright Milt Reder <milt@yetanalytics.com>
+ * @copyright 2026 David Pesce <david.pesce@exputo.com>
  * @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-final class user_suspended_course_test extends \logstore_xapi\xapi_test_case {
+final class enrolment_deleted_since_test extends \logstore_xapi\xapi_test_case {
     /**
      * Retrieve the directory of the unit test.
      *

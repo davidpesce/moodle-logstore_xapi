@@ -11,10 +11,5 @@
       "email": "test@test.com"
     }
   ],
-  "user_enrolments": [
-    {
-      "id": 1,
-      "status": 0
-    }
-  ]
+  "user_enrolments": []
 }

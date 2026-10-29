@@ -4,6 +4,18 @@ A summary of each release. The full notes, including upgrade instructions, are o
 [GitHub releases page](https://github.com/davidpesce/moodle-logstore_xapi/releases), which is
 the authoritative record.
 
+## 5.4.0 (unreleased)
+
+### Statement fixes
+
+- **Enrolment changes are sent as "updated", not "suspended" or "resumed"** (#939). Moodle
+  records an enrolment change the same way whether its status, start date or end date changed,
+  and doesn't say which. The statement read the enrolment's status when the queue was sent, so
+  editing an end date sent "resumed", a historic replay sent today's status, and an enrolment
+  deleted before the queue was sent failed. It is now "updated"
+  (`http://activitystrea.ms/update`), with the same actor, course and instructor as before. LRS
+  reports that look for suspensions in these statements need updating.
+
 ## 5.3.0 (2026-10-29)
 
 Feature release. Supports Moodle 4.5 to 5.3. Statements use the site proxy, can authenticate with

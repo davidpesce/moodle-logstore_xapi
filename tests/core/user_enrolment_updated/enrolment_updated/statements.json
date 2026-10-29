@@ -8,9 +8,9 @@
       "name": "test_fullname2"
     },
     "verb": {
-      "id": "https://w3id.org/xapi/tla/verbs/suspended",
+      "id": "http://activitystrea.ms/update",
       "display": {
-        "en": "Suspended"
+        "en": "Updated"
       }
     },
     "object": {
