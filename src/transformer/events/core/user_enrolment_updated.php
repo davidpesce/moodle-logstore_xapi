@@ -29,37 +29,30 @@ use src\transformer\utils;
 /**
  * Transformer for the user enrolment updated event.
  *
+ * Moodle fires this event when an enrolment's status, start date or end date changes, and
+ * records only the enrolment method, so the statement says the enrolment was updated, not that it
+ * was suspended or resumed. The enrolment's status when the queue is sent may not be its status
+ * at the time, or the change the event was about.
+ *
  * @param array $config The transformer config settings.
  * @param \stdClass $event The event to be transformed.
  * @return array
  */
 function user_enrolment_updated(array $config, \stdClass $event) {
     $repo = $config['repo'];
-    $enrolment = $repo->read_record_by_id('user_enrolments', $event->objectid);
     $user = $repo->read_record_by_id('user', $event->userid);
     $cuser = $repo->read_record_by_id('user', $event->relateduserid);
     $course = $repo->read_record_by_id('course', $event->courseid);
     $lang = utils\get_course_lang($course);
 
-    if ($enrolment->status == 1) {
-        $verb = [
-            'id' => 'https://w3id.org/xapi/tla/verbs/suspended',
-            'display' => [
-                'en' => 'Suspended',
-            ],
-        ];
-    } else {
-        $verb = [
-            'id' => 'https://w3id.org/xapi/tla/verbs/resumed',
-            'display' => [
-                'en' => 'Resumed',
-            ],
-        ];
-    }
-
     return [[
         'actor' => utils\get_user($config, $cuser),
-        'verb' => $verb,
+        'verb' => [
+            'id' => 'http://activitystrea.ms/update',
+            'display' => [
+                'en' => 'Updated',
+            ],
+        ],
         'object' => utils\get_activity\course($config, $course),
         'context' => utils\get_enrolment_context(
             $config,

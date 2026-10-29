@@ -8,9 +8,9 @@
       "name": "test_fullname2"
     },
     "verb": {
-      "id": "https://w3id.org/xapi/tla/verbs/resumed",
+      "id": "http://activitystrea.ms/update",
       "display": {
-        "en": "Resumed"
+        "en": "Updated"
       }
     },
     "object": {
