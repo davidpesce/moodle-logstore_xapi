@@ -4,7 +4,14 @@ A summary of each release. The full notes, including upgrade instructions, are o
 [GitHub releases page](https://github.com/davidpesce/moodle-logstore_xapi/releases), which is
 the authoritative record.
 
-## 5.4.0 (unreleased)
+## 5.4.0 (2026-10-29)
+
+Feature and bug-fix release. Supports Moodle 4.5 to 5.3. Quiz and lesson statements report what
+the event was about, choice responses always match their definitions, and a new setting leaves
+out what people wrote. A batch the LRS keeps failing on no longer holds up the queue, and
+"Resend" works for any number of events. One database change (a column in the queue table); two
+new settings.
+[Release notes](https://github.com/davidpesce/moodle-logstore_xapi/releases/tag/v5.4.0)
 
 ### Statement fixes
 
