@@ -27,16 +27,66 @@ namespace src\transformer\utils\get_activity\definition\cmi;
 use src\transformer\utils;
 
 /**
+ * The id of each choice in a choice interaction, keyed as the choices are.
+ *
+ * An id is made from the choice's text. Two choices can give the same id ("Yes" and "yes", or
+ * two answers with the same text), and every choice needs its own, so a later choice gets a
+ * number: "yes-2". Definitions and responses must both take their ids from here, with the same
+ * choices in the same order, so that a response is always one of the defined choices.
+ *
+ * @param array $choices The choice texts.
+ * @return array The ids, with the keys of $choices.
+ */
+function get_choice_ids(array $choices): array {
+    $ids = [];
+    foreach ($choices as $key => $choice) {
+        $base = utils\slugify((string) $choice);
+        $id = $base;
+        for ($n = 2; in_array($id, $ids, true); $n++) {
+            $id = $base . '-' . $n;
+        }
+        $ids[$key] = $id;
+    }
+    return $ids;
+}
+
+/**
+ * The correct responses of a choice interaction, as patterns of choice ids.
+ *
+ * Each pattern keeps the order of its keys, which is the correct order in a sequencing
+ * interaction. Keys that aren't choices are left out, and so are patterns left empty.
+ *
+ * @param array $ids The choice ids, from get_choice_ids().
+ * @param array $correctresponses Lists of keys of the choices, as choice() takes them.
+ * @return array
+ */
+function get_choice_patterns(array $ids, array $correctresponses): array {
+    $patterns = [];
+    foreach ($correctresponses as $rightkeys) {
+        $rightids = [];
+        foreach ($rightkeys as $key) {
+            if (isset($ids[$key])) {
+                $rightids[] = $ids[$key];
+            }
+        }
+        if (!empty($rightids)) {
+            $patterns[] = implode('[,]', $rightids);
+        }
+    }
+    return $patterns;
+}
+
+/**
  * Transformer util for creating choice definitions
  *
  * @param array $config The transformer config settings.
  * @param string $name The activity name.
  * @param ?string $description The activity description.
- * @param array $choices The choices available.
+ * @param array $choices The choice texts. Responses must use get_choice_ids() with the same array.
  * @param string $lang The language.
- * @param ?array $correctresponses The correct responses, each a list of the options that are
- *                                right together: [['A'], ['B']] when A or B is right on its own,
- *                                [['A', 'B']] when both must be chosen. Omit for questions with no
+ * @param ?array $correctresponses The correct responses, each a list of keys of $choices that are
+ *                                right together: [[a], [b]] when a or b is right on its own,
+ *                                [[a, b]] when both must be chosen. Omit for questions with no
  *                                correct answer (surveys, Choice activities), and no
  *                                correctResponsesPattern is sent.
  * @return array
@@ -49,25 +99,24 @@ function choice(
     string $lang,
     ?array $correctresponses = null
 ) {
-    $cmichoices = ($config['send_response_choices'] && !is_null($choices))
+    $ids = get_choice_ids($choices);
+    $cmichoices = $config['send_response_choices']
         ? array_map(
-            function ($choice) use ($lang) {
+            function ($key) use ($choices, $ids, $lang) {
                 return [
-                    'id' => utils\slugify($choice),
+                    'id' => $ids[$key],
                     'description' => [
-                        $lang => $choice,
+                        $lang => $choices[$key],
                     ],
                 ];
             },
-            // Callers often pass records from get_records(), which are keyed by id. Renumber them
-            // so that choices is a JSON array, not an object.
-            array_values($choices)
+            // Callers often pass records from get_records(), which are keyed by id. Use the keys
+            // in order, so that choices is a JSON array, not an object.
+            array_keys($choices)
         )
         : null;
 
-    $correctresponses = array_filter($correctresponses ?? [], function ($rightchoices) {
-        return !empty($rightchoices);
-    });
+    $patterns = get_choice_patterns($ids, $correctresponses ?? []);
 
     return [
         ...common($config, $name, $description, $lang),
@@ -75,14 +124,8 @@ function choice(
         // A correctResponsesPattern says which response is correct, so it is only sent when there
         // is a correct answer. Claiming that every choice together was correct made an LRS mark
         // survey and Choice activity answers as wrong.
-        ...($config['send_response_choices'] && !empty($cmichoices) && !empty($correctresponses)
-            ? [
-                'correctResponsesPattern' => array_values(array_map(function ($rightchoices) {
-                    return implode('[,]', array_map(function ($rightchoice) {
-                        return utils\slugify($rightchoice);
-                    }, $rightchoices));
-                }, $correctresponses)),
-            ]
+        ...($config['send_response_choices'] && !empty($cmichoices) && !empty($patterns)
+            ? ['correctResponsesPattern' => $patterns]
             : []),
         ...($config['send_response_choices'] && !empty($cmichoices)
             ? ['choices' => $cmichoices]

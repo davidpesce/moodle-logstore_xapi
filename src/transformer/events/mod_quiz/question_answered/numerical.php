@@ -46,15 +46,13 @@ function numerical(array $config, \stdClass $event, \stdClass $questionattempt, 
     $quiz = $repo->read_record_by_id('quiz', $attempt->quiz);
     $coursemodule = $repo->read_record_by_id('course_modules', $event->contextinstanceid);
     $lang = utils\get_course_lang($course);
-    [
-        'min' => $min,
-        'max' => $max,
-        'target' => $target,
-    ] = utils\quiz_question\get_numerical_answer($config, $question->id);
     // Moodle stores NULL for a question the learner didn't answer. The summary is the answer as
     // typed, which can include a unit, so the response is the number alone.
     $responsesummary = $questionattempt->responsesummary ?? '';
     $numanswer = utils\get_numeric_response($responsesummary);
+    // The question engine has graded the answer, with any unit and its multiplier, against every
+    // answer with marks.
+    $success = utils\quiz_question\get_question_attempt_success($config, $questionattempt, $event);
 
     return [[
         'actor' => utils\get_user($config, $user),
@@ -72,7 +70,7 @@ function numerical(array $config, \stdClass $event, \stdClass $questionattempt, 
         'result' => [
             'response' => $numanswer,
             'completion' => $responsesummary !== '',
-            'success' => $numanswer !== '' && ($target == '*' || ($min <= $numanswer && $numanswer <= $max)),
+            ...(is_null($success) ? [] : ['success' => $success]),
             ...($numanswer !== ''
                 ? [
                     'extensions' => [

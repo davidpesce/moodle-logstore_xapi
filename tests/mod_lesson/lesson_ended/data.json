@@ -23,10 +23,20 @@
     {
       "id": 1,
       "name": "test_lesson",
-      "intro": "test_lesson_intro"
+      "intro": "test_lesson_intro",
+      "grade": 100
     }
   ],
-  "lesson_grades": [],
+  "lesson_grades": [
+    {
+      "id": 1,
+      "lessonid": 1,
+      "userid": 1,
+      "grade": 75,
+      "late": 0,
+      "completed": 1433946701
+    }
+  ],
   "modules": [
     {
       "id": 1,

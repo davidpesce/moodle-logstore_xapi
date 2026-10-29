@@ -191,7 +191,8 @@
     },
     "result": {
       "completion": false,
-      "response": ""
+      "response": "",
+      "success": false
     }
   }
 ]

@@ -27,34 +27,39 @@ namespace src\transformer\utils\get_activity\definition\choice;
 use src\transformer\utils;
 
 /**
+ * The options of a Choice activity: the text of each option, keyed by option id.
+ *
+ * The definition and the response both take their choice ids from these, through
+ * cmi\get_choice_ids().
+ *
+ * @param array $config The transformer config settings.
+ * @param int $choiceid The Choice activity's id.
+ * @return array
+ */
+function get_choice_options(array $config, int $choiceid): array {
+    return array_map(function ($option) {
+        return $option->text;
+    }, $config['repo']->read_records('choice_options', ['choiceid' => $choiceid], 'id ASC'));
+}
+
+/**
  * Transformer util for creating choice definitions
  *
  * @param array $config The transformer config settings.
  * @param \stdClass $choice The choice object.
  * @param string $lang The language.
+ * @return array
  */
 function get_choice_definition(
     array $config,
     \stdClass $choice,
     string $lang
 ) {
-    $repo = $config['repo'];
-    $options = $repo->read_records(
-        'choice_options',
-        ['choiceid' => $choice->id],
-        'id ASC'
-    );
-
     return utils\get_activity\definition\cmi\choice(
         $config,
         $choice->name,
         utils\get_string_html_removed($choice->intro),
-        array_map(
-            function ($option) {
-                return $option->text;
-            },
-            $options
-        ),
+        get_choice_options($config, $choice->id),
         $lang
     );
 }
