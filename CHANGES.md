@@ -4,7 +4,12 @@ A summary of each release. The full notes, including upgrade instructions, are o
 [GitHub releases page](https://github.com/davidpesce/moodle-logstore_xapi/releases), which is
 the authoritative record.
 
-## 5.3.0 (unreleased)
+## 5.3.0 (2026-10-29)
+
+Feature release. Supports Moodle 4.5 to 5.3. Statements use the site proxy, can authenticate with
+OAuth2, wait in the queue while the LRS is unavailable and carry ids. One database change (an
+indexed column in the failed log); four new settings.
+[Release notes](https://github.com/davidpesce/moodle-logstore_xapi/releases/tag/v5.3.0)
 
 ### New events
 
