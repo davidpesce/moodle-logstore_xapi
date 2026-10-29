@@ -114,17 +114,13 @@ $string['logstorexapierrorlog'] = 'Logstore xAPI Error Log';
 $string['logstorexapihistoriclog'] = 'Logstore xAPI Historic Log';
 $string['lrserror'] = 'There is a problem with the LDH. The LDH has responded with a 500 error.';
 $string['maxbatchsize'] = 'Maximum batch size';
-$string['maxbatchsize_desc'] = 'Statements are sent to the LRS in batches. This setting controls the maximum number of
-        statements that will be sent in a single operation. Setting this to zero will cause all available statements to
-        be sent at once, although this is not recommended.';
+$string['maxbatchsize_desc'] = 'Statements are sent to the LRS in batches, one request per batch, until the queue is empty or the time limit for each run passes. This setting controls the maximum number of events in a batch. Setting this to zero sends all queued events in one request, which is not recommended.';
 $string['maxbatchsizeforfailed'] = 'Maximum batch size for failed requests';
-$string['maxbatchsizeforfailed_desc'] = 'Statements are sent to the LRS in batches. This setting controls the maximum number of
-        statements that will be sent in a single operation for failed requests. Setting this to zero will cause all available statements to
-        be sent at once, although this is not recommended.';
+$string['maxbatchsizeforfailed_desc'] = 'The maximum number of events taken from the queue at a time when failed events are sent again. Each batch is sent in requests of at most "Maximum batch size" events. Setting this to zero takes all of them at once, which is not recommended.';
 $string['maxbatchsizeforhistorical'] = 'Maximum batch size for historical requests';
-$string['maxbatchsizeforhistorical_desc'] = 'Statements are sent to the LRS in batches. This setting controls the maximum number of
-        statements that will be sent in a single operation for historical requests. Setting this to zero will cause all available statements to
-        be sent at once, although this is not recommended.';
+$string['maxbatchsizeforhistorical_desc'] = 'The maximum number of events taken from the queue at a time when historic events are sent. Each batch is sent in requests of at most "Maximum batch size" events. Setting this to zero takes all of them at once, which is not recommended.';
+$string['maxruntime'] = 'Time limit for each run';
+$string['maxruntime_desc'] = 'The tasks that send live, failed and historic events send batch after batch until their queue is empty, the LRS can\'t take statements, or this time has passed. It only matters when there is a backlog: raise it to clear a large one, such as a historic backfill, faster.';
 $string['mbox'] = 'Identify users by email';
 $string['mbox_desc'] = 'Statements will identify users with their email (mbox) when this box is ticked.';
 $string['networkerror'] = 'There was a network error sending the response.';

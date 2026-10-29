@@ -44,13 +44,7 @@ class failed_task extends \core\task\scheduled_task {
      * @return void
      */
     public function execute() {
-        $manager = get_log_manager();
-        $store = new store($manager);
-        $batchsize = $store->get_max_batch_size_for_failed();
-
-        $extractedevents = logstore_xapi_extract_events($batchsize, XAPI_REPORT_SOURCE_LOG, XAPI_IMPORT_TYPE_FAILED);
-        $loadedevents = $store->process_events($extractedevents, XAPI_IMPORT_TYPE_FAILED);
-
-        logstore_xapi_finish_batch($loadedevents);
+        $store = new store(get_log_manager());
+        logstore_xapi_send_queued_events($store, XAPI_IMPORT_TYPE_FAILED, (int) $store->get_max_batch_size_for_failed());
     }
 }

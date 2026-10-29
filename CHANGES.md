@@ -153,6 +153,12 @@ the authoritative record.
   every run moved another batch to the failed log, to be resent by hand. Other errors, such as a
   400 for bad data, still go to the failed log. In real-time mode, these events go to the queue
   for the emit task. An endpoint that isn't set is treated the same way.
+- **Each run sends the whole queue** (#930). The live, failed and historic tasks used to send
+  one batch per run, so the live task sent at most 30 events a minute (about 43,000 a day), and a
+  busier site fell behind for good. Each run now sends batch after batch until the queue is
+  empty, the LRS can't take statements, or the new "Time limit for each run" (default 5 minutes)
+  passes. The oldest events are sent first. The batch size settings keep their meaning; the task
+  prints one summary per run.
 - **A batch that is too large (413) is split** until it fits; an event that is too large on its
   own goes to the failed log.
 - **A new check in the system status report** (Site administration > Reports > System status),

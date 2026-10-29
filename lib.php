@@ -60,6 +60,9 @@ define('XAPI_REPORT_ERRORTYPE_TRANSFORM', 10000); // This high number has been s
 // ones null.
 define('XAPI_LOADED_RETRY', 'retry');
 
+// The default time limit, in seconds, for each run of the tasks that send queued events.
+define('XAPI_MAX_RUNTIME_DEFAULT', 5 * MINSECS);
+
 // Resend values.
 define('XAPI_REPORT_RESEND_FALSE', 0);
 define('XAPI_REPORT_RESEND_TRUE', 1);
@@ -500,7 +503,8 @@ function logstore_xapi_extract_events($limitnum, $log, $type) {
     global $DB;
 
     $conditions = ["type" => $type];
-    $sort = '';
+    // Oldest first.
+    $sort = 'id';
     $fields = '*';
     $limitfrom = 0;
 
@@ -587,16 +591,6 @@ function logstore_xapi_get_send_error_string(\stdClass $error): string {
 }
 
 /**
- * Log the number of events using mtrace.
- *
- * @param array $events raw events data
- * @return void
- */
-function logstore_xapi_record_successful_events($events) {
-    mtrace(count(logstore_xapi_get_successful_events($events)) . " " . get_string('successful_events', 'logstore_xapi'));
-}
-
-/**
  * Record the standard log rows of successfully sent events in logstore_xapi_sent_log.
  *
  * The historic report uses this to leave out events that have been sent. One query finds the
@@ -646,25 +640,66 @@ function logstore_xapi_save_sent_events(array $events) {
  * \src\transformer\utils\set_statement_ids()). Events the LRS couldn't take now stay queued.
  *
  * @param array $loadedevents Loaded events, as returned by store::process_events().
- * @return void
+ * @return array The number of events sent, failed and left for a later run (sent, failed,
+ *     retry), and the LRS's error when events were left (error), or null.
  */
-function logstore_xapi_finish_batch(array $loadedevents) {
+function logstore_xapi_finish_batch(array $loadedevents): array {
     global $DB;
 
     $transaction = $DB->start_delegated_transaction();
     try {
-        logstore_xapi_store_failed_events($loadedevents);
+        logstore_xapi_store_failed_events($loadedevents, false);
         logstore_xapi_delete_processed_events($loadedevents);
         $transaction->allow_commit();
     } catch (\Throwable $e) {
         $transaction->rollback($e);
     }
-    logstore_xapi_record_successful_events($loadedevents);
-    $error = logstore_xapi_record_retry_events($loadedevents);
-    if ($error) {
+    return [
+        'sent' => count(logstore_xapi_get_successful_events($loadedevents)),
+        'failed' => count(logstore_xapi_get_failed_events($loadedevents)),
+        'retry' => count(logstore_xapi_get_retry_events($loadedevents)),
+        'error' => logstore_xapi_record_retry_events($loadedevents),
+    ];
+}
+
+/**
+ * Send the queued events of one type, batch after batch.
+ *
+ * Sends until the queue is empty, the LRS can't take statements (the batch stays queued, see
+ * \src\loader\utils\retry_later), the time limit for each run passes, or a batch removes
+ * nothing from the queue, which would otherwise send the same events again. A summary is
+ * printed at the end.
+ *
+ * @param \logstore_xapi\log\store $store The store.
+ * @param int $type The events' type: XAPI_IMPORT_TYPE_LIVE, _FAILED or _HISTORIC.
+ * @param int $batchsize The number of events to take from the queue at a time, or 0 for all.
+ * @return void
+ */
+function logstore_xapi_send_queued_events(\logstore_xapi\log\store $store, int $type, int $batchsize): void {
+    $timelimit = (int) get_config('logstore_xapi', 'maxruntime');
+    $deadline = time() + ($timelimit > 0 ? $timelimit : XAPI_MAX_RUNTIME_DEFAULT);
+    $totals = ['sent' => 0, 'failed' => 0, 'retry' => 0, 'error' => null];
+
+    do {
+        $events = logstore_xapi_extract_events($batchsize, XAPI_REPORT_SOURCE_LOG, $type);
+        if (empty($events)) {
+            break;
+        }
+        $loadedevents = $store->process_events($events, $type);
+        $counts = logstore_xapi_finish_batch($loadedevents);
+        foreach (['sent', 'failed', 'retry'] as $outcome) {
+            $totals[$outcome] += $counts[$outcome];
+        }
+        $totals['error'] = $counts['error'] ?? $totals['error'];
+        $removed = count($loadedevents) - $counts['retry'];
+    } while ($counts['retry'] === 0 && $removed > 0 && time() < $deadline);
+
+    mtrace($totals['failed'] . ' ' . get_string('failed_events', 'logstore_xapi'));
+    mtrace($totals['sent'] . ' ' . get_string('successful_events', 'logstore_xapi'));
+    if ($totals['retry'] > 0) {
         mtrace(get_string('retry_events', 'logstore_xapi', (object) [
-            'count' => count(logstore_xapi_get_retry_events($loadedevents)),
-            'error' => logstore_xapi_get_send_error_string($error),
+            'count' => $totals['retry'],
+            'error' => logstore_xapi_get_send_error_string($totals['error']),
         ]));
     }
 }

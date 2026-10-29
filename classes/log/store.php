@@ -48,6 +48,9 @@ class store extends php_obj implements log_writer {
      */
     public static $mocklrs = null;
 
+    /** @var bool[] The logstore_standard_log ids given to events so far, as keys. */
+    private $usedlogids = [];
+
     /**
      * Constructs a new store.
      * @param log_manager $manager
@@ -81,13 +84,13 @@ class store extends php_obj implements log_writer {
      * The event is matched on every column the two logs share, except the TEXT column "other",
      * which cannot be compared in SQL on every database. These include the columns of the
      * standard log's user-module index, so the lookup can use it. Identical events in the same
-     * second match several rows: the latest is returned, or the latest before $below.
+     * second match several rows: the latest one that hasn't been given to another event is
+     * returned (see get_persistent_eventids()).
      *
      * @param \stdClass $event The event, as stored in logstore_xapi_log.
-     * @param int|null $below Only consider rows with a lower id than this.
-     * @return int The row id, or 0 when no row matches.
+     * @return int The row id, or 0 when no free row matches.
      */
-    protected function get_event_id($event, ?int $below = null) {
+    protected function get_event_id($event) {
         global $DB;
 
         $fields = ['eventname', 'component', 'action', 'target', 'objecttable', 'objectid', 'crud', 'edulevel',
@@ -103,13 +106,14 @@ class store extends php_obj implements log_writer {
                 $where[] = "$field IS NULL";
             }
         }
-        if (!is_null($below)) {
-            $where[] = 'id < :below';
-            $params['below'] = $below;
-        }
 
-        $sql = 'SELECT MAX(id) FROM {logstore_standard_log} WHERE ' . implode(' AND ', $where);
-        return (int) $DB->get_field_sql($sql, $params);
+        $sql = 'SELECT id FROM {logstore_standard_log} WHERE ' . implode(' AND ', $where) . ' ORDER BY id DESC';
+        foreach ($DB->get_fieldset_sql($sql, $params) as $id) {
+            if (!isset($this->usedlogids[$id])) {
+                return (int) $id;
+            }
+        }
+        return 0;
     }
 
     /**
@@ -176,25 +180,20 @@ class store extends php_obj implements log_writer {
      * Set the events' type, and look up the logstore_standard_log id of those that have none.
      *
      * Events from the historic report and the failed log already have their id, so they keep it.
-     * Identical events in the same second match the same rows, so each event in the batch is
-     * given a row no other event in the batch has.
+     * Identical events in the same second match the same rows, so each event is given a row no
+     * other event has had from this store: across all the batches of a run, not only one batch.
      *
      * @param array $events raw event data
      * @param int $eventtype event type
      * @return array
      */
     private function get_persistent_eventids(array $events, $eventtype = XAPI_IMPORT_TYPE_LIVE) {
-        $assigned = [];
         foreach ($events as $event) {
             $event->type = $eventtype;
             if (empty($event->logstorestandardlogid)) {
-                $id = $this->get_event_id($event);
-                while ($id && isset($assigned[$id])) {
-                    $id = $this->get_event_id($event, $id);
-                }
-                $event->logstorestandardlogid = $id;
+                $event->logstorestandardlogid = $this->get_event_id($event);
             }
-            $assigned[$event->logstorestandardlogid] = true;
+            $this->usedlogids[$event->logstorestandardlogid] = true;
         }
         return $events;
     }
