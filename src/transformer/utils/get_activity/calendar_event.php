@@ -24,6 +24,8 @@
 
 namespace src\transformer\utils\get_activity;
 
+use src\transformer\utils;
+
 /**
  * Utility for creating calendar event objects.
  *
@@ -53,9 +55,10 @@ function calendar_event(
         ...base(),
         'id' => $config['app_url'] . '/calendar/view.php?id=' . $eventid,
         'definition' => [
+            // OCSW: a name that is sent is redacted; upstream already leaves out a personal one.
             ...(is_null($name) ? [] : [
                 'name' => [
-                    $lang => $name,
+                    $lang => utils\redact_free_text($config, $name),
                 ],
             ]),
             'type' => 'https://xapi.edlm/profiles/edlm-lms/concepts/activity-types/calendar-event',

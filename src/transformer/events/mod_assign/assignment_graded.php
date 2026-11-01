@@ -96,10 +96,19 @@ function assignment_graded(array $config, \stdClass $event) {
         ],
     ];
 
-    // The comment is free text written to the student and may name them, so it is left out
-    // while their identity is hidden (blind marking).
-    if (!is_null($gradecomment) && empty($event->anonymous)) {
-        $statement['result']['response'] = $gradecomment;
+    // The flag is always sent; comment text is optional and redacted when enabled.
+    $statement['result']['extensions']['https://w3id.org/xapi/ocsw/extensions/feedback_present'] =
+        !is_null($gradecomment) && trim(strip_tags((string) $gradecomment)) !== '';
+    $feedbackpresent = $statement['result']['extensions']['https://w3id.org/xapi/ocsw/extensions/feedback_present'];
+    $sendcontent = utils\is_sending_content($config);
+    $sendfeedbacktext = $feedbackpresent && $sendcontent && !empty($config['send_grading_feedback']);
+    if ($sendfeedbacktext) {
+        $statement['result']['response'] = utils\redact_free_text(
+            $config,
+            (string) $gradecomment,
+            (int) $event->courseid,
+            [$grade->userid]
+        );
     }
 
     // Only write a score if valid.

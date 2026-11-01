@@ -38,11 +38,17 @@ namespace src\transformer\utils;
 function get_lesson_essay_result(array $config, \stdClass $lesson, \stdClass $answer, \stdClass $attempt) {
 
     $attemptdetail = decode_other($attempt->useranswer);
+    $feedback = get_string_html_removed($attemptdetail->response ?? '');
+    $feedbackpresent = trim($feedback) !== '';
 
     $result = [
-        // The grader's comment is content, which "Send content" leaves out.
-        ...(is_sending_content($config) ? ['response' => get_string_html_removed($attemptdetail->response)] : []),
+        'extensions' => [
+            'https://w3id.org/xapi/ocsw/extensions/feedback_present' => $feedbackpresent,
+        ],
         'score' => get_score(floatval($attemptdetail->score ?: 0), 0.0, floatval($answer->score)),
     ];
+    if ($feedbackpresent && is_sending_content($config) && !empty($config['send_grading_feedback'])) {
+        $result['response'] = redact_free_text($config, $feedback, (int) $lesson->course, [(int) $attempt->userid]);
+    }
     return $result;
 }

@@ -305,6 +305,7 @@ final class lib_test extends advanced_testcase {
         }
         $this->assertCount(count($eventnames) - count(XAPI_ROUTES_OFF_BY_DEFAULT), $defaults);
         $this->assertArrayNotHasKey('\\core\\event\\search_results_viewed', $defaults);
+        $this->assertArrayHasKey('\\core\\event\\user_graded', $defaults);
         $this->assertArrayHasKey('\\mod_quiz\\event\\attempt_submitted', $defaults);
     }
 

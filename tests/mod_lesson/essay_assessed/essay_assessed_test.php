@@ -65,4 +65,37 @@ final class essay_assessed_test extends \logstore_xapi\xapi_test_case {
      */
     public function test_init(): void {
     }
+
+    /**
+     * Lesson grading feedback text is optional and redacted when enabled.
+     *
+     * @covers \\src\\transformer\\utils\\get_lesson_essay_result
+     * @return void
+     */
+    public function test_grading_feedback_is_sent_when_enabled(): void {
+        $statements = $this->get_statement_results([
+            'send_content' => true,
+            'send_grading_feedback' => true,
+            'redact_free_text' => true,
+        ]);
+
+        $this->assertSame('essay_grade_response', $statements[0]['result']['response']);
+        $this->assertTrue($statements[0]['result']['extensions']['https://w3id.org/xapi/ocsw/extensions/feedback_present']);
+    }
+
+    /**
+     * The master Send content setting still omits lesson grading feedback.
+     *
+     * @covers \\src\\transformer\\utils\\get_lesson_essay_result
+     * @return void
+     */
+    public function test_send_content_off_omits_grading_feedback(): void {
+        $statements = $this->get_statement_results([
+            'send_content' => false,
+            'send_grading_feedback' => true,
+        ]);
+
+        $this->assertArrayNotHasKey('response', $statements[0]['result']);
+        $this->assertTrue($statements[0]['result']['extensions']['https://w3id.org/xapi/ocsw/extensions/feedback_present']);
+    }
 }

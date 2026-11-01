@@ -50,12 +50,13 @@ function wiki_comment(
             . '&pageid=' . $wikipage->id,
         'definition' => [
             'type' => 'http://activitystrea.ms/comment',
+            // OCSW: a learner can title a page, and write the comment; both are redacted.
             'name' => [
-                $lang => 'RE: ' . $wikipage->title,
+                $lang => 'RE: ' . utils\redact_free_text($config, $wikipage->title, (int) $course->id, [$wikipage->userid ?? 0]),
             ],
             ...((is_null($comment) || !utils\is_sending_content($config)) ? [] : [
                 'description' => [
-                    $lang => utils\get_string_html_removed($comment->content),
+                    $lang => utils\redact_free_text($config, $comment->content, (int) $course->id, [$comment->userid ?? 0]),
                 ],
             ]),
         ],

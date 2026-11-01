@@ -58,10 +58,13 @@ function get_lesson_question_result(array $config, \stdClass $lesson, \stdClass 
     if ($attempt) {
         if ($page->qtype == 10) { // LESSON_PAGE_ESSAY.
             // Essay is graded later, and is also serialized into an object. Its text is content,
-            // which "Send content" leaves out.
+            // which is controlled by "Send essay answer text".
             $essay = decode_other($attempt->useranswer);
-            if (is_sending_content($config)) {
-                $result['response'] = get_string_html_removed($essay->answer);
+            $essaytext = get_string_html_removed($essay->answer ?? '');
+            $result['completion'] = trim($essaytext) !== '';
+            $result['extensions'] = ['https://w3id.org/xapi/ocsw/extensions/essay' => true];
+            if (is_sending_content($config) && !empty($config['send_essay_text'])) {
+                $result['response'] = redact_free_text($config, $essaytext, (int) $lesson->course, [$event->userid]);
             }
         } else if ($page->qtype == 5) { // LESSON_PAGE_MATCHING.
             // Matching is the tricky one because the stored response is
@@ -106,7 +109,10 @@ function get_lesson_question_result(array $config, \stdClass $lesson, \stdClass 
             // text, which "Send content" leaves out.
             $result['success'] = ($attempt->correct == 1);
             if ($page->qtype != 1 || is_sending_content($config)) { // LESSON_PAGE_SHORTANSWER.
-                $result['response'] = get_string_html_removed($attempt->useranswer);
+                // OCSW: a typed answer is redacted before it leaves Moodle.
+                $result['response'] = $page->qtype == 1
+                    ? redact_free_text($config, $attempt->useranswer, (int) $lesson->course, [$event->userid])
+                    : get_string_html_removed($attempt->useranswer);
             }
         }
     }

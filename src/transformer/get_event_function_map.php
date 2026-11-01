@@ -54,6 +54,7 @@ function get_event_function_map() {
         '\core\event\calendar_subscription_updated' => 'core\calendar_subscription_updated',
         '\core\event\calendar_subscription_deleted' => 'core\calendar_subscription_deleted',
         '\core\event\course_completed' => 'core\course_completed',
+        '\core\event\user_graded' => 'core\user_graded',
         '\core\event\course_completion_updated' => 'core\course_completion_updated',
         '\core\event\course_viewed' => 'core\course_viewed',
         '\core\event\course_section_created' => 'core\course_section_created',

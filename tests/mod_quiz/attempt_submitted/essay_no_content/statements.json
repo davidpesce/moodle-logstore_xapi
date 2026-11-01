@@ -190,7 +190,10 @@
       "registration": "89fdb5f6-c98d-54d1-8a37-bb602c90a9ef"
     },
     "result": {
-      "completion": true
+      "completion": true,
+      "extensions": {
+        "https://w3id.org/xapi/ocsw/extensions/essay": true
+      }
     }
   }
 ]

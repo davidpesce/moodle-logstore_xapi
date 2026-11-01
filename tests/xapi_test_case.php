@@ -133,30 +133,7 @@ abstract class xapi_test_case extends \advanced_testcase {
      * @return void
      */
     public function test_create_event() {
-        $event = $this->get_event();
-        $logerror = function ($message = '') {
-            echo("ERROR: $message\n");
-        };
-        $loginfo = function ($message = '') {
-            echo("INFO: $message\n");
-        };
-        $handlerconfig = [
-            'log_error' => $logerror,
-            'log_info' => $loginfo,
-            'transformer' => $this->get_transformer_config(),
-            'loader' => [
-                'loader' => 'none',
-                'lrs_endpoint' => '',
-                'lrs_username' => '',
-                'lrs_password' => '',
-                'lrs_max_batch_size' => 1,
-            ],
-        ];
-        $loadedevents = \src\handler($handlerconfig, [$event]);
-        $statements = array_reduce($loadedevents, function ($result, $loadedevent) {
-            $eventstatements = $loadedevent['statements'];
-            return array_merge($result, $eventstatements);
-        }, []);
+        $statements = $this->get_statement_results();
         $statements = $this->remove_statement_ids($statements);
         $this->assert_expected_statements($statements);
         foreach ($statements as $statement) {
@@ -168,6 +145,37 @@ abstract class xapi_test_case extends \advanced_testcase {
         foreach ($statements as $statement) {
             $this->assert_valid_xapi_statement($statement);
         }
+    }
+
+    /**
+     * Transform this fixture event with optional transformer configuration overrides.
+     *
+     * @param array $overrides Transformer configuration overrides.
+     * @return array Statements, including their generated IDs.
+     */
+    protected function get_statement_results(array $overrides = []): array {
+        $logerror = function ($message = '') {
+            echo("ERROR: $message\n");
+        };
+        $loginfo = function ($message = '') {
+            echo("INFO: $message\n");
+        };
+        $handlerconfig = [
+            'log_error' => $logerror,
+            'log_info' => $loginfo,
+            'transformer' => array_merge($this->get_transformer_config(), $overrides),
+            'loader' => [
+                'loader' => 'none',
+                'lrs_endpoint' => '',
+                'lrs_username' => '',
+                'lrs_password' => '',
+                'lrs_max_batch_size' => 1,
+            ],
+        ];
+        $loadedevents = \src\handler($handlerconfig, [$this->get_event()]);
+        return array_reduce($loadedevents, function ($result, $loadedevent) {
+            return array_merge($result, $loadedevent['statements']);
+        }, []);
     }
 
     /**

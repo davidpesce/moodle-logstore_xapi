@@ -48,7 +48,7 @@
       }
     },
     "result": {
-      "response": "query"
+      "response": "[name] [email] [phone]"
     }
   }
 ]

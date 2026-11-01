@@ -49,6 +49,22 @@ function essay(array $config, \stdClass $event, \stdClass $questionattempt, \std
 
     $responsesummary = is_null($questionattempt->responsesummary) ? '' : $questionattempt->responsesummary;
 
+    $result = [
+        // Essay presence is always reported; sending the answer itself is optional.
+        'completion' => $responsesummary !== '',
+        'extensions' => [
+            'https://w3id.org/xapi/ocsw/extensions/essay' => true,
+        ],
+    ];
+    if (utils\is_sending_content($config) && !empty($config['send_essay_text'])) {
+        $result['response'] = utils\redact_free_text(
+            $config,
+            $responsesummary,
+            (int) $event->courseid,
+            [$event->relateduserid]
+        );
+    }
+
     return [[
         'actor' => utils\get_user($config, $user),
         'verb' => [
@@ -66,11 +82,7 @@ function essay(array $config, \stdClass $event, \stdClass $questionattempt, \std
                 $lang
             ),
         ],
-        'result' => [
-            // The answer is free text, which "Send content" leaves out.
-            ...(utils\is_sending_content($config) ? ['response' => $responsesummary] : []),
-            'completion' => $responsesummary !== '',
-        ],
+        'result' => $result,
         'context' => [
             ...utils\get_context_base($config, $event, $lang, $course),
             'contextActivities' => [

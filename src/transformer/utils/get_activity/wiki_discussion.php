@@ -47,7 +47,12 @@ function wiki_discussion(
         'definition' => [
             'type' => 'http://id.tincanapi.com/activitytype/discussion',
             'name' => [
-                $lang => $wikipage->title . ' Discussion',
+                $lang => utils\redact_free_text(
+                    $config,
+                    $wikipage->title,
+                    (int) $course->id,
+                    [$wikipage->userid ?? 0]
+                ) . ' Discussion',
             ],
         ],
     ];

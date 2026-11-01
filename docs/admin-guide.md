@@ -45,7 +45,7 @@ To check that statements reach the LRS, look for "xAPI statements sent to the LR
 
 ## Which events are sent
 
-- **Include actions with these routes** lists every supported event (see [Supported events](supported-events.md)). New sites send all of them except private messages, notes and searches, whose statements carry the text of the message or note, or the search query. Sites that upgrade keep their choice, so events added in a new version are off until you turn them on.
+- **Include actions with these routes** lists every supported event (see [Supported events](supported-events.md)). New sites send all of them except private messages, notes and searches, whose statements carry the text of the message or note, or the search query. Existing choices are otherwise retained on upgrade; `user_graded` is appended so gradebook marks can be reported. If the saved list was empty, only that event is enabled.
 - **Log guest actions** sends the actions of guests and of users who aren't logged in.
 - **Anonymous events** decides what happens to events Moodle marks as anonymous, such as anonymous feedback, or assignments with blind marking: sent with an anonymous actor in place of the hidden user (the default), or not sent.
 
@@ -60,12 +60,15 @@ By default the actor is an account whose name is the user's Moodle id, with the 
 
 ## What statements contain
 
-Two settings under "Statement content" decide how much of what learners write and answer reaches the LRS:
+Settings under "Statement content" decide how much of what learners write and answer reaches the LRS:
 
-- **Send content**, on by default, sends what people write with the statements about it: forum post subjects and messages, private messages, wiki pages and comments, glossary definitions and comments, book chapters, notes, essay and short-answer text, a teacher's comment on a lesson essay, and feedback text answers. Turn it off if the LRS doesn't need the text, and the statements still say what happened. Feedback text answers are never sent from anonymous feedback.
+- **Send content**, on by default, is the master switch for text bodies and answers: forum messages, private messages, notes, wiki page content and comments, glossary definitions and comments, book chapters, short-answer responses and feedback text answers. It also gates the essay and grading text options below. It does not remove activity names or titles. Feedback text answers are never sent from anonymous feedback.
+- **Redact free text**, on by default, replaces detected emails, links, UK National Insurance numbers and postcodes, phone numbers, long digit runs, and names known to Moodle. It applies to free text wherever included, including activity names and titles when **Send content** is off. This is pattern-based and cannot guarantee that every identifying detail is removed. Turning it off sends included text without redaction.
+- **Send essay answer text**, off by default, includes quiz and lesson essay answers when both it and **Send content** are on. The statement still carries an essay indicator when the answer text is off.
+- **Send grading feedback comments**, off by default, includes assignment comments, gradebook feedback and lesson essay grader comments when both it and **Send content** are on. The statement still says whether feedback was written when the comment is off.
 - **Send response choices**, off by default, sends the possible and correct answers of quiz, lesson and feedback questions.
 
-The name of a personal calendar event is never sent.
+Essay and grading feedback text require **Send content** to be on. **Redact free text** determines whether included text and names are masked. **Send response choices**, off by default, separately controls possible and correct answers for quiz, lesson and feedback questions. The name of a personal calendar event follows the redaction setting.
 
 ## Proxy
 

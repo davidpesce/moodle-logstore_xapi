@@ -155,7 +155,7 @@
     },
     "result": {
       "completion": true,
-      "response": "test_long_text_answer: Tom & Jerry's \"show\""
+      "response": "[name]_long_text_answer: Tom & Jerry's \"show\""
     }
   }
 ]

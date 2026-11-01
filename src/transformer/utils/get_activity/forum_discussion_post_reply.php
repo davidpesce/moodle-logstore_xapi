@@ -54,13 +54,13 @@ function forum_discussion_post_reply(array $config, \stdClass $course, \stdClass
     }
     if (isset($post->subject)) {
         $activity['definition']['name'] = [
-            $lang => $post->subject,
+            $lang => utils\redact_free_text($config, $post->subject, (int) $course->id, [$post->userid ?? 0]),
         ];
     }
 
     if (isset($post->message)) {
         $activity['definition']['description'] = [
-            $lang => utils\get_string_html_removed($post->message),
+            $lang => utils\redact_free_text($config, $post->message, (int) $course->id, [$post->userid ?? 0]),
         ];
     }
 

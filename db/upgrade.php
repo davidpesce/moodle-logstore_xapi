@@ -186,12 +186,35 @@ function logstore_xapi_create_xapi_notification_table($dbman, $tablename) {
     }
 }
 
- /**
-  * Determine what needs to be done for each upgrade step.
-  *
-  * @param string $oldversion Prior version of plugin during an upgrade.
-  * @return bool
-  */
+/**
+ * Add the gradebook event to the saved routes, initializing defaults if unset.
+ *
+ * @return void
+ */
+function logstore_xapi_upgrade_routes(): void {
+    $storedroutes = get_config('logstore_xapi', 'routes');
+    if ($storedroutes === false) {
+        require_once(__DIR__ . '/../lib.php');
+        require_once(__DIR__ . '/../src/autoload.php');
+        $eventnames = array_keys(\src\transformer\get_event_function_map());
+        $routes = array_keys(logstore_xapi_get_default_routes($eventnames));
+    } else {
+        $routes = array_values(array_filter(array_map('trim', explode(',', (string) $storedroutes))));
+    }
+
+    $gradedroute = '\\core\\event\\user_graded';
+    if (!in_array($gradedroute, $routes, true)) {
+        $routes[] = $gradedroute;
+    }
+    set_config('routes', implode(',', $routes), 'logstore_xapi');
+}
+
+/**
+ * Determine what needs to be done for each upgrade step.
+ *
+ * @param string $oldversion Prior version of plugin during an upgrade.
+ * @return bool
+ */
 function xmldb_logstore_xapi_upgrade($oldversion) {
     global $DB;
 
@@ -292,6 +315,11 @@ function xmldb_logstore_xapi_upgrade($oldversion) {
             $dbman->add_field($table, $field);
         }
         upgrade_plugin_savepoint(true, 2026102900, 'logstore', 'xapi');
+    }
+
+    if ($oldversion < 2026110100) {
+        logstore_xapi_upgrade_routes();
+        upgrade_plugin_savepoint(true, 2026110100, 'logstore', 'xapi');
     }
 
     return true;

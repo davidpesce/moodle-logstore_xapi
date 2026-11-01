@@ -32,6 +32,7 @@ use logstore_xapi\task\emit_task;
  * @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @covers    \logstore_xapi\log\store::process_events
  * @covers    \logstore_xapi\log\store::is_event_ignored
+ * @covers    \logstore_xapi\log\store::get_handler_config
  */
 final class routes_test extends \advanced_testcase {
     /**
@@ -305,5 +306,63 @@ final class routes_test extends \advanced_testcase {
         // The queued row has no grade behind it, so it fails to transform: it was attempted.
         $this->assertEquals(0, $DB->count_records('logstore_xapi_log'));
         $this->assertEquals(1, $DB->count_records('logstore_xapi_failed_log'));
+    }
+
+    /**
+     * The saved statement-content settings reach the event transformer.
+     *
+     * @return void
+     */
+    public function test_transformer_content_settings_follow_admin_values(): void {
+        $this->resetAfterTest();
+        set_config('sendcontent', 1, 'logstore_xapi');
+        set_config('redactfreetext', 0, 'logstore_xapi');
+        set_config('sendessaytext', 1, 'logstore_xapi');
+        set_config('sendgradingfeedback', 1, 'logstore_xapi');
+
+        $store = new class (get_log_manager()) extends store {
+            /**
+             * Expose the transformer's settings for this config test.
+             *
+             * @return array
+             */
+            public function transformer_config(): array {
+                return $this->get_handler_config()['transformer'];
+            }
+        };
+        $config = $store->transformer_config();
+
+        $this->assertEquals(1, $config['send_content']);
+        $this->assertEquals(0, $config['redact_free_text']);
+        $this->assertEquals(1, $config['send_essay_text']);
+        $this->assertEquals(1, $config['send_grading_feedback']);
+    }
+
+    /**
+     * Unset new settings keep the documented privacy-first defaults.
+     *
+     * @return void
+     */
+    public function test_transformer_content_settings_have_legacy_safe_defaults(): void {
+        $this->resetAfterTest();
+        unset_config('redactfreetext', 'logstore_xapi');
+        unset_config('sendessaytext', 'logstore_xapi');
+        unset_config('sendgradingfeedback', 'logstore_xapi');
+
+        $store = new class (get_log_manager()) extends store {
+            /**
+             * Expose the transformer's settings for this config test.
+             *
+             * @return array
+             */
+            public function transformer_config(): array {
+                return $this->get_handler_config()['transformer'];
+            }
+        };
+        $config = $store->transformer_config();
+
+        $this->assertTrue((bool) $config['redact_free_text']);
+        $this->assertFalse((bool) $config['send_essay_text']);
+        $this->assertFalse((bool) $config['send_grading_feedback']);
     }
 }

@@ -3,6 +3,7 @@
     {
       "id": 1,
       "name": "test_lesson",
+      "course": 2,
       "intro": "test_lesson_intro",
       "custom": 1
     }

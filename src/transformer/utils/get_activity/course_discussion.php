@@ -39,7 +39,10 @@ use src\transformer\utils;
 function course_discussion(array $config, \stdClass $course, \stdClass $discussion) {
     $courselang = utils\get_course_lang($course);
     $discussionurl = $config['app_url'] . '/mod/forum/discuss.php?d=' . $discussion->id;
-    $discussionname = property_exists($discussion, 'name') ? $discussion->name : 'Discussion';
+    // OCSW: a learner can name a discussion, so the name is redacted.
+    $discussionname = property_exists($discussion, 'name')
+        ? utils\redact_free_text($config, $discussion->name, (int) $course->id, [$discussion->userid ?? 0])
+        : 'Discussion';
 
     return [
         ...base(),

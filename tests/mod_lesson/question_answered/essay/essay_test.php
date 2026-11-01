@@ -65,4 +65,36 @@ final class essay_test extends \logstore_xapi\xapi_test_case {
      */
     public function test_init(): void {
     }
+
+    /**
+     * Lesson essay text is included when its setting and Send content are enabled.
+     *
+     * @covers \\src\\transformer\\utils\\get_lesson_question_result
+     * @return void
+     */
+    public function test_essay_text_is_sent_when_enabled(): void {
+        $statements = $this->get_statement_results([
+            'send_content' => true,
+            'send_essay_text' => true,
+            'redact_free_text' => false,
+        ]);
+
+        $this->assertSame('lesson_question_essay_response', $statements[0]['result']['response']);
+    }
+
+    /**
+     * The master Send content setting still omits lesson essay text.
+     *
+     * @covers \\src\\transformer\\utils\\get_lesson_question_result
+     * @return void
+     */
+    public function test_send_content_off_omits_essay_text(): void {
+        $statements = $this->get_statement_results([
+            'send_content' => false,
+            'send_essay_text' => true,
+            'redact_free_text' => false,
+        ]);
+
+        $this->assertArrayNotHasKey('response', $statements[0]['result']);
+    }
 }

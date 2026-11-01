@@ -93,7 +93,9 @@
       "registration": "64bd2b1a-f742-5552-8718-bd20690257f3"
     },
     "result": {
-      "response": "essay_grade_response",
+      "extensions": {
+        "https://w3id.org/xapi/ocsw/extensions/feedback_present": true
+      },
       "score": {
         "max": 1,
         "min": 0,

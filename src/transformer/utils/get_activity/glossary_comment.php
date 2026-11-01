@@ -51,14 +51,14 @@ function glossary_comment(array $config, \stdClass $course, \stdClass $comment) 
 
     if (isset($entry->concept)) {
         $activity['definition']['name'] = [
-            $courselang => 'RE: ' . $entry->concept,
+            $courselang => 'RE: ' . utils\redact_free_text($config, $entry->concept, (int) $course->id, [$entry->userid ?? 0]),
         ];
     }
 
     // Comments only have descriptions when they aren't deleted.
     if (isset($comment->content) && utils\is_sending_content($config)) {
         $activity['definition']['description'] = [
-            $courselang => utils\get_string_html_removed($comment->content),
+            $courselang => utils\redact_free_text($config, $comment->content, (int) $course->id, [$comment->userid ?? 0]),
         ];
     }
 

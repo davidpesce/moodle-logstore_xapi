@@ -51,6 +51,9 @@ function course_completed(array $config, \stdClass $event) {
             ],
         ],
         'object' => utils\get_activity\course($config, $course),
+        'result' => [
+            'completion' => true,
+        ],
         'context' => [
             ...utils\get_context_base($config, $event, $lang, $course),
             'contextActivities' => [

@@ -47,11 +47,12 @@ function wiki_page(
         'definition' => [
             'type' => 'https://xapi.edlm/profiles/edlm-lms/concepts/activity-types/wiki-page',
             'name' => [
-                $lang => $wikipage->title,
+                // OCSW: a learner can create a page, so its title and text are redacted.
+                $lang => utils\redact_free_text($config, $wikipage->title, (int) $course->id, [$wikipage->userid ?? 0]),
             ],
             ...(utils\is_sending_content($config) ? [
                 'description' => [
-                    $lang => utils\get_string_html_removed($wikipage->cachedcontent),
+                    $lang => utils\redact_free_text($config, $wikipage->cachedcontent, (int) $course->id, [$wikipage->userid ?? 0]),
                 ],
             ] : []),
         ],

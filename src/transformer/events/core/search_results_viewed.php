@@ -58,9 +58,12 @@ function search_results_viewed(array $config, \stdClass $event): array {
                 ],
             ],
         ],
-        'result' => [
-            'response' => $info['q'],
-        ],
+        ...(utils\is_sending_content($config) ? [
+            'result' => [
+                // A search can name anyone on the site, so redact it like other free text.
+                'response' => utils\redact_free_text($config, (string) ($info['q'] ?? ''), 0, [$event->userid]),
+            ],
+        ] : []),
         'context' => [
             ...utils\get_context_base($config, $event, $lang),
             'contextActivities' => [

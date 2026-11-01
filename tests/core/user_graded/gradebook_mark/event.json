@@ -1,0 +1,12 @@
+{
+  "contextinstanceid": 2,
+  "courseid": 2,
+  "id": 9,
+  "objectid": 9,
+  "relateduserid": 2,
+  "userid": 1,
+  "eventname": "\\core\\event\\user_graded",
+  "objecttable": "grade_grades",
+  "other": "{\"itemid\":5,\"overridden\":false,\"finalgrade\":8.5}",
+  "timecreated": 1433946701
+}

@@ -65,7 +65,13 @@ function shortanswer(array $config, \stdClass $event, \stdClass $questionattempt
         ],
         'result' => [
             // The answer is free text, which "Send content" leaves out.
-            ...(utils\is_sending_content($config) ? ['response' => $responsesummary] : []),
+            // OCSW: redacted before it leaves Moodle.
+            ...(utils\is_sending_content($config) ? ['response' => utils\redact_free_text(
+                $config,
+                $responsesummary,
+                (int) $event->courseid,
+                [$event->relateduserid]
+            )] : []),
             'completion' => $responsesummary !== '',
             ...(is_null($success) ? [] : ['success' => $success]),
         ],

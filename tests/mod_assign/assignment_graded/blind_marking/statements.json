@@ -88,7 +88,9 @@
       "language": "en"
     },
     "result": {
-      "response": null,
+      "extensions": {
+        "https://w3id.org/xapi/ocsw/extensions/feedback_present": true
+      },
       "score": {
         "max": 2.0,
         "min": 0.0,

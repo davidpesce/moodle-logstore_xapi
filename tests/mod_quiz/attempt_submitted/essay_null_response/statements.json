@@ -191,7 +191,9 @@
     },
     "result": {
       "completion": false,
-      "response": ""
+      "extensions": {
+        "https://w3id.org/xapi/ocsw/extensions/essay": true
+      }
     }
   }
 ]

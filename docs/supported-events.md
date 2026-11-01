@@ -2,6 +2,8 @@
 
 The plugin sends statements for these events, when "Include actions with these routes" includes them and the plugin the event comes from is installed. The list is kept in step with [`get_event_function_map()`](../src/transformer/get_event_function_map.php) by a unit test.
 
+When upgrading to a version that adds `\\core\\event\\user_graded`, the upgrade appends it to the saved route list. If the saved list was empty, only gradebook marks are enabled; review the routes in the admin settings if that is not intended.
+
 ## Core (`core`)
 
 - `\core\event\badge_awarded`
@@ -41,6 +43,7 @@ The plugin sends statements for these events, when "Include actions with these r
 - `\core\event\user_enrolment_created`
 - `\core\event\user_enrolment_deleted`
 - `\core\event\user_enrolment_updated`
+- `\core\event\user_graded`
 - `\core\event\user_loggedin`
 - `\core\event\user_loggedinas`
 - `\core\event\user_loggedout`

@@ -49,12 +49,13 @@ function glossary_entry(array $config, \stdClass $course, \stdClass $entry) {
     // Entries only have names when they aren't deleted.
     if (isset($entry->concept)) {
         $activity['definition']['name'] = [
-            $courselang => $entry->concept,
+            // OCSW: a learner can add an entry, so its name is redacted.
+            $courselang => utils\redact_free_text($config, $entry->concept, (int) $course->id, [$entry->userid ?? 0]),
         ];
     }
     if (isset($entry->definition) && utils\is_sending_content($config)) {
         $activity['definition']['description'] = [
-            $courselang => utils\get_string_html_removed($entry->definition),
+            $courselang => utils\redact_free_text($config, $entry->definition, (int) $course->id, [$entry->userid ?? 0]),
         ];
     }
 

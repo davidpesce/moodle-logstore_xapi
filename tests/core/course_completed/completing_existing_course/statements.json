@@ -23,6 +23,9 @@
       },
       "objectType": "Activity"
     },
+    "result": {
+      "completion": true
+    },
     "context": {
       "contextActivities": {
         "category": [

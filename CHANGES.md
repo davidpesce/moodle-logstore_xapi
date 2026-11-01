@@ -4,6 +4,17 @@ A summary of each release. The full notes, including upgrade instructions, are o
 [GitHub releases page](https://github.com/davidpesce/moodle-logstore_xapi/releases), which is
 the authoritative record.
 
+## Unreleased
+
+- **Statement content is configurable in the UI.** `Send content` controls text bodies and answers;
+  activity names and titles can still appear when it is off. `Redact free text` defaults on and
+  applies to both. Disabling it explicitly permits included text and names to be sent unredacted.
+  New `Send essay answer text` and `Send grading feedback comments` options default off. Essays and
+  grading comments continue to report presence even when their bodies are omitted.
+- **Gradebook marks are sent as scored statements.** The `user_graded` route is appended during
+  upgrade, including when the saved route list is empty; in that case, only `user_graded` is
+  selected. The statement uses the grade captured by the event and reports feedback presence.
+
 ## 5.4.0 (2026-10-29)
 
 Feature and bug-fix release. Supports Moodle 4.5 to 5.3. Quiz and lesson statements report what

@@ -67,4 +67,67 @@ final class essay_test extends \logstore_xapi\xapi_test_case {
      */
     public function test_init(): void {
     }
+
+    /**
+     * Essay answer text is included only by its setting and is redacted by default.
+     *
+     * @covers \\src\\transformer\\events\\mod_quiz\\question_answered\\essay
+     * @return void
+     */
+    public function test_enabled_essay_text_is_redacted(): void {
+        $statement = $this->get_essay_statement([
+            'send_content' => true,
+            'send_essay_text' => true,
+            'redact_free_text' => true,
+        ]);
+
+        $this->assertSame('[name]_answer', $statement['result']['response']);
+    }
+
+    /**
+     * Turning redaction off sends the essay answer as authored.
+     *
+     * @covers \\src\\transformer\\events\\mod_quiz\\question_answered\\essay
+     * @return void
+     */
+    public function test_essay_text_can_be_sent_unredacted(): void {
+        $statement = $this->get_essay_statement([
+            'send_content' => true,
+            'send_essay_text' => true,
+            'redact_free_text' => false,
+        ]);
+
+        $this->assertSame('test_answer', $statement['result']['response']);
+    }
+
+    /**
+     * The master Send content setting still omits essay text.
+     *
+     * @covers \\src\\transformer\\events\\mod_quiz\\question_answered\\essay
+     * @return void
+     */
+    public function test_send_content_off_omits_essay_text(): void {
+        $statement = $this->get_essay_statement([
+            'send_content' => false,
+            'send_essay_text' => true,
+            'redact_free_text' => false,
+        ]);
+
+        $this->assertArrayNotHasKey('response', $statement['result']);
+    }
+
+    /**
+     * Return the essay statement from the fixture event.
+     *
+     * @param array $overrides Transformer setting overrides.
+     * @return array
+     */
+    private function get_essay_statement(array $overrides): array {
+        foreach ($this->get_statement_results($overrides) as $statement) {
+            if (!empty($statement['result']['extensions']['https://w3id.org/xapi/ocsw/extensions/essay'])) {
+                return $statement;
+            }
+        }
+        $this->fail('The fixture event did not produce an essay statement.');
+    }
 }

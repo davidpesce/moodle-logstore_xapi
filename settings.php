@@ -290,6 +290,27 @@ if ($hassiteconfig) {
         1
     ));
 
+    $settings->add(new admin_setting_configcheckbox(
+        'logstore_xapi/redactfreetext',
+        get_string('redact_free_text', 'logstore_xapi'),
+        get_string('redact_free_text_desc', 'logstore_xapi'),
+        1
+    ));
+
+    $settings->add(new admin_setting_configcheckbox(
+        'logstore_xapi/sendessaytext',
+        get_string('send_essay_text', 'logstore_xapi'),
+        get_string('send_essay_text_desc', 'logstore_xapi'),
+        0
+    ));
+
+    $settings->add(new admin_setting_configcheckbox(
+        'logstore_xapi/sendgradingfeedback',
+        get_string('send_grading_feedback', 'logstore_xapi'),
+        get_string('send_grading_feedback_desc', 'logstore_xapi'),
+        0
+    ));
+
     // Notifications.
     $settings->add(new admin_setting_heading(
         'notifications',

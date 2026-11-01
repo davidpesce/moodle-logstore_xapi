@@ -67,4 +67,36 @@ final class existing_assignment_graded_comment_test extends \logstore_xapi\xapi_
      */
     public function test_init(): void {
     }
+
+    /**
+     * Assignment grading comments are sent only when their setting is enabled.
+     *
+     * @covers \\src\\transformer\\events\\mod_assign\\assignment_graded
+     * @return void
+     */
+    public function test_grading_feedback_is_sent_when_enabled(): void {
+        $statements = $this->get_statement_results([
+            'send_content' => true,
+            'send_grading_feedback' => true,
+            'redact_free_text' => false,
+        ]);
+
+        $this->assertSame('test_comment_text', $statements[0]['result']['response']);
+    }
+
+    /**
+     * The master Send content setting still omits assignment grading comments.
+     *
+     * @covers \\src\\transformer\\events\\mod_assign\\assignment_graded
+     * @return void
+     */
+    public function test_send_content_off_omits_grading_feedback(): void {
+        $statements = $this->get_statement_results([
+            'send_content' => false,
+            'send_grading_feedback' => true,
+            'redact_free_text' => false,
+        ]);
+
+        $this->assertArrayNotHasKey('response', $statements[0]['result']);
+    }
 }

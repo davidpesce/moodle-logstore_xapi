@@ -86,7 +86,10 @@
       "registration": "64bd2b1a-f742-5552-8718-bd20690257f3"
     },
     "result": {
-      "response": "lesson_question_essay_response"
+      "completion": true,
+      "extensions": {
+        "https://w3id.org/xapi/ocsw/extensions/essay": true
+      }
     }
   }
 ]

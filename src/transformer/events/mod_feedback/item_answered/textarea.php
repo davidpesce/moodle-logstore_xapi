@@ -72,8 +72,14 @@ function textarea(
         'result' => [
             // Core stores the answer HTML-escaped, through s(). The text is content, and is never
             // sent from anonymous feedback, where it can say who wrote it.
+            // OCSW: and when it is sent, it is redacted first (utils/redact_free_text.php).
             ...((utils\is_sending_content($config) && empty($event->anonymous))
-                ? ['response' => htmlspecialchars_decode($feedbackvalue->value, ENT_QUOTES | ENT_HTML401)]
+                ? ['response' => utils\redact_free_text(
+                    $config,
+                    htmlspecialchars_decode($feedbackvalue->value, ENT_QUOTES | ENT_HTML401),
+                    (int) $event->courseid,
+                    [$event->userid]
+                )]
                 : []),
             'completion' => $feedbackvalue->value !== '',
         ],

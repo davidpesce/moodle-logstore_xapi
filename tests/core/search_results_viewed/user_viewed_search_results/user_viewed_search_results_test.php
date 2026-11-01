@@ -65,4 +65,19 @@ final class user_viewed_search_results_test extends \logstore_xapi\xapi_test_cas
      */
     public function test_init(): void {
     }
+
+    /**
+     * Search terms are omitted when Send content is off.
+     *
+     * @covers ::search_results_viewed
+     * @return void
+     */
+    public function test_search_query_obeys_send_content(): void {
+        $statements = $this->get_statement_results([
+            'send_content' => false,
+            'redact_free_text' => false,
+        ]);
+
+        $this->assertArrayNotHasKey('result', $statements[0]);
+    }
 }

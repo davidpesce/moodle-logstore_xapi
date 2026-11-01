@@ -1,0 +1,43 @@
+{
+  "assign": [
+    {
+      "id": 1,
+      "name": "test_assignment"
+    }
+  ],
+  "grade_grades": [
+    {
+      "id": 9,
+      "itemid": 5,
+      "userid": 2,
+      "finalgrade": 4.0,
+      "feedback": "<p>Gradebook feedback</p>"
+    }
+  ],
+  "grade_items": [
+    {
+      "id": 5,
+      "courseid": 2,
+      "itemtype": "mod",
+      "itemmodule": "assign",
+      "iteminstance": 1,
+      "grademin": 0,
+      "grademax": 10
+    }
+  ],
+  "modules": [
+    {
+      "id": 1,
+      "name": "assign"
+    }
+  ],
+  "user": [
+    {
+      "id": 2,
+      "firstname": "Aya",
+      "lastname": "Uchiha",
+      "username": "learner2",
+      "email": "aya@example.org"
+    }
+  ]
+}

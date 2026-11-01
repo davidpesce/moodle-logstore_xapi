@@ -191,7 +191,7 @@
     },
     "result": {
       "completion": true,
-      "response": "test_answer",
+      "response": "[name]_answer",
       "success": true
     }
   }

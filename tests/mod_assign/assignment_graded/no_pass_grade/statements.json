@@ -89,6 +89,9 @@
       "registration": "0019364e-d2ff-5902-8174-e9b27ffb43b1"
     },
     "result": {
+      "extensions": {
+        "https://w3id.org/xapi/ocsw/extensions/feedback_present": false
+      },
       "score": {
         "max": 2.0,
         "min": 0.0,
