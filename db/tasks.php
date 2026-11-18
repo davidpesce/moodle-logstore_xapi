@@ -37,6 +37,15 @@ $tasks = [
         'month' => '*',
     ],
     [
+        'classname' => '\logstore_xapi\task\client_emit_task',
+        'blocking' => 0,
+        'minute' => '*/1',
+        'hour' => '*',
+        'day' => '*',
+        'dayofweek' => '*',
+        'month' => '*',
+    ],
+    [
         'classname' => '\logstore_xapi\task\failed_task',
         'blocking' => 0,
         'minute' => '*/30',

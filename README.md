@@ -5,6 +5,7 @@ A Moodle log store that turns Moodle events into [xAPI](https://github.com/adlne
 **Get it from [CAMP](https://camp-registry.org/plugin/logstore_xapi)**, the Moodle community plugin registry, where every release is published first. It reaches the [Moodle Marketplace](https://marketplace.moodle.com/plugins/logstore_xapi) once Moodle has reviewed it.
 
 - Supports Moodle 4.5 to 5.3, and is tested on PostgreSQL and MariaDB. Oracle isn't supported.
+- Can optionally capture client-side xAPI statements from H5P content; see [the admin guide](docs/admin-guide.md#capture-client-side-h5p-statements) for setup and privacy details.
 - Each release's changes are in [CHANGES.md](CHANGES.md).
 
 ## Documentation

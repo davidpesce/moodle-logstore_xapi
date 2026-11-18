@@ -290,6 +290,42 @@ if ($hassiteconfig) {
         1
     ));
 
+    $settings->add(new admin_setting_configcheckbox(
+        'logstore_xapi/captureclientsideevents',
+        get_string('captureclientsideevents', 'logstore_xapi'),
+        get_string('captureclientsideevents_desc', 'logstore_xapi'),
+        0
+    ));
+
+    // Client-side (H5P) verb filters. Single multicheckbox mirroring the
+    // server-side routes setting: each verb behaves as a boolean toggle.
+    $settings->add(new admin_setting_heading(
+        'clientverbs',
+        get_string('heading_clientverbs', 'logstore_xapi'),
+        get_string('heading_clientverbs_desc', 'logstore_xapi')
+    ));
+
+    $clientverbmap = \logstore_xapi\client\verb_policy::get_verb_map();
+    $clientverbchoices = [];
+    foreach ($clientverbmap as $short => $iri) {
+        $clientverbchoices[$short] = ucfirst($short);
+    }
+
+    $settings->add(new admin_setting_configmulticheckbox(
+        'logstore_xapi/clientverbs',
+        get_string('clientverbs', 'logstore_xapi'),
+        get_string('clientverbs_desc', 'logstore_xapi'),
+        $clientverbchoices,
+        $clientverbchoices
+    ));
+
+    $settings->add(new admin_setting_configcheckbox(
+        'logstore_xapi/clientverbs_allow_unknown',
+        get_string('clientverbs_allow_unknown', 'logstore_xapi'),
+        get_string('clientverbs_allow_unknown_desc', 'logstore_xapi'),
+        1
+    ));
+
     // Notifications.
     $settings->add(new admin_setting_heading(
         'notifications',
