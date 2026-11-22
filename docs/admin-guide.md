@@ -6,6 +6,7 @@ Install, set up and run the plugin. [How it works](how-it-works.md) explains wha
 - [Connect to the LRS](#connect-to-the-lrs)
 - [Enable](#enable)
 - [Which events are sent](#which-events-are-sent)
+- [Capture client-side (H5P) statements](#capture-client-side-h5p-statements)
 - [How users are identified](#how-users-are-identified)
 - [What statements contain](#what-statements-contain)
 - [Proxy](#proxy)
@@ -49,6 +50,18 @@ To check that statements reach the LRS, look for "xAPI statements sent to the LR
 - **Log guest actions** sends the actions of guests and of users who aren't logged in.
 - **Anonymous events** decides what happens to events Moodle marks as anonymous, such as anonymous feedback, or assignments with blind marking: sent with an anonymous actor in place of the hidden user (the default), or not sent.
 
+## Capture client-side (H5P) statements
+
+The plugin can also collect xAPI statements emitted by H5P content in the browser. This is separate from Moodle event logging: it captures interactions that H5P reports through its xAPI event dispatcher, rather than only the Moodle event that the learner viewed the activity.
+
+To enable it, go to Site administration > Plugins > Logging > Logstore xAPI > General Settings and turn on **Capture client side events**. The setting is off by default. When enabled, the plugin listens on course and activity pages for logged-in, non-guest users. H5P events are sent to Moodle over an authenticated POST request; the server replaces the submitted actor with the authenticated Moodle user and verifies any course association before forwarding the statement.
+
+Under **Client-side verbs**, choose which known H5P verbs to include. All listed verbs are enabled by default. **Allow unknown client-side verbs** is a separate setting, on by default, for verbs not in the known H5P list. Verb filters are applied in the browser to reduce requests and again on the server, so the server-side filter remains authoritative.
+
+Client-side statements use the same LRS endpoint, authentication, TLS and delivery mode as other plugin statements. With **Send statements by scheduled task?** enabled, they are queued and processed by a scheduled task that runs every minute; failures remain queued for retry. If background mode is off, the endpoint attempts delivery during the request. The client queue is separate from the Moodle event queue and error report.
+
+Client-side xAPI statements may include learners' answers in `result.response`. **Send content** controls this response text too: when off, response text—including in nested SubStatements—is removed before the statement is stored or sent, while scores and other result data are retained. Turning the setting off does not retract statements already sent to the LRS.
+
 ## How users are identified
 
 By default the actor is an account whose name is the user's Moodle id, with the site URL as its homePage, and the user's full name. Under "Actor identification":
@@ -62,7 +75,7 @@ By default the actor is an account whose name is the user's Moodle id, with the 
 
 Two settings under "Statement content" decide how much of what learners write and answer reaches the LRS:
 
-- **Send content**, on by default, sends what people write with the statements about it: forum post subjects and messages, private messages, wiki pages and comments, glossary definitions and comments, book chapters, notes, essay and short-answer text, a teacher's comment on a lesson essay, and feedback text answers. Turn it off if the LRS doesn't need the text, and the statements still say what happened. Feedback text answers are never sent from anonymous feedback.
+- **Send content**, on by default, sends what people write with the statements about it: forum post subjects and messages, private messages, wiki pages and comments, glossary definitions and comments, book chapters, notes, essay and short-answer text, a teacher's comment on a lesson essay, feedback text answers, and response text in client-side (including H5P) statements. Turn it off if the LRS doesn't need the text; affected statements still say what happened, and response text is removed before client statements are queued or sent. Scores and other result data are retained. Feedback text answers are never sent from anonymous feedback.
 - **Send response choices**, off by default, sends the possible and correct answers of quiz, lesson and feedback questions.
 
 The name of a personal calendar event is never sent.

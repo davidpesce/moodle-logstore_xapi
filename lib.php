@@ -27,6 +27,47 @@
 define('XAPI_REPORT_ID_ERROR', 0);
 define('XAPI_REPORT_ID_HISTORIC', 1);
 
+// Client-side statement hardening.
+//
+// ajax/client_events.php is authenticated (require_login + sesskey), which
+// stops CSRF and unauthenticated posts, but any logged-in user knows their
+// own sesskey and can craft the POST by hand (curl, devtools, etc.). The
+// statement JSON must therefore be treated as untrusted user input: size
+// capped before decoding, shape capped after decoding, spoofable/LRS-owned
+// fields rejected, and everything bound via the $DB API (no SQL string
+// interpolation) so a hostile payload cannot become SQL injection. The same
+// payload is later forwarded to the LRS and may surface in reports, so
+// over-long strings and control characters are rejected here as well.
+
+// Maximum raw JSON accepted for one client statement (typical H5P
+// statements are a few KB; 64KB leaves ample headroom for context/result).
+define('XAPI_CLIENT_STATEMENT_MAX_BYTES', 65536);
+// Maximum nesting depth / total keys / string lengths, guarding against
+// deeply-nested or "billion laughs"-style payloads and DB/TEXT abuse.
+define('XAPI_CLIENT_STATEMENT_MAX_DEPTH', 20);
+define('XAPI_CLIENT_STATEMENT_MAX_KEYS', 200);
+define('XAPI_CLIENT_STATEMENT_MAX_STRING', 8192);
+define('XAPI_CLIENT_STATEMENT_MAX_IRI', 2048);
+define('XAPI_CLIENT_STATEMENT_MAX_ID', 255);
+
+// Top-level xAPI statement properties a browser may send. 'stored' and
+// 'authority' are deliberately absent: they are assigned by the LRS and a
+// client supplying them is attempting to spoof LRS state.
+define('XAPI_CLIENT_STATEMENT_TOP_LEVEL', [
+    'id', 'actor', 'verb', 'object', 'result', 'context', 'timestamp', 'version', 'attachments',
+]);
+
+// Object types defined by the xAPI spec.
+define('XAPI_CLIENT_STATEMENT_OBJECT_TYPES', [
+    'Activity', 'Agent', 'Group', 'StatementRef', 'SubStatement',
+]);
+
+// Retry budget for a failed client statement: 4320 one-minute task runs
+// (3 days) before retries stop. Retention for sent-statement
+// idempotency rows, after which a duplicate re-send is harmless.
+define('XAPI_CLIENT_QUEUE_MAX_ATTEMPTS', 4320);
+define('XAPI_CLIENT_SENT_RETENTION_SECS', 90 * DAYSECS);
+
 // Type constants.
 define('XAPI_IMPORT_TYPE_LIVE', 0);
 define('XAPI_IMPORT_TYPE_HISTORIC', 1);
@@ -960,16 +1001,465 @@ function logstore_xapi_get_type_from_table($table) {
 }
 
 /**
+ * Check whether a value looks like an absolute IRI.
+ *
+ * Mirrors the RFC 3986 scheme grammar: a letter followed by letters, digits,
+ * '+', '-' or '.', then a colon and at least one additional non-whitespace
+ * character. It does not attempt full RFC 3987 parsing. Length is capped so
+ * a hostile client cannot smuggle megabytes inside a single IRI field.
+ *
+ * @param mixed $value Value to check.
+ * @return bool
+ */
+function logstore_xapi_is_valid_iri($value) {
+    return is_string($value) &&
+        strlen($value) <= XAPI_CLIENT_STATEMENT_MAX_IRI &&
+        strpos($value, "\0") === false &&
+        (bool) preg_match('/^[A-Za-z][A-Za-z0-9+.-]*:[^\s]+$/', $value);
+}
+
+/**
+ * Validate raw client statement JSON before it is decoded.
+ *
+ * Must run before json_decode so a single huge POST cannot exhaust memory.
+ * Guards against the "SQL injection equivalent" here too: the payload is
+ * never interpolated into SQL (all writes go through $DB->insert_record
+ * with bound parameters), but an uncapped TEXT value is still a DoS and
+ * truncation vector, so it is rejected up front.
+ *
+ * @param mixed $statementjson Raw POST value.
+ * @param string|null $error Set to a validation error when invalid.
+ * @return bool
+ */
+function logstore_xapi_validate_client_statement_json($statementjson, &$error = null) {
+    $error = null;
+    if (!is_string($statementjson) || $statementjson === '') {
+        $error = get_string('clientpayloadrequired', 'logstore_xapi');
+        return false;
+    }
+    if (strpos($statementjson, "\0") !== false) {
+        $error = get_string('clientpayloadchar', 'logstore_xapi');
+        return false;
+    }
+    if (strlen($statementjson) > XAPI_CLIENT_STATEMENT_MAX_BYTES) {
+        $error = get_string('clientpayloadsize', 'logstore_xapi');
+        return false;
+    }
+    return true;
+}
+
+/**
+ * Recursively cap the shape of a decoded statement.
+ *
+ * Limits nesting depth, total key count, key names and string values. This
+ * blocks deeply-nested decoding bombs, key-flooding, null-byte smuggling
+ * and control-character log/report injection in one pass.
+ *
+ * @param mixed $node Current node.
+ * @param string|null $error Set to a validation error when invalid.
+ * @param int $depth Current depth.
+ * @param int $keycount Running total of array keys seen.
+ * @return bool
+ */
+function logstore_xapi_check_client_statement_shape($node, &$error = null, $depth = 0, &$keycount = 0) {
+    if ($depth > XAPI_CLIENT_STATEMENT_MAX_DEPTH) {
+        $error = get_string('clientdepth', 'logstore_xapi');
+        return false;
+    }
+    if (is_array($node)) {
+        $keycount += count($node);
+        if ($keycount > XAPI_CLIENT_STATEMENT_MAX_KEYS) {
+            $error = get_string('clientmanyfields', 'logstore_xapi');
+            return false;
+        }
+        foreach ($node as $key => $value) {
+            if (!is_int($key) && (!is_string($key) || $key === '' || strlen($key) > 128 ||
+                    preg_match('/[\x00-\x1F\x7F]/', $key))) {
+                $error = get_string('clientfieldname', 'logstore_xapi');
+                return false;
+            }
+            if (!logstore_xapi_check_client_statement_shape($value, $error, $depth + 1, $keycount)) {
+                return false;
+            }
+        }
+        return true;
+    }
+    if (is_string($node)) {
+        if (strlen($node) > XAPI_CLIENT_STATEMENT_MAX_STRING) {
+            $error = get_string('clientvaluetoolong', 'logstore_xapi');
+            return false;
+        }
+        if (strpos($node, "\0") !== false ||
+                preg_match('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', $node)) {
+            $error = get_string('clientvaluechar', 'logstore_xapi');
+            return false;
+        }
+        return true;
+    }
+    if (is_null($node) || is_bool($node) || is_int($node) || is_float($node)) {
+        if (is_float($node) && !is_finite($node)) {
+            $error = get_string('clientnumber', 'logstore_xapi');
+            return false;
+        }
+        return true;
+    }
+    $error = get_string('clientvalue', 'logstore_xapi');
+    return false;
+}
+
+/**
+ * Validate an ISO 8601 timestamp as used by xAPI.
+ *
+ * @param mixed $value Value to check.
+ * @return bool
+ */
+function logstore_xapi_is_valid_statement_timestamp($value) {
+    if (!is_string($value) || strlen($value) > 64 || strpos($value, "\0") !== false) {
+        return false;
+    }
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:?\d{2})?$/', $value)) {
+        return false;
+    }
+    return strtotime($value) !== false;
+}
+
+/**
+ * Validate the subset of an xAPI statement required by the client queue.
+ *
+ * The statement arrives from the browser, and any authenticated user can
+ * forge it (sesskey proves the request came from their own session, not
+ * that the H5P content produced it). Validation is therefore hostile-input
+ * validation, not just well-formedness: size/shape caps, an allow-list of
+ * top-level fields, rejection of LRS-owned fields (stored/authority),
+ * IRI checks, and range checks on scores.
+ *
+ * Note: the actor is intentionally NOT trusted here. ajax/client_events.php
+ * overwrites it with the authenticated user after validation.
+ *
+ * @param mixed $statement Decoded statement data.
+ * @param string|null $error Set to a validation error when invalid.
+ * @param string|null $statementjson Optional raw JSON for a size pre-check.
+ * @return bool
+ */
+function logstore_xapi_validate_client_statement($statement, &$error = null, $statementjson = null) {
+    $error = null;
+
+    if ($statementjson !== null && !logstore_xapi_validate_client_statement_json($statementjson, $error)) {
+        return false;
+    }
+
+    if (!is_array($statement)) {
+        $error = get_string('clientnotobject', 'logstore_xapi');
+        return false;
+    }
+
+    // Unknown top-level members carry no meaning for the queue and only
+    // enlarge the LRS payload / stored row, so reject them. LRS-owned
+    // members are rejected explicitly below with a clearer message.
+    foreach (array_keys($statement) as $key) {
+        if ($key === 'stored' || $key === 'authority') {
+            $error = get_string('clientlrsfield', 'logstore_xapi');
+            return false;
+        }
+        if (!in_array($key, XAPI_CLIENT_STATEMENT_TOP_LEVEL, true)) {
+            $error = get_string('clienttopfield', 'logstore_xapi');
+            return false;
+        }
+    }
+
+    if (empty($statement['actor']) || !is_array($statement['actor'])) {
+        $error = get_string('clientactor', 'logstore_xapi');
+        return false;
+    }
+
+    if (empty($statement['verb']) || !is_array($statement['verb']) ||
+            empty($statement['verb']['id']) || !logstore_xapi_is_valid_iri($statement['verb']['id'])) {
+        $error = get_string('clientverb', 'logstore_xapi');
+        return false;
+    }
+
+    if (empty($statement['object']) || !is_array($statement['object'])) {
+        $error = get_string('clientobject', 'logstore_xapi');
+        return false;
+    }
+
+    // Activity objects carry an IRI id. Statement references, sub-statements
+    // and other xAPI object types identify themselves by objectType and may
+    // carry a non-IRI id, so the IRI check only applies to plain activities.
+    $objecttype = $statement['object']['objectType'] ?? null;
+    if ($objecttype !== null &&
+            (!is_string($objecttype) || !in_array($objecttype, XAPI_CLIENT_STATEMENT_OBJECT_TYPES, true))) {
+        $error = get_string('clientobjecttype', 'logstore_xapi');
+        return false;
+    }
+    if (isset($statement['object']['id'])) {
+        if (!is_string($statement['object']['id']) || $statement['object']['id'] === '' ||
+                strlen($statement['object']['id']) > XAPI_CLIENT_STATEMENT_MAX_IRI) {
+            $error = get_string('clientobjectid', 'logstore_xapi');
+            return false;
+        }
+        if (($objecttype === null || $objecttype === 'Activity') &&
+                !logstore_xapi_is_valid_iri($statement['object']['id'])) {
+            $error = get_string('clientobjectidiri', 'logstore_xapi');
+            return false;
+        }
+    } else if ($objecttype === null) {
+        $error = get_string('clientobjectidor', 'logstore_xapi');
+        return false;
+    }
+
+    if (isset($statement['id'])) {
+        if (!is_string($statement['id']) || $statement['id'] === '' ||
+                strlen($statement['id']) > XAPI_CLIENT_STATEMENT_MAX_ID ||
+                strpos($statement['id'], "\0") !== false ||
+                preg_match('/[\x00-\x1F\x7F\s]/', $statement['id'])) {
+            $error = get_string('clientstatementid', 'logstore_xapi');
+            return false;
+        }
+    }
+
+    if (isset($statement['timestamp']) && !logstore_xapi_is_valid_statement_timestamp($statement['timestamp'])) {
+        $error = get_string('clienttimestamp', 'logstore_xapi');
+        return false;
+    }
+
+    if (isset($statement['version'])) {
+        if (!is_string($statement['version']) || strlen($statement['version']) > 16 ||
+                !preg_match('/^1\.0\.\d+$/', $statement['version'])) {
+            $error = get_string('clientversion', 'logstore_xapi');
+            return false;
+        }
+    }
+
+    $keycount = 0;
+    if (!logstore_xapi_check_client_statement_shape($statement, $error, 0, $keycount)) {
+        return false;
+    }
+
+    return true;
+}
+
+/**
+ * Derive the course for a client-side statement and strip untrusted claims.
+ *
+ * sender.js hints the course via context.contextActivities.grouping, but that
+ * value comes from the browser and can be forged to claim any course. Keep
+ * only a grouping entry that points at a course on this site which the user
+ * can access, and return its id so the queue row carries a server-verified
+ * course. Anything else is removed so an unverified course association is
+ * not forwarded to the LRS.
+ *
+ * A verified claim is enriched with the same standard course activity the
+ * server-side transformer emits (cmi5 course type, localised name, and the
+ * short-id/external-id extensions only when the admin enables them), so
+ * client and server statements describe the course identically.
+ *
+ * @param array $statement Decoded statement, updated in place.
+ * @param stdClass $user Authenticated user.
+ * @return int|null Verified course id, or null when no claim verifies.
+ */
+function logstore_xapi_resolve_client_statement_course(array &$statement, $user) {
+    global $CFG, $DB;
+
+    $grouping = $statement['context']['contextActivities']['grouping'] ?? null;
+    if ($grouping === null) {
+        return null;
+    }
+    $entries = is_array($grouping) && array_key_exists('id', $grouping) ? [$grouping] : (array)$grouping;
+
+    $base = preg_quote($CFG->wwwroot, '#');
+    foreach ($entries as $entry) {
+        if (!is_array($entry) || empty($entry['id']) || !is_string($entry['id'])) {
+            continue;
+        }
+        if (!preg_match('#^' . $base . '/course/view\.php\?id=(\d+)$#', $entry['id'], $matches)) {
+            continue;
+        }
+        $courseid = (int)$matches[1];
+        if ($courseid <= 0) {
+            continue;
+        }
+        $course = $DB->get_record('course', ['id' => $courseid]);
+        if (!$course || !can_access_course($course, $user)) {
+            continue;
+        }
+        // Replace the browser's bare URL with the standard course activity,
+        // mirroring classes/log/store.php so both statement sources agree.
+        require_once($CFG->dirroot . '/admin/tool/log/store/xapi/src/autoload.php');
+        $activityconfig = [
+            'app_url' => $CFG->wwwroot,
+            'send_short_course_id' => get_config('logstore_xapi', 'shortcourseid'),
+            'send_course_and_module_idnumber' => get_config('logstore_xapi', 'sendidnumber'),
+        ];
+        $statement['context']['contextActivities']['grouping'] =
+            [\src\transformer\utils\get_activity\course($activityconfig, $course)];
+        return $courseid;
+    }
+
+    // No verifiable course claim: remove the grouping so it is not forwarded.
+    unset($statement['context']['contextActivities']['grouping']);
+    if (empty($statement['context']['contextActivities'])) {
+        unset($statement['context']['contextActivities']);
+    }
+    if (empty($statement['context'])) {
+        unset($statement['context']);
+    }
+    return null;
+}
+
+/**
+ * Queue a client-side xAPI statement unless it has already been queued or sent.
+ *
+ * Defence in depth: the caller (ajax/client_events.php) already validates,
+ * but this re-checks sizes and scalar bindings so a future caller cannot
+ * turn the queue into a truncation/SQL-injection point. All writes use
+ * $DB->insert_record with bound parameters; no statement content is ever
+ * interpolated into SQL.
+ *
+ * @param array $statement Decoded xAPI statement.
+ * @param string $statementjson Original JSON representation.
+ * @param int $userid Authenticated Moodle user id.
+ * @param int $contextid Moodle context id.
+ * @param int|null $courseid Optional course id.
+ * @param string|null $ip Request IP address.
+ * @return array Queue result.
+ */
+function logstore_xapi_queue_client_statement(array $statement, $statementjson, $userid, $contextid,
+        $courseid = null, $ip = null) {
+    global $DB;
+
+    $validationerror = null;
+    if (!logstore_xapi_validate_client_statement($statement, $validationerror, $statementjson)) {
+        throw new coding_exception('Invalid client statement: ' . $validationerror);
+    }
+
+    $userid = (int)$userid;
+    $contextid = (int)$contextid;
+    if ($userid <= 0 || $contextid <= 0) {
+        throw new coding_exception('Invalid user or context for client statement.');
+    }
+
+    $statementid = isset($statement['id']) ? (string)$statement['id'] : null;
+    if ($statementid !== null && strlen($statementid) > XAPI_CLIENT_STATEMENT_MAX_ID) {
+        throw new coding_exception('Invalid client statement id.');
+    }
+
+    // Bound to a char(45) column; keep only a valid IP (or nothing) so a
+    // forged header cannot smuggle control characters into the log.
+    $iprecord = null;
+    if (is_string($ip) && $ip !== '') {
+        $ip = trim(substr($ip, 0, 45));
+        if (strpos($ip, "\0") === false && !preg_match('/[\x00-\x1F\x7F]/', $ip)) {
+            $iprecord = $ip;
+        }
+    }
+
+    $clientkey = hash('sha256', $statementid !== null ? 'id:' . $statementid : 'json:' . $statementjson);
+
+    if ($DB->record_exists('logstore_xapi_client_log', ['clientkey' => $clientkey]) ||
+            $DB->record_exists('logstore_xapi_client_sent', ['clientkey' => $clientkey])) {
+        return ['queued' => false, 'duplicate' => true, 'id' => 0];
+    }
+
+    $record = (object) [
+        'statement' => $statementjson,
+        'clientkey' => $clientkey,
+        'statementid' => $statementid,
+        'userid' => $userid,
+        'contextid' => $contextid,
+        'courseid' => $courseid === null ? null : (int)$courseid,
+        'timecreated' => time(),
+        'ip' => $iprecord,
+        'type' => XAPI_IMPORT_TYPE_LIVE,
+        'attempts' => 0,
+    ];
+
+    try {
+        $id = $DB->insert_record('logstore_xapi_client_log', $record);
+    } catch (\dml_exception $exception) {
+        // The unique client key also protects against two concurrent browser
+        // requests for the same statement.
+        if ($DB->record_exists('logstore_xapi_client_log', ['clientkey' => $clientkey]) ||
+                $DB->record_exists('logstore_xapi_client_sent', ['clientkey' => $clientkey])) {
+            return ['queued' => false, 'duplicate' => true, 'id' => 0];
+        }
+        throw $exception;
+    }
+
+    return [
+        'queued' => true,
+        'duplicate' => false,
+        'id' => $id,
+    ];
+}
+
+/**
  * Status checks contributed to the system status report.
  *
- * Called by \core\check\manager::get_checks('status').
+ * Called by \\core\\check\\manager::get_checks('status').
  *
- * @return array of \core\check\check
+ * @return array of \\core\\check\\check
  */
 function logstore_xapi_status_checks() {
     return [
         new \logstore_xapi\check\sending(),
     ];
+}
+
+/**
+ * Extract client statements awaiting processing.
+ *
+ * Ordered by attempts so rows that already burned retries (including
+ * exhausted ones past the attempt cap) sort last and cannot crowd
+ * retryable rows out of the batch window.
+ *
+ * @param int $limitnum Maximum number of records.
+ * @param int $type Client queue type.
+ * @return array
+ */
+function logstore_xapi_extract_client_events($limitnum, $type) {
+    global $DB;
+
+    return $DB->get_records('logstore_xapi_client_log', ['type' => $type], 'attempts ASC, id ASC', '*', 0, $limitnum);
+}
+
+/**
+ * Add a successfully sent client statement to the idempotency log.
+ *
+ * @param stdClass $event Client queue record.
+ * @return void
+ */
+function logstore_xapi_add_client_event_to_sent_log($event) {
+    global $DB;
+
+    if (!$DB->record_exists('logstore_xapi_client_sent', ['clientkey' => $event->clientkey])) {
+        $DB->insert_record('logstore_xapi_client_sent', (object) [
+            'clientkey' => $event->clientkey,
+            'statementid' => $event->statementid,
+            'userid' => $event->userid,
+            'contextid' => $event->contextid,
+            'timecreated' => time(),
+        ]);
+    }
+}
+
+/**
+ * Mark a client statement as failed so the failed queue task can retry it.
+ *
+ * @param stdClass $event Client queue record with error information.
+ * @return void
+ */
+function logstore_xapi_update_client_event_failure($event) {
+    global $DB;
+
+    $record = (object) [
+        'id' => $event->id,
+        'type' => XAPI_IMPORT_TYPE_FAILED,
+        'attempts' => ((int)($event->attempts ?? 0)) + 1,
+        'errortype' => $event->errortype ?? XAPI_REPORT_ERRORTYPE_LRS,
+        'response' => $event->response ?? '',
+    ];
+    $DB->update_record('logstore_xapi_client_log', $record);
 }
 
 /**

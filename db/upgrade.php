@@ -186,6 +186,56 @@ function logstore_xapi_create_xapi_notification_table($dbman, $tablename) {
     }
 }
 
+  /**
+   * Create a client statement table.
+   *
+   * @param object $dbman Database manipulation object.
+   * @param string $tablename Table name.
+   * @param bool $sent Whether this is the sent idempotency table.
+   * @return void
+   */
+function logstore_xapi_create_client_table($dbman, $tablename, $sent = false) {
+    $table = new xmldb_table($tablename);
+    $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+    $table->add_field('clientkey', XMLDB_TYPE_CHAR, '64', null, XMLDB_NOTNULL, null, null);
+
+    if ($sent) {
+        $table->add_field('statementid', XMLDB_TYPE_CHAR, '255', null, null, null, null);
+        $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('contextid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+    } else {
+        $table->add_field('statement', XMLDB_TYPE_TEXT, null, null, XMLDB_NOTNULL, null, null);
+        $table->add_field('statementid', XMLDB_TYPE_CHAR, '255', null, null, null, null);
+        $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('contextid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('courseid', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('ip', XMLDB_TYPE_CHAR, '45', null, null, null, null);
+        $table->add_field('type', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, 0);
+        $table->add_field('attempts', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, 0);
+        $table->add_field('errortype', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+        $table->add_field('response', XMLDB_TYPE_TEXT, null, null, null, null, null);
+    }
+
+    $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+    $table->add_index('clientkey', XMLDB_INDEX_UNIQUE, ['clientkey']);
+    if (!$sent) {
+        $table->add_index('type', XMLDB_INDEX_NOTUNIQUE, ['type']);
+        $table->add_index('userid', XMLDB_INDEX_NOTUNIQUE, ['userid']);
+        $table->add_index('contextid', XMLDB_INDEX_NOTUNIQUE, ['contextid']);
+    } else {
+        $table->add_index('statementid', XMLDB_INDEX_NOTUNIQUE, ['statementid']);
+        $table->add_index('userid', XMLDB_INDEX_NOTUNIQUE, ['userid']);
+        $table->add_index('contextid', XMLDB_INDEX_NOTUNIQUE, ['contextid']);
+    }
+    $table->add_index('timecreated', XMLDB_INDEX_NOTUNIQUE, ['timecreated']);
+
+    if (!$dbman->table_exists($table)) {
+        $dbman->create_table($table);
+    }
+}
+
  /**
   * Determine what needs to be done for each upgrade step.
   *
@@ -292,6 +342,29 @@ function xmldb_logstore_xapi_upgrade($oldversion) {
             $dbman->add_field($table, $field);
         }
         upgrade_plugin_savepoint(true, 2026102900, 'logstore', 'xapi');
+    }
+
+    if ($oldversion < 2026102901) {
+        logstore_xapi_create_client_table($dbman, 'logstore_xapi_client_log');
+        logstore_xapi_create_client_table($dbman, 'logstore_xapi_client_sent', true);
+        upgrade_plugin_savepoint(true, 2026102901, 'logstore', 'xapi');
+    }
+
+    if ($oldversion < 2026102902) {
+        // Backfill defaults for the client-side verb filters. New admin
+        // settings do not get their defaults written until an upgrade runs,
+        // so without this existing sites see every checkbox unticked
+        // (config_read returns null) even though the code treats "never
+        // saved" as all-enabled. Writing the defaults makes the UI match
+        // the runtime behaviour.
+        if (get_config('logstore_xapi', 'clientverbs') === false) {
+            $verbs = array_keys(\logstore_xapi\client\verb_policy::get_verb_map());
+            set_config('clientverbs', implode(',', $verbs), 'logstore_xapi');
+        }
+        if (get_config('logstore_xapi', 'clientverbs_allow_unknown') === false) {
+            set_config('clientverbs_allow_unknown', 1, 'logstore_xapi');
+        }
+        upgrade_plugin_savepoint(true, 2026102902, 'logstore', 'xapi');
     }
 
     return true;
